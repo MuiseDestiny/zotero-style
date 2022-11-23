@@ -157,9 +157,10 @@ class AddonEvents extends AddonModule {
     style.setAttribute('type', 'text/css')
     style.setAttribute('id', 'pageStyle')
     style.textContent = `
-      #zotero-items-tree .cell.primary .tag-swatch {
+      #zotero-items-tree .cell.primary .zotero-tag {
         height: ${this.tagSize}em;
         width: ${this.tagSize}em;
+        margin: auto;
         border-radius: 100%;
       }
       .zotero-style-progress[visible=false] {
@@ -194,6 +195,9 @@ class AddonEvents extends AddonModule {
           tagBoxNode.setAttribute("class", "tag-box")
           primaryCell.appendChild(tagBoxNode)
           primaryCell.querySelectorAll(".tag-swatch").forEach(tagNode => {
+            if (tagNode.style.backgroundColor.includes("rgb")) {
+              tagNode.classList.add("zotero-tag")
+            }
             tagBoxNode.appendChild(tagNode)
           })
           primaryCell.style.display = "flex"
@@ -216,7 +220,7 @@ class AddonEvents extends AddonModule {
             top: 0;
             width: calc(100% - 3.7em - 5em);
             height: 100%;
-            opacity: .5;
+            opacity: .8;
             animation: opacity 1s linear;
           `
           primaryCell.appendChild(progressNode)
@@ -242,11 +246,18 @@ class AddonEvents extends AddonModule {
             let recordTimeObj = record[title]
             const total = recordTimeObj["total"]
             let maxSec = 0
+            let s = 0
+            let n = 0
             for (let i=0; i<total; i++) {
-              if (recordTimeObj[i] && recordTimeObj[i] > maxSec) {
+              if (!(recordTimeObj[i])) continue
+              if (recordTimeObj[i] > maxSec) {
                 maxSec = recordTimeObj[i]
               }
+              s += recordTimeObj[i]
+              n += 1
             }
+            const meanSec = s / n
+            maxSec = meanSec + (maxSec - meanSec) * .5
             const minSec = 60
             const pct = 1 / total * 100
             for (let i=0; i<total; i++) {
