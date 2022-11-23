@@ -17,6 +17,7 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 新特性 - 阅读进度记录（逐页阅读时间记录渲染在标题上）
 ![](https://spr1ng.live/file/ed09ed3b676eef4d09bd2.png)
 ![](https://spr1ng.live/file/447b7d8912422770731a5.png)
+> 颜色越深阅读时间越久，同时可显示整体阅读进度，这个部分参考<https://github.com/volatile-static/Chartero>，这个插件对于这方面实现的更为彻底，本脚本相当于实现了一个初级，简化的版本。
 
 按钮详解
 ![](https://spr1ng.live/file/15deb6f9b3da8f5d6c7de.png)
@@ -30,3 +31,5 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 ## 致谢
 本插件基于@windingwind的模板<https://github.com/windingwind/zotero-addon-template>，
 本插件参考了他的大量代码和教程
+
+感谢@volatile-static的插件`Chartore`<https://github.com/volatile-static/Chartero>
