@@ -3,7 +3,7 @@
   "addonName": "Zotero Style",
   "addonID": "zoterostyle@polygon.org",
   "addonRef": "zoterostyle",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "标签靠右显示，标题最大化按钮",
   "main": "src/index.js",
   "scripts": {
