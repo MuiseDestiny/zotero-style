@@ -5,10 +5,38 @@ class AddonEvents extends AddonModule {
   public Zotero: any;
   public window: any;
   public document: any;
-  public tagSize: .8;
-  public mode = "normal";
+  public notifierCallback : any;
+  public intervalID: number;
+  public recordInterval = 5;  // s
+  public maxHangTime = 60;  // s
+  public tagSize = .8;  // em
+  public mode = "normal";  // default
+  public progress = true;
+  public state = {
+    activate: true,
+    pageIndex: null,
+    left: null,
+    top: null,
+    hangCount: null
+  }
   constructor(parent: Addon) {
     super(parent);
+    this.notifierCallback  = {
+      notify: async (
+        event: string,
+        type: string,
+        ids: Array<number | string>,
+        extraData: object
+      ) => {
+        if (event == "open" && type == "file") {
+          // open a pdf
+          
+        } 
+        if (event == "close" && type == "file") {
+          // close a pdf
+        }
+      }
+    }
   }
 
   public async onInit(_Zotero: any) {
@@ -22,10 +50,39 @@ class AddonEvents extends AddonModule {
 
     // add button
     this.addSwitchButton()
-
+  
     // modify Zotero render function
     this.modifyRenderPrimaryCell()
     this.modifyRenderCell()
+    
+    // event
+    let notifierID = this.Zotero.Notifier.registerObserver(
+      this.notifierCallback,
+      ["file"]
+    );
+
+    this.window.addEventListener(
+      "unload",
+      function (e) {
+        this.Zotero.Notifier.unregisterObserver(notifierID);
+      },
+      false
+    );
+
+    // listen to Zotero's state
+    this.window.addEventListener('activate', () => {
+      console.log('activate')
+      this.state.activate = true
+      // once Zotero is activated again, it will continue to record read time
+      this.intervalID = this.window.setInterval(this.recordReadTime.bind(this), this.recordInterval * 1e3)
+    }, true);
+    this.window.addEventListener('deactivate', () => {
+      console.log('deactivate')
+      this.state.activate = false
+      this.state.hangCount = 0;
+      // once Zotero is deactivate again, it will stop to record read time
+      this.window.clearInterval(this.intervalID)
+    }, true);
   }
 
   private addSwitchButton(): void {
@@ -52,21 +109,30 @@ class AddonEvents extends AddonModule {
         itemNode.childNodes.forEach(switchNodeDisplay)
       )
     }
-    let callback = function (e: Event) {
+    let callback = function (event) {
       var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
         Components.interfaces.nsISupports
       ).wrappedJSObject;
-      if (this.classList.contains('max')) {
-        _Zotero.ZoteroStyle.events.mode = "normal"
-        this.classList.remove("max")
-        switchDisplay(_Zotero)
-        this.innerHTML = normalSvg
-      } else {
-        _Zotero.ZoteroStyle.events.mode = "max"
-        this.classList.add("max")
-        switchDisplay(_Zotero)
-        this.innerHTML = maxSvg
-      }
+      if (event.button == 0) {
+        console.log("left click")
+        if (this.classList.contains('max')) {
+          _Zotero.ZoteroStyle.events.mode = "normal"
+          this.classList.remove("max")
+          switchDisplay(_Zotero)
+          this.innerHTML = normalSvg
+        } else {
+          _Zotero.ZoteroStyle.events.mode = "max"
+          this.classList.add("max")
+          switchDisplay(_Zotero)
+          this.innerHTML = maxSvg
+        }
+      } else if (event.button == 2) {
+        console.log("right click")
+        _Zotero.ZoteroStyle.events.progress  = !_Zotero.ZoteroStyle.events.progress
+        _Zotero.getMainWindow().document.querySelectorAll(".zotero-style-progress").forEach(node=>{
+          node.setAttribute("visible", String(node.getAttribute("visible") == "false"))
+        })
+      } 
     }
     let toolbar = this.document.querySelector("#zotero-items-toolbar")
     let toolbarbutton = toolbar.querySelector("toolbarbutton").cloneNode()
@@ -96,6 +162,10 @@ class AddonEvents extends AddonModule {
         width: ${this.tagSize}em;
         border-radius: 100%;
       }
+      .zotero-style-progress[visible=false] {
+        opacity: 0 !important;
+        animation: opacity 1s linear !important;
+      }
     `
     mainWindow.appendChild(style)
   }
@@ -112,25 +182,86 @@ class AddonEvents extends AddonModule {
         if (this.window.ZoteroPane.itemsView._renderPrimaryCell === undefined) return
         let zotero_renderPrimaryCell = this.window.ZoteroPane.itemsView._renderPrimaryCell
         this.window.ZoteroPane.itemsView._renderPrimaryCell = function (index, data, column) {
-          let PrimaryCell = zotero_renderPrimaryCell.call(this.window.ZoteroPane.itemsView, index, data, column)
+          
+          let primaryCell = zotero_renderPrimaryCell.call(this.window.ZoteroPane.itemsView, index, data, column)
           // move all tagNode to a new parent, tagBox
           var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
             Components.interfaces.nsISupports
           ).wrappedJSObject;
           let document = _Zotero.getMainWindow().document
-          let tagBoxNode = document.createElementNS("http://www.w3.org/1999/xhtml", "span")
+          let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
+          let tagBoxNode = createElement("span")
           tagBoxNode.setAttribute("class", "tag-box")
-          PrimaryCell.appendChild(tagBoxNode)
-          PrimaryCell.querySelectorAll(".tag-swatch").forEach(tagNode => {
+          primaryCell.appendChild(tagBoxNode)
+          primaryCell.querySelectorAll(".tag-swatch").forEach(tagNode => {
             tagBoxNode.appendChild(tagNode)
           })
-          PrimaryCell.style.display = "flex"
+          primaryCell.style.display = "flex"
           tagBoxNode.style = `
             width: 5em;
             line-height: 1em;
             margin-left: auto;
           `
-          return PrimaryCell
+          // render the read progress
+          primaryCell.style = `
+            position: relative;
+            box-sizing: border-box;
+          `
+          let progressNode = createElement("span")
+          progressNode.setAttribute("class", "zotero-style-progress")
+          progressNode.setAttribute("visible", String(_Zotero.ZoteroStyle.events.progress))
+          progressNode.style = `
+            position: absolute;
+            left: 3.2em;
+            top: 0;
+            width: calc(100% - 3.7em - 5em);
+            height: 100%;
+            opacity: .5;
+          `
+          primaryCell.appendChild(progressNode)
+          primaryCell.querySelector(".cell-text").style.zIndex = 999
+          // create sub span in this progress node
+          const recordKey = `Zotero.ZoteroStyle.record`;
+          let record = JSON.parse(_Zotero.Prefs.get(recordKey) || "{}");
+          console.log(record)
+          // i.e.
+          const testTitle = "Satellite remote sensing of aerosol optical depth: advances, challenges, and perspectives"
+          record[testTitle] = {
+              0: 60 * 3,
+              1: 60 * 6,
+              2: 5,
+              3: 60 * 3,
+              4: 60 * 7,
+              5: 60 * 2,
+              "total": 12
+          }
+          const title = data
+          console.log(title)
+          if (record && record[title]) {
+            let recordTimeObj = record[title]
+            const total = recordTimeObj["total"]
+            let maxSec = 0
+            for (let i=0; i<total; i++) {
+              if (recordTimeObj[i] && recordTimeObj[i] > maxSec) {
+                maxSec = recordTimeObj[i]
+              }
+            }
+            const minSec = 60
+            const pct = 1 / total * 100
+            for (let i=0; i<total; i++) {
+              // pageSpan represent a page, color represent the length of read time
+              let pageSpan = createElement("span")
+              let alpha = (recordTimeObj[i] || 0) / (maxSec > minSec ? maxSec : minSec)
+              pageSpan.style = `
+                width: ${pct}%;
+                height: 100%;
+                background-color: rgba(90, 193, 189, ${alpha < 1 ? alpha : 1});
+                display: inline-block;
+              `
+              progressNode.appendChild(pageSpan)
+            }   
+          } 
+          return primaryCell
         }
         this.window.clearInterval(id)
       }).bind(this),
@@ -170,10 +301,64 @@ class AddonEvents extends AddonModule {
 
   }
 
+  private getReader(): any {
+    return this.Zotero.Reader.getByTabID(this.window.Zotero_Tabs.selectedID);
+  }
+
+  public recordReadTime(): void {
+    // is not reading
+    // it return undefined if no reader selected, so we ignore it
+    const reader = this.getReader();
+    // Zotero deactivate is ignored too
+    if (!(reader && reader.state && this.state.activate)) return;
+    console.log("is reading")
+    // is reading
+    // hang up ? reference to Chartero.js
+    const pageIndex = reader.state.pageIndex;
+    if (pageIndex == this.state.pageIndex) {
+        if (reader.state.left == this.state.left && reader.state.top == this.state.top)
+            this.state.hangCount ++;
+        else {
+          this.state.left = reader.state.left;
+            this.state.top = reader.state.top;
+            this.state.hangCount = 0;
+        }
+    } else {
+        this.state.pageIndex = pageIndex;
+        this.state.hangCount = 0;
+    }
+    // yes, hang up
+    if (this.state.hangCount * this.recordInterval > this.maxHangTime) return;
+
+    // real read, record this recordInterval
+    const totalPageNum = reader._iframeWindow.wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
+    const title = this.Zotero.Items.get(this.Zotero.Items.get(reader.itemID)._parentID)._displayTitle;
+
+    // get local record
+    console.log("saving");
+    const recordKey = `Zotero.ZoteroStyle.record`;
+    let record = JSON.parse(this.Zotero.Prefs.get(recordKey) || "{}");
+    if (!record[title]) record[title] = {}
+    record[title][this.state.pageIndex] = (
+      this.isNumber(record[title][this.state.pageIndex]) 
+      ? record[title][this.state.pageIndex]
+      : 0
+    ) + this.recordInterval;
+    record[title]["total"] = totalPageNum;
+    this.Zotero.Prefs.set(
+      recordKey, 
+      JSON.stringify(record)
+    );
+    console.log(record)
+  }
+
+  private isNumber(arg: any): boolean {
+    return (typeof(arg) == "number" && String(arg) != "NaN")
+  }
+
   public onUnInit(): void {
     console.log(`${addonName}: uninit called`);
     this.Zotero.debug(`${addonName}: uninit called`);
-    // Remove addon object
     this.Zotero.ZoteroStyle = undefined;
   }
 }
