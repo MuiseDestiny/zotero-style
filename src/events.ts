@@ -165,7 +165,6 @@ class AddonEvents extends AddonModule {
       }
       .zotero-style-progress[visible=false] {
         opacity: 0 !important;
-        animation: opacity 1s linear !important;
       }
     `
     mainWindow.appendChild(style)
@@ -221,7 +220,6 @@ class AddonEvents extends AddonModule {
             width: calc(100% - 3.7em - 5em);
             height: 100%;
             opacity: .8;
-            animation: opacity 1s linear;
           `
           primaryCell.appendChild(progressNode)
           primaryCell.querySelector(".cell-text").style.zIndex = 999
