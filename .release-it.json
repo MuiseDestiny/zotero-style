@@ -4,7 +4,7 @@
   },
   "github": {
     "release": true,
-    "assets": ["builds/*.xpi"]
+    "assets": ["builds/zotero-style.xpi"]
   },
   "hooks": {
     "after:bump": "npm run build",
