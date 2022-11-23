@@ -1,10 +1,10 @@
 {
-  "name": "zotero-addon-template",
-  "addonName": "Zotero Addon Template",
-  "addonID": "addontemplate@euclpts.com",
-  "addonRef": "addontemplate",
-  "version": "0.0.0",
-  "description": "Zotero Addon Template",
+  "name": "zotero-style",
+  "addonName": "Zotero Style",
+  "addonID": "zoterostyle@polygon.org",
+  "addonRef": "zoterostyle",
+  "version": "0.1.0",
+  "description": "标签靠右显示，标题最大化按钮",
   "main": "src/index.js",
   "scripts": {
     "build": "node build.js",
@@ -19,7 +19,7 @@
     "type": "git",
     "url": "git+https://github.com/windingwind/zotero-addon-template.git"
   },
-  "author": "windingwind",
+  "author": "Polygon",
   "license": "AGPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/windingwind/zotero-addon-template/issues"

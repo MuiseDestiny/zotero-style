@@ -2,14 +2,14 @@ import { Addon, addonName } from "./addon";
 import AddonModule from "./module";
 
 class AddonPrefs extends AddonModule {
-  private _window: Window;
+  private window: Window;
   constructor(parent: Addon) {
     super(parent);
   }
   public initPreferences(_window: Window) {
     // This function is called when the prefs window is opened
     // See addon/chrome/content/preferences.xul onpaneload
-    this._window = _window;
+    this.window = window;
     Zotero.debug(`${addonName}: init preferences`);
     this.updatePrefsUI();
   }
