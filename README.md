@@ -21,5 +21,5 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 建议配合Zotero Tag使用，本插件无个性化设置界面（其实是我还不会）
 
 ## 致谢
-本插件基于https://github.com/windingwind/zotero-addon-template模板，感谢windingwind
+本插件基于[](https://github.com/windingwind/zotero-addon-template "windingwind的模板")。模板，感谢
 本插件参考了它的大量代码和教程
