@@ -14,6 +14,13 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 点击按钮之后
 ![](https://spr1ng.live/file/6bacc5490a52029ff35f6.png)
 
+新特性 - 阅读进度记录（逐页阅读时间记录渲染在标题上）
+![](https://spr1ng.live/file/ed09ed3b676eef4d09bd2.png)
+![](https://spr1ng.live/file/447b7d8912422770731a5.png)
+
+按钮详解
+![](https://spr1ng.live/file/15deb6f9b3da8f5d6c7de.png)
+
 ## 主要功能
 1.标签右对齐，标签由`圆角正方形`->`圆形`
 2.增加`只显示标题`按钮
