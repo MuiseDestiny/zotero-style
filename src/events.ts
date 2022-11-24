@@ -219,7 +219,7 @@ class AddonEvents extends AddonModule {
             top: 0;
             width: calc(100% - 3.7em - 5em);
             height: 100%;
-            opacity: .8;
+            opacity: .7;
           `
           primaryCell.appendChild(progressNode)
           primaryCell.querySelector(".cell-text").style.zIndex = 999
