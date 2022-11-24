@@ -204,6 +204,7 @@ class AddonEvents extends AddonModule {
             width: 5em;
             line-height: 1em;
             margin-left: auto;
+            padding-left: .5em;
           `
           // render the read progress
           primaryCell.style = `
@@ -215,9 +216,9 @@ class AddonEvents extends AddonModule {
           progressNode.setAttribute("visible", String(_Zotero.ZoteroStyle.events.progress))
           progressNode.style = `
             position: absolute;
-            left: 3.2em;
+            left: 3.25em;
             top: 0;
-            width: calc(100% - 3.7em - 5em);
+            width: calc(100% - 9em);
             height: 100%;
             opacity: .7;
           `
