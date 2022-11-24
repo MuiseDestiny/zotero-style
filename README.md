@@ -4,6 +4,8 @@
 
 ![](https://spr1ng.live/file/390f08bb91ebff15bb0d1.png)
 
+<iframe src="//player.bilibili.com/player.html?aid=475484672&bvid=BV1PK411o7JN&cid=901551499&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+
 ## 起因
 Zotero标签可以显示在标题左侧，有时候条目有不同数量标签，排版特别不美观不利于阅读（强迫症，痛点）。
 而且在根据标题查找论文的时候，标题在面板中往往被其它属性挤得只能看清前面几个单词或字，于是增加一个仅`显示标题切换按钮`。
