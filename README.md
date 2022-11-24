@@ -1,5 +1,9 @@
 # Zotero Style
 
+<center><font color="deeppink"><b>效果预览</b></font></center>
+
+![](https://spr1ng.live/file/390f08bb91ebff15bb0d1.png)
+
 ## 起因
 Zotero标签可以显示在标题左侧，有时候条目有不同数量标签，排版特别不美观不利于阅读（强迫症，痛点）。
 而且在根据标题查找论文的时候，标题在面板中往往被其它属性挤得只能看清前面几个单词或字，于是增加一个仅`显示标题切换按钮`。
@@ -7,20 +11,32 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 如果你也有类似痛点欢迎提出，我们共同解决。
 
 ## 功能预览
-原始Zotero
+
+<center><font color="#27ae60"><b>原始Zotero</b></font></center>
+
 ![](https://spr1ng.live/file/d38124d3529d6dd682dd3.png)
-开启插件之后
+
+<center><font color="#e74c3c"><b>开启插件</b></font></center>
+
 ![](https://spr1ng.live/file/28d1ca9d77abb310db2e2.png)
-点击按钮之后
+
+<center><font color="#8e44ad"><b>点击按钮</b></font></center>
+
+> 全局搜索旁边
+
 ![](https://spr1ng.live/file/6bacc5490a52029ff35f6.png)
 
-新特性 - 阅读进度记录（逐页阅读时间记录渲染在标题上）
+<center><font color="#16a085"><b>新特性</b></font></center>
+
+> 阅读进度记录（逐页阅读时间记录渲染在标题上）
+
 ![](https://spr1ng.live/file/ed09ed3b676eef4d09bd2.png)
 ![](https://spr1ng.live/file/447b7d8912422770731a5.png)
 > 颜色越深阅读时间越久，同时可显示整体阅读进度，这个部分参考<https://github.com/volatile-static/Chartero>，`Chartero`对于这方面实现的更为彻底，本插件相当于实现了一个初级，简化的版本。
 
-按钮详解
-![](https://spr1ng.live/file/15deb6f9b3da8f5d6c7de.png)
+<center><font color="#2c3e50"><b>按钮详解</b></font></center>
+
+![](https://spr1ng.live/file/87ac5698538744a03d424.png)
 
 ## 主要功能
 
@@ -28,7 +44,7 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 2. 增加`只显示标题`按钮🌸
 3. 显示阅读进度，是否划水，一看便知👋
 
-🙌建议配合Zotero Tag使用，本插件无个性化设置界面（其实是我还不会）
+🙌建议配合Zotero Tag使用，本插件无个性化设置界面（其实是我还不会写，用的bootstrap模板`支持以后的Zotero`，现有的大多是overlay`后面升级的Zotero可能不支持这种模式的插件`的）
 
 ## TODO
 - [ ] 阅读PDF时，悬停参考文献点击即可快速添加到Zotero

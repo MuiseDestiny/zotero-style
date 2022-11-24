@@ -360,7 +360,6 @@ class AddonEvents extends AddonModule {
       recordKey, 
       JSON.stringify(record)
     );
-    console.log(record)
   }
 
   private isNumber(arg: any): boolean {
