@@ -1,10 +1,13 @@
 # Zotero Style
 
+> 介绍视频
+<https://www.bilibili.com/video/BV1PK411o7JN/?share_source=copy_web&vd_source=7b57a26bb78f6cbbfdf8bff111682fa3>
+
+
 <center><font color="deeppink"><b>效果预览</b></font></center>
 
 ![](https://spr1ng.live/file/390f08bb91ebff15bb0d1.png)
 
-<iframe src="//player.bilibili.com/player.html?aid=475484672&bvid=BV1PK411o7JN&cid=901551499&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
 
 ## 起因
 Zotero标签可以显示在标题左侧，有时候条目有不同数量标签，排版特别不美观不利于阅读（强迫症，痛点）。
