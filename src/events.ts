@@ -52,8 +52,14 @@ class AddonEvents extends AddonModule {
     this.addSwitchButton()
   
     // modify Zotero render function
-    this.modifyRenderPrimaryCell()
-    this.modifyRenderCell()
+    this.hookZoteroFunction(
+      "getMainWindow().ZoteroPane.itemsView._renderPrimaryCell", 
+      this.modifyRenderPrimaryCell
+    )
+    this.hookZoteroFunction(
+      "getMainWindow().ZoteroPane.itemsView._renderCell", 
+      this.modifyRenderCell
+    )
     
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(
@@ -174,142 +180,135 @@ class AddonEvents extends AddonModule {
     return this.document.createElementNS("http://www.w3.org/1999/xhtml", nodeName)
   }
 
-  private modifyRenderPrimaryCell(): void {
-    // https://github.com/zotero/zotero/blob/1c8554d527390ab0cda0352e885d461a13af767c/chrome/content/zotero/itemTree.jsx
-    // 2693     _renderPrimaryCell(index, data, column)
+  private hookZoteroFunction(path: string, func: Function) {
+    // path: getMainWindow().ZoteroPane.itemsView._renderCell
     let id = this.window.setInterval(
       (() => {
-        if (this.window.ZoteroPane.itemsView._renderPrimaryCell === undefined) return
-        let zotero_renderPrimaryCell = this.window.ZoteroPane.itemsView._renderPrimaryCell
-        this.window.ZoteroPane.itemsView._renderPrimaryCell = function (index, data, column) {
-          
-          let primaryCell = zotero_renderPrimaryCell.call(this.window.ZoteroPane.itemsView, index, data, column)
-          // move all tagNode to a new parent, tagBox
-          var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+        console.log(`wait for the Zotero.${path} to be ready...`)
+        let zoteroFunc = eval(`this.Zotero.${path}`)
+        let zoteroFuncThis = eval(`this.Zotero.${path.match(/(.+)\.\w/)[1]}`)
+        if (zoteroFunc === undefined) return
+        console.log(`Zotero.${path} ready`)
+        // zoteroFunc is the function that needs to be modified
+        console.log(zoteroFunc)
+        let modifyFunc = function (...args: any[]) {
+          let zoteroFunctionReturn = zoteroFunc.apply(zoteroFuncThis, args)
+          var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
             Components.interfaces.nsISupports
           ).wrappedJSObject;
-          let document = _Zotero.getMainWindow().document
-          let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
-          let tagBoxNode = createElement("span")
-          tagBoxNode.setAttribute("class", "tag-box")
-          primaryCell.appendChild(tagBoxNode)
-          primaryCell.querySelectorAll(".tag-swatch").forEach(tagNode => {
-            if (tagNode.style.backgroundColor.includes("rgb")) {
-              tagNode.classList.add("zotero-tag")
-            }
-            tagBoxNode.appendChild(tagNode)
-          })
-          primaryCell.style.display = "flex"
-          tagBoxNode.style = `
-            width: 5em;
-            line-height: 1em;
-            margin-left: auto;
-            padding-left: .5em;
-          `
-          // render the read progress
-          primaryCell.style = `
-            position: relative;
-            box-sizing: border-box;
-          `
-          let progressNode = createElement("span")
-          progressNode.setAttribute("class", "zotero-style-progress")
-          progressNode.setAttribute("visible", String(_Zotero.ZoteroStyle.events.progress))
-          progressNode.style = `
-            position: absolute;
-            left: 3.25em;
-            top: 0;
-            width: calc(100% - 9em);
-            height: 100%;
-            opacity: .7;
-          `
-          primaryCell.appendChild(progressNode)
-          primaryCell.querySelector(".cell-text").style.zIndex = 999
-          // create sub span in this progress node
-          const recordKey = `Zotero.ZoteroStyle.record`;
-          let record = JSON.parse(_Zotero.Prefs.get(recordKey) || "{}");
-          console.log(record)
-          // i.e.
-          const testTitle = "Satellite remote sensing of aerosol optical depth: advances, challenges, and perspectives"
-          record[testTitle] = {
-              0: 60 * 3,
-              1: 60 * 6,
-              2: 5,
-              3: 60 * 3,
-              4: 60 * 7,
-              5: 60 * 2,
-              "total": 12
-          }
-          const title = data
-          console.log(title)
-          if (record && record[title]) {
-            let recordTimeObj = record[title]
-            const total = recordTimeObj["total"]
-            let maxSec = 0
-            let s = 0
-            let n = 0
-            for (let i=0; i<total; i++) {
-              if (!(recordTimeObj[i])) continue
-              if (recordTimeObj[i] > maxSec) {
-                maxSec = recordTimeObj[i]
-              }
-              s += recordTimeObj[i]
-              n += 1
-            }
-            const meanSec = s / n
-            maxSec = meanSec + (maxSec - meanSec) * .5
-            const minSec = 60
-            const pct = 1 / total * 100
-            for (let i=0; i<total; i++) {
-              // pageSpan represent a page, color represent the length of read time
-              let pageSpan = createElement("span")
-              let alpha = (recordTimeObj[i] || 0) / (maxSec > minSec ? maxSec : minSec)
-              pageSpan.style = `
-                width: ${pct}%;
-                height: 100%;
-                background-color: rgba(90, 193, 189, ${alpha < 1 ? alpha : 1});
-                display: inline-block;
-              `
-              progressNode.appendChild(pageSpan)
-            }   
-          } 
-          return primaryCell
+          return func(zoteroFunctionReturn, args, Zotero)
         }
+        console.log(modifyFunc.toString())
+        eval(`this.Zotero.${path} = ${modifyFunc.toString()}`)
         this.window.clearInterval(id)
       }).bind(this),
       1e3
     )
-
   }
 
-  private modifyRenderCell(): void {
+  private modifyRenderPrimaryCell(primaryCell: any, args: any[], Zotero: any): any {
     // https://github.com/zotero/zotero/blob/1c8554d527390ab0cda0352e885d461a13af767c/chrome/content/zotero/itemTree.jsx
-    // 2693     _renderCell(index, data, column)
-    let id = this.window.setInterval(
-      (() => {
-        if (this.window.ZoteroPane.itemsView._renderCell === undefined) return
-        let zotero_renderCell = this.window.ZoteroPane.itemsView._renderCell
-        this.window.ZoteroPane.itemsView._renderCell = function (index, data, column) {
-          let cell = zotero_renderCell.call(this.window.ZoteroPane.itemsView, index, data, column)
-          if (
-            // these classnames is visible
-            ["hasAttachment", "title"].filter(
-              classname => cell.classList.contains(classname)
-            ).length == 0
-          ) {
-            var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
-              Components.interfaces.nsISupports
-            ).wrappedJSObject;
-            if (_Zotero.ZoteroStyle.events.mode === "max") {
-              cell.style.display = "none"
-            }
-          }
-          return cell
+    // 2693     _renderPrimaryCell(index, data, column)
+    console.log("1988")
+    let document = Zotero.getMainWindow().document
+    let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
+    let tagBoxNode = createElement("span")
+    tagBoxNode.setAttribute("class", "tag-box")
+    primaryCell.appendChild(tagBoxNode)
+    primaryCell.querySelectorAll(".tag-swatch").forEach(tagNode => {
+      if (tagNode.style.backgroundColor.includes("rgb")) {
+        tagNode.classList.add("zotero-tag")
+      }
+      tagBoxNode.appendChild(tagNode)
+    })
+    primaryCell.style.display = "flex"
+    tagBoxNode.style = `
+      width: 5em;
+      line-height: 1em;
+      margin-left: auto;
+      padding-left: .5em;
+    `
+    // render the read progress
+    primaryCell.style = `
+      position: relative;
+      box-sizing: border-box;
+    `
+    let progressNode = createElement("span")
+    progressNode.setAttribute("class", "zotero-style-progress")
+    progressNode.setAttribute("visible", String(Zotero.ZoteroStyle.events.progress))
+    progressNode.style = `
+      position: absolute;
+      left: 3.25em;
+      top: 0;
+      width: calc(100% - 9em);
+      height: 100%;
+      opacity: .7;
+    `
+    primaryCell.appendChild(progressNode)
+    primaryCell.querySelector(".cell-text").style.zIndex = 999
+    // create sub span in this progress node
+    const recordKey = `Zotero.ZoteroStyle.record`;
+    let record = JSON.parse(Zotero.Prefs.get(recordKey) || "{}");
+    console.log(record)
+    // i.e.
+    const testTitle = "Satellite remote sensing of aerosol optical depth: advances, challenges, and perspectives"
+    record[testTitle] = {
+        0: 60 * 3,
+        1: 60 * 6,
+        2: 5,
+        3: 60 * 3,
+        4: 60 * 7,
+        5: 60 * 2,
+        "total": 12
+    }
+    const title = args[1]
+    console.log(title)
+    if (record && record[title]) {
+      let recordTimeObj = record[title]
+      const total = recordTimeObj["total"]
+      let maxSec = 0
+      let s = 0
+      let n = 0
+      for (let i=0; i<total; i++) {
+        if (!(recordTimeObj[i])) continue
+        if (recordTimeObj[i] > maxSec) {
+          maxSec = recordTimeObj[i]
         }
-        this.window.clearInterval(id)
-      }).bind(this),
-      1e3
-    )
+        s += recordTimeObj[i]
+        n += 1
+      }
+      const meanSec = s / n
+      maxSec = meanSec + (maxSec - meanSec) * .5
+      const minSec = 60
+      const pct = 1 / total * 100
+      for (let i=0; i<total; i++) {
+        // pageSpan represent a page, color represent the length of read time
+        let pageSpan = createElement("span")
+        let alpha = (recordTimeObj[i] || 0) / (maxSec > minSec ? maxSec : minSec)
+        pageSpan.style = `
+          width: ${pct}%;
+          height: 100%;
+          background-color: rgba(90, 193, 189, ${alpha < 1 ? alpha : 1});
+          display: inline-block;
+        `
+        progressNode.appendChild(pageSpan)
+      }   
+    } 
+    return primaryCell
+  }
 
+  private modifyRenderCell(cell: any, args: any[], Zotero: any): any {
+    if (
+      // these classnames is visible
+      ["hasAttachment", "title"].filter(
+        classname => cell.classList.contains(classname)
+      ).length == 0
+    ) {
+      if (Zotero.ZoteroStyle.events.mode === "max") {
+        cell.style.display = "none"
+      }
+    }
+    return cell
   }
 
   private getReader(): any {
