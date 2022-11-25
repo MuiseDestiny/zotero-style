@@ -9,7 +9,6 @@ class AddonEvents extends AddonModule {
   public intervalID: number;
   public recordInterval = 5;  // s
   public maxHangTime = 60;  // s
-  public tagSize = .8;  // em
   public mode = "normal";  // default
   public progress = true;
   public state = {
@@ -163,14 +162,37 @@ class AddonEvents extends AddonModule {
     style.setAttribute('type', 'text/css')
     style.setAttribute('id', 'pageStyle')
     style.textContent = `
+      .primary {
+        display: flex;
+        position: relative;
+        box-sizing: border-box;
+      }
+      .tag-box {
+        position: relative;
+        width: 5em;
+        height: 1em;
+        line-height: 1em;
+      }
       #zotero-items-tree .cell.primary .zotero-tag {
-        height: ${this.tagSize}em;
-        width: ${this.tagSize}em;
-        margin: auto;
-        border-radius: 100%;
+        height: .9em;
+        width: .9em;
+        border-radius: 50%;
+      }
+      #zotero-items-tree .cell.primary .tag-swatch{
+        position: absolute;
+        font-size: 1em;
+        bottom: 0;
       }
       .zotero-style-progress[visible=false] {
         opacity: 0 !important;
+      }
+      .zotero-style-progress {
+        position: absolute;
+        left: 3.25em;
+        top: 0;
+        width: calc(100% - 9em);
+        height: 100%;
+        opacity: .7;
       }
     `
     mainWindow.appendChild(style)
@@ -184,13 +206,10 @@ class AddonEvents extends AddonModule {
     // path: getMainWindow().ZoteroPane.itemsView._renderCell
     let id = this.window.setInterval(
       (() => {
-        console.log(`wait for the Zotero.${path} to be ready...`)
         let zoteroFunc = eval(`this.Zotero.${path}`)
         let zoteroFuncThis = eval(`this.Zotero.${path.match(/(.+)\.\w/)[1]}`)
         if (zoteroFunc === undefined) return
-        console.log(`Zotero.${path} ready`)
         // zoteroFunc is the function that needs to be modified
-        console.log(zoteroFunc)
         let modifyFunc = function (...args: any[]) {
           let zoteroFunctionReturn = zoteroFunc.apply(zoteroFuncThis, args)
           var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
@@ -198,7 +217,6 @@ class AddonEvents extends AddonModule {
           ).wrappedJSObject;
           return func(zoteroFunctionReturn, args, Zotero)
         }
-        console.log(modifyFunc.toString())
         eval(`this.Zotero.${path} = ${modifyFunc.toString()}`)
         this.window.clearInterval(id)
       }).bind(this),
@@ -209,41 +227,26 @@ class AddonEvents extends AddonModule {
   private modifyRenderPrimaryCell(primaryCell: any, args: any[], Zotero: any): any {
     // https://github.com/zotero/zotero/blob/1c8554d527390ab0cda0352e885d461a13af767c/chrome/content/zotero/itemTree.jsx
     // 2693     _renderPrimaryCell(index, data, column)
-    console.log("1988")
     let document = Zotero.getMainWindow().document
     let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
+    // render the tag
     let tagBoxNode = createElement("span")
     tagBoxNode.setAttribute("class", "tag-box")
     primaryCell.appendChild(tagBoxNode)
-    primaryCell.querySelectorAll(".tag-swatch").forEach(tagNode => {
+    // special algin between font and span
+    primaryCell.querySelectorAll(".tag-swatch").forEach((tagNode: any, i: number) => {
+      let delta = 0
       if (tagNode.style.backgroundColor.includes("rgb")) {
         tagNode.classList.add("zotero-tag")
+        delta = .25
       }
+      tagNode.style.left = `${i*1.25+delta}em`
       tagBoxNode.appendChild(tagNode)
     })
-    primaryCell.style.display = "flex"
-    tagBoxNode.style = `
-      width: 5em;
-      line-height: 1em;
-      margin-left: auto;
-      padding-left: .5em;
-    `
     // render the read progress
-    primaryCell.style = `
-      position: relative;
-      box-sizing: border-box;
-    `
     let progressNode = createElement("span")
     progressNode.setAttribute("class", "zotero-style-progress")
     progressNode.setAttribute("visible", String(Zotero.ZoteroStyle.events.progress))
-    progressNode.style = `
-      position: absolute;
-      left: 3.25em;
-      top: 0;
-      width: calc(100% - 9em);
-      height: 100%;
-      opacity: .7;
-    `
     primaryCell.appendChild(progressNode)
     primaryCell.querySelector(".cell-text").style.zIndex = 999
     // create sub span in this progress node
