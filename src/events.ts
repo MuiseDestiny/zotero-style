@@ -10,7 +10,7 @@ class AddonEvents extends AddonModule {
   public setting: any;
   public intervalID: number;
   public tagSize = 5;  // em
-  public progressOpacity = .7;  // s
+  public progressOpacity = .7;
   public progressColor = "#5AC1BD";
   public constantFields = ["hasAttachment", "title"];
   public recordInterval = 5;  // s

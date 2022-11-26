@@ -19,7 +19,7 @@ class AddonModule {
       Components.interfaces.nsISupports
     ).wrappedJSObject;
     let _v = _Zotero.Prefs.get(k)
-    if (v == undefined) {
+    if (v == undefined || typeof(_v) == typeof(v)) {
       return _v
     }
     console.log(typeof(v), _v, v)

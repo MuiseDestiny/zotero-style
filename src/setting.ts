@@ -13,6 +13,7 @@ class Setting extends AddonModule {
   public _settingHistory = [
     "Zotero.ZoteroStyle.progressOpacity=.7", 
     "Zotero.ZoteroStyle.tagSize=5",
+    "Zotero.ZoteroStyle.progressColor='#5AC1BD'",
     "Zotero.ZoteroStyle.constantFields=['hasAttachment', 'title']"
   ]
   constructor(parent) {
