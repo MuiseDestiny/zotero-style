@@ -54,6 +54,7 @@ Mac用户同时鼠标中键可能也用不了,可以用Shift+P来唤醒设置界
 | Zotero.ZoteroStyle.progressOpacity | 0.5 | 设置进度条透明度,0~1 |
 | Zotero.ZoteroStyle.tagSize | 8 | 设置标签宽度,单位em | 
 | Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |
+
 ![](https://spr1ng.live/file/7a36a8cf795e1746ddf01.png)
 
 > Tips:
