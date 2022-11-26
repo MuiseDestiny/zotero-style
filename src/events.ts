@@ -320,7 +320,7 @@ class AddonEvents extends AddonModule {
       const pct = 1 / total * 100
       let obj = Zotero.ZoteroStyle.events
       let progressColor = obj.getValue("Zotero.ZoteroStyle.progressColor", obj.progressColor)
-      let [r, g, b] = this.toRGB(progressColor)
+      let [r, g, b] = obj.toRGB(progressColor)
       for (let i=0; i<total; i++) {
         // pageSpan represent a page, color represent the length of read time
         let pageSpan = createElement("span")
