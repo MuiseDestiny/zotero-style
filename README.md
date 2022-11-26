@@ -48,15 +48,19 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 Mac用户可以设置Zotero.ZoteroStyle.progressOpacity=0来隐藏进度条=window用户鼠标右键
 Mac用户同时鼠标中键可能也用不了,可以用Shift+P来唤醒设置界面
 
-1. Zotero.ZoteroStyle.progressColor=#F06292 - 设置进度条颜色
-2. Zotero.ZoteroStyle.progressOpacity=.5 - 设置进度条透明度
-3. Zotero.ZoteroStyle.tagSize=8 - 设置标签宽度
-4. Zotero.ZoteroStyle.constantFields=[title, year]
-![](https://spr1ng.live/file/1f8ea01f480f45a0149ca.png)
+| 命令 | 示例值 | 描述 |
+| ----------- | ----------- | ----------- |
+| Zotero.ZoteroStyle.progressColor | #F06292 | 设置进度条颜色 |
+| Zotero.ZoteroStyle.progressOpacity | 0.5 | 设置进度条透明度,0~1 |
+| Zotero.ZoteroStyle.tagSize | 8 | 设置标签宽度,单位em | 
+| Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |
+![](https://spr1ng.live/file/7a36a8cf795e1746ddf01.png)
 
-Tips:
-在<https://github.com/zotero/zotero/blob/26847c672f62de30bd63d9434a00d6c9f8a5e76c/chrome/locale/zh-CN/zotero/zotero.properties>搜索itemFields查看所有字段英文名
-例如
+> Tips:
+<https://github.com/zotero/zotero/blob/26847c672f62de30bd63d9434a00d6c9f8a5e76c/chrome/locale/zh-CN/zotero/zotero.properties>
+搜索itemFields查看所有字段英文名
+
+例如,
 | English | Chinese |
 | ----------- | ----------- |
 | title | 标题 |
