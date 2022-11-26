@@ -14,23 +14,29 @@ class AddonModule {
     _Zotero.Prefs.set(k, v)
   }
 
-  public getValue(k: string, v: any = {}) {
+  public getValue(k: string, v: any = undefined) {
     var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
       Components.interfaces.nsISupports
     ).wrappedJSObject;
     let _v = _Zotero.Prefs.get(k)
-    if (v != undefined) {
-      try {
-        if (typeof(v) == "object") {
-          _v = JSON.parse(_v)
-        } else if (typeof(v) == "number") {
-          _v = Number(_v)
-        }
-      } catch {
-        return v
-      }
+    console.log(`_v='${_v}'`, v)
+    if (v == undefined) {
+      console.log(_v)
+      return _v
     }
-    return typeof(_v)==typeof(v) ? _v : v
+    console.log(typeof(v), _v, v)
+    try {
+      if (typeof(v) == "object") {
+        _v = JSON.parse(_v)
+      } else if (typeof(v) == "number") {
+        _v = Number(_v)
+      }
+    } catch (e) {
+      console.log(`_v='${_v}'`)
+      console.log(e)
+      return v
+    }
+    return (typeof(_v) == typeof(v) ? _v : v)
   }
 }
 

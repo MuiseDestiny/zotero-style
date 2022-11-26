@@ -59,7 +59,7 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 3. 显示阅读进度，是否划水，一看便知👋
 4. 本插件可与`Chartero`共存，若安装`Chartero`本插件将不再渲染进度条，因为这一功能我已合并到`Chartero`，而且`Chartero`支持同步数据
 
-🙌建议配合Zotero Tag使用，本插件无个性化设置界面（其实是我还不会写，用的bootstrap模板`支持以后的Zotero`，现有的大多是overlay`后面升级的Zotero可能不支持这种模式的插件`的）
+🙌建议配合`Zotero Tag`&`Chartero`使用
 
 ## TODO
 - [ ] 阅读PDF时，悬停参考文献点击即可快速添加到Zotero

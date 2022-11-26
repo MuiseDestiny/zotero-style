@@ -69,6 +69,7 @@ class AddonEvents extends AddonModule {
     this.setting = new Setting(AddonModule)
     this.setting.init(this.Zotero)
     this.setting.settingNode.style.display = "none"
+    this.initKeys()
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(
       this.notifierCallback,
@@ -148,6 +149,7 @@ class AddonEvents extends AddonModule {
         let settingNode = _Zotero.getMainWindow().document.querySelector("#Zotero-Style-Setting")
         if (settingNode.style.display = "none") {
           settingNode.style.display = ""
+          settingNode.querySelector("input").focus()
         } else {
           settingNode.style.display = "none"
         }
@@ -314,7 +316,7 @@ class AddonEvents extends AddonModule {
       const pct = 1 / total * 100
       let obj = Zotero.ZoteroStyle.events
       let progressColor = obj.getValue("Zotero.ZoteroStyle.progressColor", obj.progressColor)
-      let [r, g, b] = progressColor.colorRgb()
+      let [r, g, b] = this.toRGB(progressColor)
       for (let i=0; i<total; i++) {
         // pageSpan represent a page, color represent the length of read time
         let pageSpan = createElement("span")
@@ -399,6 +401,55 @@ class AddonEvents extends AddonModule {
     return (typeof(arg) == "number" && String(arg) != "NaN")
   }
 
+  private initKeys() {
+    let keyset = this.document.createElement("keyset");
+    keyset.setAttribute("id", "zoterostyle-keyset");
+
+    let key = this.document.createElement("key");
+    key.setAttribute("id", "zoterostyle-key");
+    key.setAttribute("oncommand", "console.log(111)");
+    key.addEventListener("command", function () {
+      var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+        Components.interfaces.nsISupports
+      ).wrappedJSObject;
+      let document = _Zotero.getMainWindow().document
+      let settingNode = document.querySelector("#Zotero-Style-Setting")
+      if (settingNode.style.display == "none") {
+        settingNode.style.display = ""
+        settingNode.querySelector("input").focus()
+      } else {
+        settingNode.style.display = "none"
+      }
+    })
+    key.setAttribute("key", "p")
+    key.setAttribute("modifiers", "shift")
+    keyset.appendChild(key)
+    this.document.getElementById("mainKeyset").parentNode.appendChild(keyset);
+  }
+
+  private toRGB(color: string) {
+    var sColor = color.toLowerCase();
+    //十六进制颜色值的正则表达式
+    var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+    // 如果是16进制颜色
+    if (sColor && reg.test(sColor)) {
+        if (sColor.length === 4) {
+            var sColorNew = "#";
+            for (var i=1; i<4; i+=1) {
+                sColorNew += sColor.slice(i, i+1).concat(sColor.slice(i, i+1));    
+            }
+            sColor = sColorNew;
+        }
+        //处理六位的颜色值
+        var sColorChange = [];
+        for (var i=1; i<7; i+=2) {
+            sColorChange.push(parseInt("0x"+sColor.slice(i, i+2)));    
+        }
+        return sColorChange;
+    }
+    return sColor;
+  };
+
   public onUnInit(): void {
     console.log(`${addonName}: uninit called`);
     this.Zotero.debug(`${addonName}: uninit called`);
@@ -406,27 +457,5 @@ class AddonEvents extends AddonModule {
   }
 }
 
-String.prototype.colorRgb = function(){
-  var sColor = this.toLowerCase();
-  //十六进制颜色值的正则表达式
-  var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
-  // 如果是16进制颜色
-  if (sColor && reg.test(sColor)) {
-      if (sColor.length === 4) {
-          var sColorNew = "#";
-          for (var i=1; i<4; i+=1) {
-              sColorNew += sColor.slice(i, i+1).concat(sColor.slice(i, i+1));    
-          }
-          sColor = sColorNew;
-      }
-      //处理六位的颜色值
-      var sColorChange = [];
-      for (var i=1; i<7; i+=2) {
-          sColorChange.push(parseInt("0x"+sColor.slice(i, i+2)));    
-      }
-      return sColorChange;
-  }
-  return sColor;
-};
 
 export default AddonEvents;

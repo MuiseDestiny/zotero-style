@@ -29,16 +29,26 @@ class Setting extends AddonModule {
   }
 
   public execLine(text: string) {
+    console.log(`exec ${text}`)
     if (text.includes("=")) {
-      // 赋值
       let [key, value] = text.split("=")
       this.setValue(key.trim(), value.trim())
       console.log(`setValue(${key}, ${value})`)
+      this.Zotero.ZoteroStyle.events.addStyle()
+      this.inputNode.value = ""
       return true
-    } else if (this.getValue(text, undefined)) {
-      return this.getValue(text)
+    } else if (this.getValue(text)) {
+      let v = this.getValue(text)
+      console.log("->", v)
+      this.inputNode.value = v
+      return true
     } else {
+      this.inputNode.value = ""
       this.inputMessage("Not Support")
+      let lastLine = this.historyNode.querySelector(".line:last-child")
+      if (lastLine) {
+        lastLine.setAttribute("selected", "")
+      }
       return false
     }
   }
@@ -72,7 +82,6 @@ class Setting extends AddonModule {
       settingHistory.push(text)
       console.log(settingHistory)
       this.setValue(k, settingHistory)
-      this.Zotero.ZoteroStyle.events.addStyle()
       return true
     }
     return false
@@ -104,7 +113,13 @@ class Setting extends AddonModule {
     this.historyNode = historyNode
     const k = "Zotero.ZoteroStyle.settingHistory"
     console.log(this.getValue(k, []))
-    this.getValue(k, []).forEach(text=>this.appendLine(text))
+    let textArray = Array()
+    this.getValue(k, []).forEach(text=>{
+      if (textArray.indexOf(text)==-1) {
+        this.appendLine(text)
+        textArray.push(text)
+      }
+    })
     console.log(settingNode)
   }
 
@@ -204,7 +219,6 @@ class Setting extends AddonModule {
               if (this.appendLine(this.inputNode.value, true)) {
                 this.historyNode.style.display = ""
               }
-              this.inputNode.value = ""
             }
         } else if (event.key=="Escape") {
           if (this.historyNode.style.display != "none") {
