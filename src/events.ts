@@ -11,7 +11,8 @@ class AddonEvents extends AddonModule {
   public intervalID: number;
   public tagSize = 5;  // em
   public progressOpacity = .7;  // s
-  public progressColor = "#5AC1BD";  // 
+  public progressColor = "#5AC1BD";
+  public constantFields = ["hasAttachment", "title"];
   public recordInterval = 5;  // s
   public maxHangTime = 60;  // s
   public mode = "normal";  // default
@@ -110,11 +111,14 @@ class AddonEvents extends AddonModule {
       <svg t="1669171254064" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4645" width="16" height="16"><path d="M671.968176 911.99957c-12.287381 0-24.576482-4.67206-33.951566-14.047144L286.048434 545.984249c-18.751888-18.719204-18.751888-49.12028 0-67.872168L638.016611 126.111222c18.751888-18.751888 49.12028-18.751888 67.872168 0 18.751888 18.719204 18.751888 49.12028 0 67.872168l-318.016611 318.047574L705.888778 830.047574c18.751888 18.751888 18.751888 49.12028 0 67.872168C696.544658 907.32751 684.255557 911.99957 671.968176 911.99957z" p-id="4646" fill="#7e7e7e"></path></svg>
     `
     let switchDisplay = (_Zotero: any) => {
-      const skipClassNames = ["hasAttachment", "title"]
       let document = _Zotero.ZoteroStyle.events.document
+      const k = "Zotero.ZoteroStyle.constantFields"
+      let obj = _Zotero.ZoteroStyle.events
+      let constantFields = obj.getValue(k, obj.constantFields)
+      console.log(constantFields)
       let switchNodeDisplay = (node: HTMLElement) => {
         if (
-          skipClassNames.filter(
+          constantFields.filter(
             classname => node.classList.contains(classname)
           ).length == 0
         ) {
@@ -334,10 +338,13 @@ class AddonEvents extends AddonModule {
   }
 
   private modifyRenderCell(cell: any, args: any[], Zotero: any): any {
+    const k = "Zotero.ZoteroStyle.constantFields"
+    let obj = Zotero.ZoteroStyle.events
+    let constantFields = obj.getValue(k, obj.constantFields)
     if (
       // these classnames is visible
-      ["hasAttachment", "title"].filter(
-        classname => cell.classList.contains(classname)
+      constantFields.filter(
+        fieldname => cell.classList.contains(fieldname)
       ).length == 0
     ) {
       if (Zotero.ZoteroStyle.events.mode === "max") {

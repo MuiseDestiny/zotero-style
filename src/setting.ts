@@ -13,7 +13,7 @@ class Setting extends AddonModule {
   public _settingHistory = [
     "Zotero.ZoteroStyle.progressOpacity=.7", 
     "Zotero.ZoteroStyle.tagSize=5",
-    ""
+    "Zotero.ZoteroStyle.constantFields=['hasAttachment', 'title']"
   ]
   constructor(parent) {
     super(parent)
@@ -36,6 +36,7 @@ class Setting extends AddonModule {
       console.log(`setValue(${key}, ${value})`)
       this.Zotero.ZoteroStyle.events.addStyle()
       this.inputNode.value = ""
+      this.inputMessage("Success")
       return true
     } else if (this.getValue(text)) {
       let v = this.getValue(text)

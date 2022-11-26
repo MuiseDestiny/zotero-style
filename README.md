@@ -43,14 +43,32 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 
 ![](https://spr1ng.live/file/87ac5698538744a03d424.png)
 
-设置界面
-> 鼠标中键，Mac用户没有鼠标右键，可以设置Zotero.ZoteroStyle.progressOpacity=0隐藏进度条
+#### 设置界面
+> 鼠标中键
+Mac用户可以设置Zotero.ZoteroStyle.progressOpacity=0来隐藏进度条=window用户鼠标右键
+Mac用户同时鼠标中键可能也用不了,可以用Shift+P来唤醒设置界面
 
 1. Zotero.ZoteroStyle.progressColor=#F06292 - 设置进度条颜色
 2. Zotero.ZoteroStyle.progressOpacity=.5 - 设置进度条透明度
 3. Zotero.ZoteroStyle.tagSize=8 - 设置标签宽度
-4. 展开标题后保留的列（即将支持）
+4. Zotero.ZoteroStyle.constantFields=[title, year]
 ![](https://spr1ng.live/file/1f8ea01f480f45a0149ca.png)
+
+Tips:
+在<https://github.com/zotero/zotero/blob/26847c672f62de30bd63d9434a00d6c9f8a5e76c/chrome/locale/zh-CN/zotero/zotero.properties>搜索itemFields查看所有字段英文名
+例如
+| English | Chinese |
+| ----------- | ----------- |
+| title | 标题 |
+| publisher | 出版社 |
+| libraryCatalog | 馆藏目录 |
+| year | 年 |
+| hasAttachment | `回形针` |
+按照源码的中英对照应该能正确过滤掉大多数列,但是如果有的过滤不掉可以提issue,我将补充特殊字段表格
+
+如果你想在展开后保留`标题`和`出版社`,
+输入命令`Zotero.ZoteroStyle.constantFields=['title', 'publisher']`回车即可
+注意`[]`内字段名要用引号引起来,`=`右边应该可以被js的eval函数执行返回一个Array
 
 ## 主要功能
 
