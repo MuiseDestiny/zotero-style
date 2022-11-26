@@ -25,8 +25,8 @@
     "url": "https://github.com/MuiseDestiny/ZoteroStyle/issues"
   },
   "homepage": "https://github.com/MuiseDestiny",
-  "releasepage": "https://github.com/windingwind/zotero-addon-template/releases/latest/download/zotero-addon-template.xpi",
-  "updaterdf": "https://raw.githubusercontent.com/windingwind/zotero-addon-template/master/update.rdf",
+  "releasepage": "https://github.com/MuiseDestiny/ZoteroStyle/releases/latest/download/zotero-style.xpi",
+  "updaterdf": "https://raw.githubusercontent.com/MuiseDestiny/ZoteroStyle/bootstrap/update.rdf",
   "dependencies": {
     "compressing": "^1.5.1",
     "esbuild": "^0.14.34",
