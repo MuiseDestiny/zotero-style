@@ -57,6 +57,8 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 
 ![](https://spr1ng.live/file/7a36a8cf795e1746ddf01.png)
 
+相关问题<https://github.com/MuiseDestiny/ZoteroStyle/issues/2>
+
 > Tips:
 <https://github.com/zotero/zotero/blob/26847c672f62de30bd63d9434a00d6c9f8a5e76c/chrome/locale/zh-CN/zotero/zotero.properties>
 搜索itemFields查看所有字段英文名
