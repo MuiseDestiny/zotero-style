@@ -115,7 +115,6 @@ class AddonEvents extends AddonModule {
       const k = "Zotero.ZoteroStyle.constantFields"
       let obj = _Zotero.ZoteroStyle.events
       let constantFields = obj.getValue(k, obj.constantFields)
-      console.log(constantFields)
       let switchNodeDisplay = (node: HTMLElement) => {
         if (
           constantFields.filter(
