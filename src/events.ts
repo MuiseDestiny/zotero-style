@@ -1,12 +1,17 @@
 import { Addon, addonName } from "./addon";
 import AddonModule from "./module";
+import Setting from "./setting";
 
 class AddonEvents extends AddonModule {
   public Zotero: any;
   public window: any;
   public document: any;
   public notifierCallback : any;
+  public setting: any;
   public intervalID: number;
+  public tagSize = 5;  // em
+  public progressOpacity = .7;  // s
+  public progressColor = "#5AC1BD";  // 
   public recordInterval = 5;  // s
   public maxHangTime = 60;  // s
   public mode = "normal";  // default
@@ -60,6 +65,10 @@ class AddonEvents extends AddonModule {
       this.modifyRenderCell
     )
     
+    // setting 
+    this.setting = new Setting(AddonModule)
+    this.setting.init(this.Zotero)
+    this.setting.settingNode.style.display = "none"
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(
       this.notifierCallback,
@@ -75,19 +84,21 @@ class AddonEvents extends AddonModule {
     );
 
     // listen to Zotero's state
-    this.window.addEventListener('activate', () => {
-      console.log('activate')
-      this.state.activate = true
-      // once Zotero is activated again, it will continue to record read time
-      this.intervalID = this.window.setInterval(this.recordReadTime.bind(this), this.recordInterval * 1e3)
-    }, true);
-    this.window.addEventListener('deactivate', () => {
-      console.log('deactivate')
-      this.state.activate = false
-      this.state.hangCount = 0;
-      // once Zotero is deactivate again, it will stop to record read time
-      this.window.clearInterval(this.intervalID)
-    }, true);
+    if (!this.Zotero.Chartero) {
+      this.window.addEventListener('activate', () => {
+        console.log('activate')
+        this.state.activate = true
+        // once Zotero is activated again, it will continue to record read time
+        this.intervalID = this.window.setInterval(this.recordReadTime.bind(this), this.recordInterval * 1e3)
+      }, true);
+      this.window.addEventListener('deactivate', () => {
+        console.log('deactivate')
+        this.state.activate = false
+        this.state.hangCount = 0;
+        // once Zotero is deactivate again, it will stop to record read time
+        this.window.clearInterval(this.intervalID)
+      }, true);
+    }
   }
 
   private addSwitchButton(): void {
@@ -131,6 +142,15 @@ class AddonEvents extends AddonModule {
           switchDisplay(_Zotero)
           this.innerHTML = maxSvg
         }
+      } else if (event.button == 1) {
+        // setting ui
+        console.log("init Setting")
+        let settingNode = _Zotero.getMainWindow().document.querySelector("#Zotero-Style-Setting")
+        if (settingNode.style.display = "none") {
+          settingNode.style.display = ""
+        } else {
+          settingNode.style.display = "none"
+        }
       } else if (event.button == 2) {
         console.log("right click")
         _Zotero.ZoteroStyle.events.progress  = !_Zotero.ZoteroStyle.events.progress
@@ -142,7 +162,7 @@ class AddonEvents extends AddonModule {
     let toolbar = this.document.querySelector("#zotero-items-toolbar")
     let toolbarbutton = toolbar.querySelector("toolbarbutton").cloneNode()
     toolbarbutton.setAttribute("id", "zotero-tb-switch-itemtree")
-    toolbarbutton.setAttribute("tooltiptext", "switch itemtree")
+    toolbarbutton.setAttribute("tooltiptext", "Zotero Style For You")
     toolbarbutton.setAttribute("type", "")
     toolbarbutton.setAttribute("class", "")
     toolbarbutton.setAttribute("onmousedown", "")
@@ -158,9 +178,14 @@ class AddonEvents extends AddonModule {
   private addStyle(): void {
     console.log("Start style")
     let mainWindow = this.document.querySelector('#main-window')
+    let oldStyle = mainWindow.querySelector("#pageStyle")
+    if (oldStyle) oldStyle.remove()
     let style = this.createElement("style")
     style.setAttribute('type', 'text/css')
     style.setAttribute('id', 'pageStyle')
+    // some setting value
+    let tagSize = this.getValue("Zotero.ZoteroStyle.tagSize", this.tagSize)
+    let progressOpacity = this.getValue("Zotero.ZoteroStyle.progressOpacity", this.progressOpacity)
     style.textContent = `
       .primary {
         display: flex;
@@ -169,9 +194,10 @@ class AddonEvents extends AddonModule {
       }
       .tag-box {
         position: relative;
-        width: 5em;
+        width: ${tagSize}em;
         height: 1em;
         line-height: 1em;
+        margin-left: auto;
       }
       #zotero-items-tree .cell.primary .zotero-tag {
         height: .9em;
@@ -190,9 +216,9 @@ class AddonEvents extends AddonModule {
         position: absolute;
         left: 3.25em;
         top: 0;
-        width: calc(100% - 9em);
+        width: calc(100% - 3.5em - ${tagSize}em) !important;
         height: 100%;
-        opacity: .7;
+        opacity: ${progressOpacity};
       }
     `
     mainWindow.appendChild(style)
@@ -229,6 +255,7 @@ class AddonEvents extends AddonModule {
     // 2693     _renderPrimaryCell(index, data, column)
     let document = Zotero.getMainWindow().document
     let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
+
     // render the tag
     let tagBoxNode = createElement("span")
     tagBoxNode.setAttribute("class", "tag-box")
@@ -243,6 +270,9 @@ class AddonEvents extends AddonModule {
       tagNode.style.left = `${i*1.25+delta}em`
       tagBoxNode.appendChild(tagNode)
     })
+    if (Zotero.Chartero) {
+      return primaryCell
+    }
     // render the read progress
     let progressNode = createElement("span")
     progressNode.setAttribute("class", "zotero-style-progress")
@@ -252,7 +282,6 @@ class AddonEvents extends AddonModule {
     // create sub span in this progress node
     const recordKey = `Zotero.ZoteroStyle.record`;
     let record = JSON.parse(Zotero.Prefs.get(recordKey) || "{}");
-    console.log(record)
     // i.e.
     const testTitle = "Satellite remote sensing of aerosol optical depth: advances, challenges, and perspectives"
     record[testTitle] = {
@@ -265,7 +294,6 @@ class AddonEvents extends AddonModule {
         "total": 12
     }
     const title = args[1]
-    console.log(title)
     if (record && record[title]) {
       let recordTimeObj = record[title]
       const total = recordTimeObj["total"]
@@ -284,6 +312,9 @@ class AddonEvents extends AddonModule {
       maxSec = meanSec + (maxSec - meanSec) * .5
       const minSec = 60
       const pct = 1 / total * 100
+      let obj = Zotero.ZoteroStyle.events
+      let progressColor = obj.getValue("Zotero.ZoteroStyle.progressColor", obj.progressColor)
+      let [r, g, b] = progressColor.colorRgb()
       for (let i=0; i<total; i++) {
         // pageSpan represent a page, color represent the length of read time
         let pageSpan = createElement("span")
@@ -291,7 +322,7 @@ class AddonEvents extends AddonModule {
         pageSpan.style = `
           width: ${pct}%;
           height: 100%;
-          background-color: rgba(90, 193, 189, ${alpha < 1 ? alpha : 1});
+          background-color: rgba(${r}, ${g}, ${b}, ${alpha < 1 ? alpha : 1});
           display: inline-block;
         `
         progressNode.appendChild(pageSpan)
@@ -374,5 +405,28 @@ class AddonEvents extends AddonModule {
     this.Zotero.ZoteroStyle = undefined;
   }
 }
+
+String.prototype.colorRgb = function(){
+  var sColor = this.toLowerCase();
+  //十六进制颜色值的正则表达式
+  var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
+  // 如果是16进制颜色
+  if (sColor && reg.test(sColor)) {
+      if (sColor.length === 4) {
+          var sColorNew = "#";
+          for (var i=1; i<4; i+=1) {
+              sColorNew += sColor.slice(i, i+1).concat(sColor.slice(i, i+1));    
+          }
+          sColor = sColorNew;
+      }
+      //处理六位的颜色值
+      var sColorChange = [];
+      for (var i=1; i<7; i+=2) {
+          sColorChange.push(parseInt("0x"+sColor.slice(i, i+2)));    
+      }
+      return sColorChange;
+  }
+  return sColor;
+};
 
 export default AddonEvents;

@@ -43,11 +43,21 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 
 ![](https://spr1ng.live/file/87ac5698538744a03d424.png)
 
+设置界面
+> 鼠标中键，Mac用户没有鼠标右键，可以设置Zotero.ZoteroStyle.progressOpacity=0隐藏进度条
+
+1. Zotero.ZoteroStyle.progressColor=#F06292 - 设置进度条颜色
+2. Zotero.ZoteroStyle.progressOpacity=.5 - 设置进度条透明度
+3. Zotero.ZoteroStyle.tagSize=8 - 设置标签宽度
+4. 展开标题后保留的列（即将支持）
+![](https://spr1ng.live/file/1f8ea01f480f45a0149ca.png)
+
 ## 主要功能
 
-1. 标签右对齐，标签由`圆角正方形`->`圆形`🔴🟤🔵
+1. 标签右对齐，标签由`圆角正方形`->`圆形`
 2. 增加`只显示标题`按钮🌸
 3. 显示阅读进度，是否划水，一看便知👋
+4. 本插件可与`Chartero`共存，若安装`Chartero`不插件将不再渲染进度条，因为这一功能我已合并到`Chartero`，而且`Chartero`支持同步数据
 
 🙌建议配合Zotero Tag使用，本插件无个性化设置界面（其实是我还不会写，用的bootstrap模板`支持以后的Zotero`，现有的大多是overlay`后面升级的Zotero可能不支持这种模式的插件`的）
 
