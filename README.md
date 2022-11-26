@@ -57,8 +57,6 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 
 ![](https://spr1ng.live/file/7a36a8cf795e1746ddf01.png)
 
-相关问题<https://github.com/MuiseDestiny/ZoteroStyle/issues/2>
-
 > Tips:
 <https://github.com/zotero/zotero/blob/26847c672f62de30bd63d9434a00d6c9f8a5e76c/chrome/locale/zh-CN/zotero/zotero.properties>
 搜索itemFields查看所有字段英文名
@@ -77,6 +75,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 如果你想在展开后保留`标题`和`出版社`,
 输入命令`Zotero.ZoteroStyle.constantFields=['title', 'publisher']`回车即可
 注意`[]`内字段名要用引号引起来,`=`右边应该可以被js的eval函数执行返回一个Array
+相关问题<https://github.com/MuiseDestiny/ZoteroStyle/issues/2>
 
 ## 主要功能
 
