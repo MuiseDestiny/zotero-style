@@ -55,7 +55,7 @@ class Setting extends AddonModule {
     }
   }
 
-  public appendLine(text: string, selected: boolean = false) {
+  public appendLine(text: string, selected: boolean = false, skipExec: boolean = false) {
     // 页面变化
     let li = this.createElement("li")
     li.setAttribute("class", "line")
@@ -72,7 +72,7 @@ class Setting extends AddonModule {
       li.setAttribute("selected", "")
     }
     // if (!inHistory && this.execLine(text)) {
-    if (this.execLine(text)) {
+    if (skipExec || this.execLine(text)) {
       this.historyNode.appendChild(li)
       // push to settingHistory
       const k = "Zotero.ZoteroStyle.settingHistory"
@@ -82,7 +82,6 @@ class Setting extends AddonModule {
         settingHistory = settingHistory.filter(line=>!line.includes(varname))
       }
       settingHistory.push(text)
-      console.log(settingHistory)
       this.setValue(k, settingHistory)
       return true
     }
@@ -114,11 +113,10 @@ class Setting extends AddonModule {
     this.inputNode = inputNode
     this.historyNode = historyNode
     const k = "Zotero.ZoteroStyle.settingHistory"
-    console.log(this.getValue(k, []))
     let textArray = Array()
     this.getValue(k, []).forEach(text=>{
       if (textArray.indexOf(text)==-1) {
-        this.appendLine(text)
+        this.appendLine(text, false, true)
         textArray.push(text)
       }
     })

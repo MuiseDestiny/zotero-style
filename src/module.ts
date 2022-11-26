@@ -22,7 +22,6 @@ class AddonModule {
     if (v == undefined || typeof(_v) == typeof(v)) {
       return _v
     }
-    console.log(typeof(v), _v, v)
     try {
       if (typeof(v) == "object") {
         _v = JSON.parse(_v)
