@@ -50,7 +50,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 
 | 命令 | 示例值 | 描述 |
 | ----------- | ----------- | ----------- |
-| Zotero.ZoteroStyle.progressColor | '#F06292' | 设置进度条颜色,注意引号 |
+| Zotero.ZoteroStyle.progressColor | '#F06292' | 设置进度条颜色,注意引号,配色网站<https://colorhunt.co/> |
 | Zotero.ZoteroStyle.progressOpacity | 0.5 | 设置进度条透明度,0~1 |
 | Zotero.ZoteroStyle.tagSize | 8 | 设置标签宽度,单位em | 
 | Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |
