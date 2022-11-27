@@ -90,6 +90,12 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 2. 增加`只显示标题`按钮🌸
 3. 显示阅读进度，是否划水，一看便知👋
 4. 本插件可与`Chartero`共存，若安装`Chartero`本插件将不再渲染进度条，因为这一功能我已合并到`Chartero`，而且`Chartero`支持同步数据
+5. /reference
+
+![](https://spr1ng.live/file/6c034034afb3f51309a76.png)
+![](https://spr1ng.live/file/2c468b2d30abb704b8bf0.png)
+![](https://spr1ng.live/file/f64a442981bcb66754feb.png)
+![](http://tva1.sinaimg.cn/large/c5826cc9ly1h8k444nnclj20nk03m0w4.jpg)
 
 🙌建议配合`Zotero Tag`&`Chartero`使用
 

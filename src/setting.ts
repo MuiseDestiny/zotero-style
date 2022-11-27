@@ -8,12 +8,14 @@ class Setting extends AddonModule {
   public settingNode: any
   public inputNode: any
   public historyNode: any
+  public keyset: any
 
   public setValue: any
   public getValue: any
 
-  public maxlineNodeNum = 10 // because the scroll in Zotero is too ugly
+  public maxlineNodeNum = 12 // because the scroll in Zotero is too ugly
   public tipText = "Enter your command here..."
+  public DOIData = {}
   public History = {
     k: "Zotero.ZoteroStyle.settingHistory",
     permanentSettingHistory: [
@@ -34,20 +36,7 @@ class Setting extends AddonModule {
           e.remove()
         }
       })
-      // console.log("History not in HTML", allText)
-      allText.forEach(text=>{
-        let lineNode = this.createElement("li")
-        lineNode.setAttribute("class", "line")
-        lineNode.innerText = text
-        this.historyNode.appendChild(lineNode)
-      })
-      let lineNodes = this.historyNode.childNodes
-      let lineNodeNum = lineNodes.length
-      if (lineNodeNum > this.maxlineNodeNum) {
-        for (let i=0;i<lineNodeNum-this.maxlineNodeNum;i++) {
-          lineNodes[i].style.display = "none"
-        }
-      }
+      this.renderArray(allText)
     },
     push(text) {
       console.log(`push - ${text}`)
@@ -84,10 +73,18 @@ class Setting extends AddonModule {
       this.window = this.Zotero.getMainWindow();
       this.document = this.window.document;
       console.log(this.History)
-      Object.assign(this.History, this, {getValue: this.getValue, setValue: this.setValue, createElement: this.createElement})
+      Object.assign(this.History, this, 
+        {
+          getValue: this.getValue, 
+          setValue: this.setValue, 
+          createElement: this.createElement, 
+          renderArray: this.renderArray
+        }
+      )
       this.createStyle()
       this.createHTML()
       this.setEvent()
+      this.initKeys()
   }
 
   public createStyle() {
@@ -128,7 +125,7 @@ class Setting extends AddonModule {
           margin-top: 0;
           padding: 0;
           background-color: rgba(248, 240, 240, .4);
-          max-height: 500px;
+          max-height: 600px;
           overflow-y: hidden;
       }
       #Zotero-Style-Setting .history .line {
@@ -139,7 +136,9 @@ class Setting extends AddonModule {
           display: inline-block;
           padding-left: 20px;
           padding-right: 20px;
-
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
       }
       #Zotero-Style-Setting .history .line:active {
           background-color: rgba(220, 240, 240, 1);;
@@ -189,7 +188,34 @@ class Setting extends AddonModule {
     this.History.render()
   }
 
-  public appendLine(text: string) {
+  public async appendLine(text: string) {
+    // search
+    console.log(this.historyNode.classList)
+    if (
+      [...this.historyNode.classList].filter(t=>t.startsWith("/")).length != 0
+    ) {
+      let searchText = this.inputNode.value
+      // search some 
+      let keywords = searchText.split(/[ ,-]/)
+      this.historyNode.classList.add("search-result")
+      let totalNum = 0
+      this.historyNode.querySelectorAll(".line").forEach(line=>{
+        let isAllIn = true
+        for (let i=0;i<keywords.length;i++) {
+          isAllIn = isAllIn && line.innerText.includes(keywords[i].trim()) 
+        }
+        if (isAllIn) {
+          line.style.display = ""
+          this.historyNode.insertBefore(line, this.historyNode.childNodes[0])
+          totalNum ++
+        } else {
+          line.style.display = "none"
+          line.removeAttribute("selected")
+        }
+      })
+      this.inputMessage(`get ${totalNum} resluts`, 2)
+      return
+    }
     if (!this.execLine(text)) { return false }
     if (text.includes("=")) {
       this.History.removeStartsWidth(text.split("=")[0].trim())
@@ -217,20 +243,52 @@ class Setting extends AddonModule {
       return true
     } else if (text.startsWith("/")) {
       // some advanced command here, TODO
+      text = text.slice(1)
+      if (text == "reference") {
+        let reader = this.Zotero.ZoteroStyle.events.getReader()
+        if (!reader) {
+          console.log("no reader")
+          this.inputMessage(`Please select your reader: /${text}`)
+          return false
+        }
+        // find all doi
+        const host = "https://doi.org/"
+        this.historyNode.querySelectorAll(".line").forEach(e=>e.remove())
+        reader._iframeWindow.document.querySelectorAll(`a[href^='${host}']`).forEach(async node=>{
+          let DOI = node.getAttribute("href").replace(host, "")
+          let text = (await this.getDOIInfo(DOI))
+          if (!text) { return } 
+          let lineNode = this.createElement("li")
+          lineNode.setAttribute("class", "line")
+          lineNode.setAttribute("data", DOI)
+          lineNode.innerText = text
+          this.historyNode.appendChild(lineNode)
+        })
+        // view in historyNode
+        console.log("clear the line in historyNode, prepare for references...")
+        this.inputMessage("Searching, please wait for me...", 0)
+        this.inputMessage("Please enter the search text, i.e., Polygon 2022", 0, 1)
+        let id = this.window.setInterval(() => {
+          if (this.historyNode.querySelectorAll(".line").length==0) return
+          this.window.clearInterval(id)
+          this.historyNode.style.display = ""
+          this.historyNode.classList.add("/reference")
+          this.selectLastLineNode()
+        }, 1e3)
+      }
     } else if (this.getValue(text)) {
       let v = this.getValue(text)
       console.log(`Prefs return - ${v}`)
       this.inputNode.value = v
       return true
     } else {
-      this.inputNode.value = ""
       this.inputMessage(`Not Support: ${text}`)
       return false
     }
   }
   
   public setEvent() {
-    this.settingNode.addEventListener("keyup", (event)=>{
+    this.settingNode.addEventListener("keyup", async (event) => {
         if (event.key=="ArrowUp") {
             // 如果没显示history
             if (this.historyNode.style.display=="none") {
@@ -249,12 +307,19 @@ class Setting extends AddonModule {
             // 回车则获取当前selected，填入input
             if (this.historyNode.style.display != "none" && this.inputNode.value.trim() == "") {
               // line -> input
-              this.inputNode.value = this.historyNode.querySelector(".line[selected]").innerText
+              let selectedLine = this.historyNode.querySelector(".line[selected]")
+              let text
+              if (selectedLine.hasAttribute("data")) {
+                text = selectedLine.getAttribute("data")
+              } else {
+                text = selectedLine.innerText
+              }
+              this.inputNode.value = text
               // 并且收起historyNode
               this.historyNode.style.display = "none"
             } else {
               // input -> line
-              if (this.appendLine(this.inputNode.value)) {
+              if ((await this.appendLine(this.inputNode.value))) {
                 this.historyNode.style.display = ""
               }
             }
@@ -284,7 +349,18 @@ class Setting extends AddonModule {
         }
         // arrow up down, select 
         if (["ArrowUp", "ArrowDown"].indexOf(event.key) != -1) {
-            let lineNodes = this.historyNode.childNodes
+            let lineNodes
+            if (this.historyNode.classList.contains("search-result")) {
+              lineNodes = [...this.historyNode.querySelectorAll(".line")]
+                .filter(e=>e.style.display != "none")
+              if (!this.historyNode.querySelector(".line[selected]")) {
+                  // select the first
+                  lineNodes.slice(-1)[0].setAttribute("selected", "")
+                  return
+                }
+            } else {
+              lineNodes = this.historyNode.childNodes
+            }
             let lineNodeNum = lineNodes.length
             for (let i=0;i<lineNodes.length;i++){
                 if (lineNodes[i].hasAttribute("selected")) {
@@ -301,9 +377,19 @@ class Setting extends AddonModule {
                         i = 0
                     }
                     lineNodes[i].setAttribute("selected", "")
-                    if (lineNodes[i].style.display == "none") {
-                      lineNodes[i].style.display = "";
-                      lineNodes[lineNodeNum - (i+1)].style.display = "none"
+                    if (this.historyNode.classList.contains("search-result")) { break }
+                    const half = this.maxlineNodeNum / 2
+                    for (let j=0;j<lineNodeNum;j++) {
+                      if (
+                        (j > i ? j - i : i - j) <= half || 
+                        (i <= this.maxlineNodeNum && j <= this.maxlineNodeNum) || 
+                        (lineNodeNum - i <= this.maxlineNodeNum && lineNodeNum - j <= this.maxlineNodeNum)
+                      ) {
+                        lineNodes[j].style.display = ""
+                      } else {
+                        lineNodes[j].style.display = "none"
+                      }
+                      lineNodes[j].removeAttribute("selected")
                     }
                     break
                 }
@@ -317,16 +403,96 @@ class Setting extends AddonModule {
     this.historyNode.querySelector(".line:last-child").setAttribute("selected", "")
   }
 
-  public inputMessage(msg, persist: number = 1, latency = 0) {
+  public renderArray(arr) {
+    arr.forEach(text=>{
+      let lineNode = this.createElement("li")
+      lineNode.setAttribute("class", "line")
+      lineNode.innerText = text
+      this.historyNode.appendChild(lineNode)
+    })
+    let lineNodes = this.historyNode.childNodes
+    let lineNodeNum = lineNodes.length
+    if (lineNodeNum > this.maxlineNodeNum) {
+      for (let i=0;i<lineNodeNum-this.maxlineNodeNum;i++) {
+        lineNodes[i].style.display = "none"
+      }
+    }
+  }
+
+  public inputMessage(msg, persist: number = 1, latency: number = 0) {
     this.window.setTimeout(() => {
       if (this.settingNode.style.display == "none") {
         this.settingNode.style.display = ""
       }
+      this.inputNode.value = ""
       this.inputNode.setAttribute("placeholder", msg)
-      this.window.setTimeout(()=>{
-        this.inputNode.setAttribute("placeholder", this.tipText)
-      }, persist * 1e3)
+      if (persist) {
+        this.window.setTimeout(()=>{
+          this.inputNode.setAttribute("placeholder", this.tipText)
+        }, persist * 1e3)
+      }
     }, latency * 1e3)
+  }
+
+  private removeKeys() {
+    if (this.keyset) {
+      this.keyset.remove()
+    }
+  }
+
+  private initKeys() {
+    this.removeKeys()
+    let keyset = this.document.createElement("keyset");
+    keyset.setAttribute("id", "zoterostyle-keyset");
+
+    let key = this.document.createElement("key");
+    key.setAttribute("id", "zoterostyle-key");
+    key.setAttribute("oncommand", "console.log(111)");
+    key.addEventListener("command", function () {
+      var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+        Components.interfaces.nsISupports
+      ).wrappedJSObject;
+      let document = _Zotero.getMainWindow().document
+      let settingNode = document.querySelector("#Zotero-Style-Setting")
+      if (settingNode.style.display == "none") {
+        settingNode.style.display = ""
+        settingNode.querySelector("input").focus()
+      } else {
+        settingNode.style.display = "none"
+      }
+    })
+    key.setAttribute("key", "p")
+    key.setAttribute("modifiers", "shift")
+    keyset.appendChild(key)
+    this.keyset = keyset
+    this.document.getElementById("mainKeyset").parentNode.appendChild(keyset);
+  }
+
+  public async getDOIInfo(DOI) {
+    let data
+    if (Object.keys(this.DOIData).indexOf(DOI) != -1) { 
+      data = this.DOIData[DOI]["title"] 
+    } else {
+      const unpaywall = `https://api.unpaywall.org/v2/${DOI}?email=zoterostyle@polygon.org`
+      let res = await this.Zotero.HTTP.request(
+        "GET",
+        unpaywall,
+        {
+          responseType: "json"
+        }
+      )
+      data = res.response
+      this.DOIData[DOI] = data
+    }
+    try {
+      let family = data.z_authors[0]["family"]
+      let year = data.year
+      let title = data.title
+      console.log(`${family} et al., ${year} ${title}`)
+      return `${family} et al., ${year}. ${title}`
+    } catch {
+      return false
+    }
   }
 
   public createElement(name) {

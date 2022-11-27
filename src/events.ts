@@ -11,7 +11,6 @@ class AddonEvents extends AddonModule {
   public toolbarbutton: any;
   public style: any;
   public intervalID: number;
-  public keyset: any;
   public _hookFunction = {};
   public tagSize = 5;  // em
   public tagPosition = 3; 
@@ -82,7 +81,6 @@ class AddonEvents extends AddonModule {
     this.setting = new Setting(AddonModule)
     this.setting.init(this.Zotero)
     this.setting.settingNode.style.display = "none"
-    this.initKeys()
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(
       this.notifierCallback,
@@ -100,13 +98,11 @@ class AddonEvents extends AddonModule {
     // listen to Zotero's state
     if (!this.Zotero.Chartero) {
       this.window.addEventListener('activate', () => {
-        console.log('activate')
         this.state.activate = true
         // once Zotero is activated again, it will continue to record read time
         this.intervalID = this.window.setInterval(this.recordReadTime.bind(this), this.recordInterval * 1e3)
       }, true);
       this.window.addEventListener('deactivate', () => {
-        console.log('deactivate')
         this.state.activate = false
         this.state.hangCount = 0;
         // once Zotero is deactivate again, it will stop to record read time
@@ -245,7 +241,7 @@ class AddonEvents extends AddonModule {
       }
       .zotero-style-progress {
         position: absolute;
-        left: ${tagPosition == 4 ? 3.25 : 3.25 + tagSize}em;
+        left: ${tagPosition == 4 ? 3.25 : 3.25 + tagSize}em !important;
         top: 0;
         width: calc(100% - 3.5em - ${tagSize}em) !important;
         height: 100%;
@@ -465,40 +461,6 @@ class AddonEvents extends AddonModule {
     return (typeof(arg) == "number" && String(arg) != "NaN")
   }
 
-  private initKeys() {
-    this.removeKeys()
-    let keyset = this.document.createElement("keyset");
-    keyset.setAttribute("id", "zoterostyle-keyset");
-
-    let key = this.document.createElement("key");
-    key.setAttribute("id", "zoterostyle-key");
-    key.setAttribute("oncommand", "console.log(111)");
-    key.addEventListener("command", function () {
-      var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
-        Components.interfaces.nsISupports
-      ).wrappedJSObject;
-      let document = _Zotero.getMainWindow().document
-      let settingNode = document.querySelector("#Zotero-Style-Setting")
-      if (settingNode.style.display == "none") {
-        settingNode.style.display = ""
-        settingNode.querySelector("input").focus()
-      } else {
-        settingNode.style.display = "none"
-      }
-    })
-    key.setAttribute("key", "p")
-    key.setAttribute("modifiers", "shift")
-    keyset.appendChild(key)
-    this.keyset = keyset
-    this.document.getElementById("mainKeyset").parentNode.appendChild(keyset);
-  }
-
-  private removeKeys() {
-    if (this.keyset) {
-      this.keyset.remove()
-    }
-  }
-
   private toRGB(color: string) {
     var sColor = color.toLowerCase();
     //十六进制颜色值的正则表达式
@@ -535,7 +497,7 @@ class AddonEvents extends AddonModule {
     // remove ZoteroStyle UI
     this.removeStyle()
     this.removeSwitchButton()
-    this.removeKeys()
+    this.setting.removeKeys()
     for (let path of Object.keys(this._hookFunction)) {
       let obj = this._hookFunction[path]
       let func = function(...args: any[]) {return obj.zoteroFunc.apply(obj.zoteroFuncThis, args)}
