@@ -5,43 +5,37 @@ class AddonModule {
   }
   
   public setValue(k: string, v: string) {
-    var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+    var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
       Components.interfaces.nsISupports
     ).wrappedJSObject;
     if (typeof(v) != "string") {
       v = JSON.stringify(v)
     }
-    _Zotero.Prefs.set(k, v)
+    Zotero.Prefs.set(k, v)
   }
 
   public getValue(k: string, v: any = undefined) {
-    var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+    var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
       Components.interfaces.nsISupports
     ).wrappedJSObject;
-    let _v = _Zotero.Prefs.get(k)
-    if (_v == undefined) {
-      return v
-    }
-    if (v == undefined || typeof(_v) == typeof(v)) {
-      return _v
-    }
+    let _v = Zotero.Prefs.get(k)
+    // not stored, return
+    if (_v == undefined) { return v }
+    // stored, maybe we needn't later processing or need string, return
+    if (v == undefined || typeof(_v) == typeof(v)) { return _v }
+    // json or number, but Number("") = 0, eval("") = undefined, so we use latter
+    // try json
     try {
-      if (typeof(v) == "object") {
-        _v = JSON.parse(_v)
-      } else if (typeof(v) == "number") {
-        if (_v == "") {
-          return v
-        }
-        _v = Number(_v)
-      }
+      _v = JSON.parse(_v)
     } catch (e) {
-      console.log('Error in JSON.parse and Number function')
+      console.log(`Error in JSON.parse function - JSON.parse(${_v})`)
+      // i.e., JSON.parse("['1']") can not work, but eval can
     }
+    // last try
     try {
-      _v = (0, eval)(_v)
+      _v = eval(_v)
     } catch (e) {
-      console.log("Error in eval function")
-      return v
+      console.log(`Error in eval function - eval(${_v})`)
     }
     return (typeof(_v) == typeof(v) ? _v : v)
   }

@@ -14,6 +14,7 @@ class AddonEvents extends AddonModule {
   public keyset: any;
   public _hookFunction = {};
   public tagSize = 5;  // em
+  public tagPosition = 3;  // em
   public progressOpacity = .7;
   public progressColor = "#5AC1BD";
   public constantFields = ["hasAttachment", "title"];
@@ -28,9 +29,11 @@ class AddonEvents extends AddonModule {
     top: null,
     hangCount: null
   }
+
   constructor(parent: Addon) {
     super(parent);
     this.notifierCallback  = {
+      // use it later
       notify: async (
         event: string,
         type: string,
@@ -109,17 +112,15 @@ class AddonEvents extends AddonModule {
         this.window.clearInterval(this.intervalID)
       }, true);
     }
-    // refresh itemTree
-    let refresh = this.Zotero.getMainWindow().ZoteroPane.itemsView.refreshAndMaintainSelection
-    if (refresh) {
-      refresh()
-    }
 
     // tip
-    this.setting.inputMessage("Zotero Style is running, have a nice day!", 5)
+    this.setting.inputMessage("Zotero Style is running, have a nice day!", 3)
     this.window.setTimeout(() => {
       this.setting.settingNode.style.display = "none"
-    }, 5000)
+    }, 3000)
+
+    // try refresh
+    this.refresh()
   }
 
   private addSwitchButton(): void {
@@ -214,6 +215,7 @@ class AddonEvents extends AddonModule {
     // some setting value
     let tagSize = this.getValue("Zotero.ZoteroStyle.tagSize", this.tagSize)
     let progressOpacity = this.getValue("Zotero.ZoteroStyle.progressOpacity", this.progressOpacity)
+    let tagPosition = this.getValue("Zotero.ZoteroStyle.tagPosition", this.tagPosition)
     style.textContent = `
       .primary {
         display: flex;
@@ -225,7 +227,7 @@ class AddonEvents extends AddonModule {
         width: ${tagSize}em;
         height: 1em;
         line-height: 1em;
-        margin-left: auto;
+        ${tagPosition == 4 ? 'margin-left: auto;' : ''}
       }
       #zotero-items-tree .cell.primary .zotero-tag {
         height: .9em;
@@ -242,7 +244,7 @@ class AddonEvents extends AddonModule {
       }
       .zotero-style-progress {
         position: absolute;
-        left: 3.25em;
+        left: ${tagPosition == 4 ? 3.25 : 8.25}em;
         top: 0;
         width: calc(100% - 3.5em - ${tagSize}em) !important;
         height: 100%;
@@ -298,7 +300,6 @@ class AddonEvents extends AddonModule {
     if (primaryCell.querySelector(".tag-box")) return 
     let tagBoxNode = createElement("span")
     tagBoxNode.setAttribute("class", "tag-box")
-    primaryCell.appendChild(tagBoxNode)
     // special algin between font and span
     primaryCell.querySelectorAll(".tag-swatch").forEach((tagNode: any, i: number) => {
       let delta = 0
@@ -309,6 +310,24 @@ class AddonEvents extends AddonModule {
       tagNode.style.left = `${i*1.25+delta}em`
       tagBoxNode.appendChild(tagNode)
     })
+    let obj = Zotero.ZoteroStyle.events
+    let tagPosition = obj.getValue("Zotero.ZoteroStyle.tagPosition", obj.tagPosition)
+    switch (tagPosition) {
+      case 4:
+        primaryCell.appendChild(tagBoxNode)
+        break
+      case 3:
+        primaryCell.insertBefore(tagBoxNode, primaryCell.childNodes[2])
+        break
+      case 2:
+        primaryCell.insertBefore(tagBoxNode, primaryCell.childNodes[1])
+        break
+      case 1:
+          primaryCell.insertBefore(tagBoxNode, primaryCell.childNodes[0])
+          break
+      default:
+        console.log(`Not Support tagPosition=${tagPosition}`)
+    }
     if (Zotero.Chartero || primaryCell.querySelector(".zotero-style-progress")) {
       return primaryCell
     }
@@ -351,7 +370,6 @@ class AddonEvents extends AddonModule {
       maxSec = meanSec + (maxSec - meanSec) * .5
       const minSec = 60
       const pct = 1 / total * 100
-      let obj = Zotero.ZoteroStyle.events
       let progressColor = obj.getValue("Zotero.ZoteroStyle.progressColor", obj.progressColor)
       let [r, g, b] = obj.toRGB(progressColor)
       for (let i=0; i<total; i++) {
@@ -422,7 +440,7 @@ class AddonEvents extends AddonModule {
 
     // real read, record this recordInterval
     const totalPageNum = reader._iframeWindow.wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
-    const title = this.Zotero.Items.get(this.Zotero.Items.get(reader.itemID)._parentID)._displayTitle;
+    const title = this.Zotero.Items.get(reader.itemID).parentItem._displayTitle;
 
     // get local record
     console.log("saving");
@@ -500,7 +518,14 @@ class AddonEvents extends AddonModule {
         return sColorChange;
     }
     return sColor;
-  };
+  }
+
+  public refresh() {
+    this.addStyle()
+    try {
+      this.Zotero.getMainWindow().ZoteroPane.itemsView.refreshAndMaintainSelection()
+    } catch (e) {}
+  }
 
   public onUnInit(): void {
     console.log(`${addonName}: uninit called`);
