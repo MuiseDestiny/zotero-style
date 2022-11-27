@@ -275,6 +275,9 @@ class Setting extends AddonModule {
   }
 
   public inputMessage(msg, t: number = 1) {
+    if (this.settingNode.style.display == "none") {
+      this.settingNode.style.display = ""
+    }
     this.inputNode.setAttribute("placeholder", msg)
     this.window.setTimeout(()=>{
       this.inputNode.setAttribute("placeholder", this.tip)

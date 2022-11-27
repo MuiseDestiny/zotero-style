@@ -19,6 +19,9 @@ class AddonModule {
       Components.interfaces.nsISupports
     ).wrappedJSObject;
     let _v = _Zotero.Prefs.get(k)
+    if (_v == undefined) {
+      return v
+    }
     if (v == undefined || typeof(_v) == typeof(v)) {
       return _v
     }
@@ -26,13 +29,16 @@ class AddonModule {
       if (typeof(v) == "object") {
         _v = JSON.parse(_v)
       } else if (typeof(v) == "number") {
+        if (_v == "") {
+          return v
+        }
         _v = Number(_v)
       }
     } catch (e) {
       console.log('Error in JSON.parse and Number function')
     }
     try {
-      _v = eval(_v)
+      _v = (0, eval)(_v)
     } catch (e) {
       console.log("Error in eval function")
       return v

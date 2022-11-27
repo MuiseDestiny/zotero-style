@@ -8,7 +8,11 @@ class AddonEvents extends AddonModule {
   public document: any;
   public notifierCallback : any;
   public setting: any;
+  public toolbarbutton: any;
+  public style: any;
   public intervalID: number;
+  public keyset: any;
+  public _hookFunction = {};
   public tagSize = 5;  // em
   public progressOpacity = .7;
   public progressColor = "#5AC1BD";
@@ -65,6 +69,10 @@ class AddonEvents extends AddonModule {
       "getMainWindow().ZoteroPane.itemsView._renderCell", 
       this.modifyRenderCell
     )
+    this.hookZoteroFunction(
+      "getMainWindow().ZoteroPane.itemsView.getColumns", 
+      this.modifyGetColumns
+    )
     
     // setting 
     this.setting = new Setting(AddonModule)
@@ -101,9 +109,21 @@ class AddonEvents extends AddonModule {
         this.window.clearInterval(this.intervalID)
       }, true);
     }
+    // refresh itemTree
+    let refresh = this.Zotero.getMainWindow().ZoteroPane.itemsView.refreshAndMaintainSelection
+    if (refresh) {
+      refresh()
+    }
+
+    // tip
+    this.setting.inputMessage("Zotero Style is running, have a nice day!", 5)
+    this.window.setTimeout(() => {
+      this.setting.settingNode.style.display = "none"
+    }, 5000)
   }
 
   private addSwitchButton(): void {
+    this.removeSwitchButton()
     const normalSvg = `
       <svg t="1669171122131" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3737" width="16" height="16"><path d="M761.055557 532.128047c0.512619-0.992555 1.343475-1.823411 1.792447-2.848649 8.800538-18.304636 5.919204-40.703346-9.664077-55.424808L399.935923 139.743798c-19.264507-18.208305-49.631179-17.344765-67.872168 1.888778-18.208305 19.264507-17.375729 49.631179 1.888778 67.872168l316.960409 299.839269L335.199677 813.631716c-19.071845 18.399247-19.648112 48.767639-1.247144 67.872168 9.407768 9.791372 21.984142 14.688778 34.560516 14.688778 12.000108 0 24.000215-4.479398 33.311652-13.439914l350.048434-337.375729c0.672598-0.672598 0.927187-1.599785 1.599785-2.303346 0.512619-0.479935 1.056202-0.832576 1.567101-1.343475C757.759656 538.879828 759.199462 535.391265 761.055557 532.128047z" p-id="3738" fill="#7e7e7e"></path></svg>
     `
@@ -173,18 +193,21 @@ class AddonEvents extends AddonModule {
     toolbarbutton.setAttribute("onmousedown", "")
     toolbarbutton.innerHTML = normalSvg
     toolbarbutton.addEventListener("click", callback)
-
+    this.toolbarbutton = toolbarbutton
     this.document.querySelector("#zotero-items-toolbar").insertBefore(
       toolbarbutton,
       toolbar.querySelector("spacer")
     )
   }
 
+  private removeSwitchButton(): void {
+    if (this.toolbarbutton) this.toolbarbutton.remove()
+  }
+
   private addStyle(): void {
     console.log("Start style")
     let mainWindow = this.document.querySelector('#main-window')
-    let oldStyle = mainWindow.querySelector("#pageStyle")
-    if (oldStyle) oldStyle.remove()
+    this.removeStyle()
     let style = this.createElement("style")
     style.setAttribute('type', 'text/css')
     style.setAttribute('id', 'pageStyle')
@@ -226,7 +249,12 @@ class AddonEvents extends AddonModule {
         opacity: ${progressOpacity};
       }
     `
+    this.style = style
     mainWindow.appendChild(style)
+  }
+
+  private removeStyle(): void {
+    if (this.style) this.style.remove()
   }
 
   private createElement(nodeName: string): HTMLElement {
@@ -237,8 +265,13 @@ class AddonEvents extends AddonModule {
     // path: getMainWindow().ZoteroPane.itemsView._renderCell
     let id = this.window.setInterval(
       (() => {
+        console.log(this)
         let zoteroFunc = eval(`this.Zotero.${path}`)
         let zoteroFuncThis = eval(`this.Zotero.${path.match(/(.+)\.\w/)[1]}`)
+        this._hookFunction[path] = {
+          zoteroFunc,
+          zoteroFuncThis
+        }
         if (zoteroFunc === undefined) return
         // zoteroFunc is the function that needs to be modified
         let modifyFunc = function (...args: any[]) {
@@ -262,6 +295,7 @@ class AddonEvents extends AddonModule {
     let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
 
     // render the tag
+    if (primaryCell.querySelector(".tag-box")) return 
     let tagBoxNode = createElement("span")
     tagBoxNode.setAttribute("class", "tag-box")
     primaryCell.appendChild(tagBoxNode)
@@ -275,7 +309,7 @@ class AddonEvents extends AddonModule {
       tagNode.style.left = `${i*1.25+delta}em`
       tagBoxNode.appendChild(tagNode)
     })
-    if (Zotero.Chartero) {
+    if (Zotero.Chartero || primaryCell.querySelector(".zotero-style-progress")) {
       return primaryCell
     }
     // render the read progress
@@ -353,6 +387,10 @@ class AddonEvents extends AddonModule {
     return cell
   }
 
+  private modifyGetColumns(columns: any[], args: any[], Zotero: any) {
+    return columns
+  }
+
   private getReader(): any {
     return this.Zotero.Reader.getByTabID(this.window.Zotero_Tabs.selectedID);
   }
@@ -408,6 +446,7 @@ class AddonEvents extends AddonModule {
   }
 
   private initKeys() {
+    this.removeKeys()
     let keyset = this.document.createElement("keyset");
     keyset.setAttribute("id", "zoterostyle-keyset");
 
@@ -430,7 +469,14 @@ class AddonEvents extends AddonModule {
     key.setAttribute("key", "p")
     key.setAttribute("modifiers", "shift")
     keyset.appendChild(key)
+    this.keyset = keyset
     this.document.getElementById("mainKeyset").parentNode.appendChild(keyset);
+  }
+
+  private removeKeys() {
+    if (this.keyset) {
+      this.keyset.remove()
+    }
   }
 
   private toRGB(color: string) {
@@ -459,9 +505,17 @@ class AddonEvents extends AddonModule {
   public onUnInit(): void {
     console.log(`${addonName}: uninit called`);
     this.Zotero.debug(`${addonName}: uninit called`);
+    // remove ZoteroStyle UI
+    this.removeStyle()
+    this.removeSwitchButton()
+    this.removeKeys()
+    for (let path of Object.keys(this._hookFunction)) {
+      let obj = this._hookFunction[path]
+      let func = function(...args: any[]) {return obj.zoteroFunc.apply(obj.zoteroFuncThis, args)}
+      eval(`this.Zotero.${path} = ${func.toString()}`)
+    }
     this.Zotero.ZoteroStyle = undefined;
   }
 }
-
 
 export default AddonEvents;

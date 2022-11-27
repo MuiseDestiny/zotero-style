@@ -10,10 +10,15 @@ const { classes: Cc, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-function install(data, reason) {}
+function install(data, reason) {
+  // console.log(data, reason)
+  console.log("install")
+
+}
 
 function startup(data, reason) {
   // Load the addon to Zotero if window is ready
+  console.log("startup")
   const loadAddon = (window) => {
     console.log(window);
     if (window.document.readyState === "complete" && window.Zotero) {
@@ -53,13 +58,14 @@ function startup(data, reason) {
 }
 
 function shutdown(data, reason) {
+  console.log("shutdown")
   if (reason === APP_SHUTDOWN) {
     return;
   }
   var _Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
     Components.interfaces.nsISupports
   ).wrappedJSObject;
-  _Zotero.AddonTemplate.events.onUnInit(_Zotero);
+  _Zotero.ZoteroStyle.events.onUnInit(_Zotero);
 
   Cc["@mozilla.org/intl/stringbundle;1"]
     .getService(Components.interfaces.nsIStringBundleService)
@@ -68,4 +74,7 @@ function shutdown(data, reason) {
   Cu.unload("chrome://_addonRef__/scripts/index.js");
 }
 
-function uninstall(data, reason) {}
+function uninstall(data, reason) {
+  // console.log(data, reason)
+  console.log("uninstall")
+}
