@@ -20,6 +20,7 @@ class Setting extends AddonModule {
       "Zotero.ZoteroStyle.progressOpacity=.7",
       "Zotero.ZoteroStyle.tagSize=5",
       "Zotero.ZoteroStyle.tagPosition=3",
+      "Zotero.ZoteroStyle.tagAlign=left",
       "Zotero.ZoteroStyle.progressColor=#5AC1BD",
       "Zotero.ZoteroStyle.constantFields=['hasAttachment', 'title']"
     ],

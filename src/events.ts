@@ -14,7 +14,8 @@ class AddonEvents extends AddonModule {
   public keyset: any;
   public _hookFunction = {};
   public tagSize = 5;  // em
-  public tagPosition = 3;  // em
+  public tagPosition = 3; 
+  public tagAlign = "left";  // em
   public progressOpacity = .7;
   public progressColor = "#5AC1BD";
   public constantFields = ["hasAttachment", "title"];
@@ -301,16 +302,17 @@ class AddonEvents extends AddonModule {
     let tagBoxNode = createElement("span")
     tagBoxNode.setAttribute("class", "tag-box")
     // special algin between font and span
+    let obj = Zotero.ZoteroStyle.events
+    let tagAlign = obj.getValue("Zotero.ZoteroStyle.tagAlign", obj.tagAlign)
     primaryCell.querySelectorAll(".tag-swatch").forEach((tagNode: any, i: number) => {
       let delta = 0
       if (tagNode.style.backgroundColor.includes("rgb")) {
         tagNode.classList.add("zotero-tag")
         delta = .25
       }
-      tagNode.style.left = `${i*1.25+delta}em`
+      tagNode.style[tagAlign] = `${i*1.25+delta}em`
       tagBoxNode.appendChild(tagNode)
     })
-    let obj = Zotero.ZoteroStyle.events
     let tagPosition = obj.getValue("Zotero.ZoteroStyle.tagPosition", obj.tagPosition)
     switch (tagPosition) {
       case 4:

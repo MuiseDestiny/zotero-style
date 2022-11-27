@@ -19,8 +19,8 @@ class AddonModule {
       Components.interfaces.nsISupports
     ).wrappedJSObject;
     let _v = Zotero.Prefs.get(k)
-    // not stored, return
-    if (_v == undefined) { return v }
+    // not stored or stored empty string, return
+    if (_v == undefined || _v == "") { return v }
     // stored, maybe we needn't later processing or need string, return
     if (v == undefined || typeof(_v) == typeof(v)) { return _v }
     // json or number, but Number("") = 0, eval("") = undefined, so we use latter
