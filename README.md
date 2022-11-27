@@ -43,7 +43,7 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 
 ![](https://spr1ng.live/file/87ac5698538744a03d424.png)
 
-#### 设置界面
+### 设置界面
 > 鼠标中键
 Mac用户可以设置Zotero.ZoteroStyle.progressOpacity=0来隐藏进度条=window用户鼠标右键
 Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置界面
