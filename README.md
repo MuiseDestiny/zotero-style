@@ -1,13 +1,14 @@
 # Zotero Style
 
 [介绍视频](https://www.bilibili.com/video/BV1PK411o7JN/?share_source=copy_web&vd_source=7b57a26bb78f6cbbfdf8bff111682fa3)
-![](https://spr1ng.live/file/53340a7f78f837cd8e265.png)
+
 ![](https://spr1ng.live/file/8880fce2ffe1b5ead0cd1.png)
 
 <center><font color="deeppink"><b>效果预览</b></font></center>
 
 ![](https://spr1ng.live/file/390f08bb91ebff15bb0d1.png)
 
+![](https://spr1ng.live/file/dd11d8b19009575c7f608.png)
 
 ## 起因
 Zotero标签可以显示在标题左侧，有时候条目有不同数量标签，排版特别不美观不利于阅读（强迫症，痛点）。
@@ -94,7 +95,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 如果已有ZoteroStyle更新最新版本，请卸载旧版本，重启Zotero后安装新版本
 
 ## 修复BUG
-1.2.2 - tagSize返回0或者NaN导致宽度为0，所以不显示标签 - 已修复
+1.2.2 - tagSize返回0或者NaN导致宽度为0，所以不显示标签 -
 
 ## TODO
 - [ ] 阅读PDF时，悬停参考文献点击即可快速添加到Zotero
