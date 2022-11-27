@@ -244,7 +244,7 @@ class AddonEvents extends AddonModule {
       }
       .zotero-style-progress {
         position: absolute;
-        left: ${tagPosition == 4 ? 3.25 : 8.25}em;
+        left: ${tagPosition == 4 ? 3.25 : 3.25 + tagSize}em;
         top: 0;
         width: calc(100% - 3.5em - ${tagSize}em) !important;
         height: 100%;

@@ -211,7 +211,8 @@ class Setting extends AddonModule {
       console.log(`execute - setValue(${key}, ${value})`)
       this.Zotero.ZoteroStyle.events.refresh()
       this.inputNode.value = ""
-      this.inputMessage("Finished")
+      this.inputMessage("Refresh", 2)
+      this.inputMessage("Finished", 1, 1)
       return true
     } else if (text.startsWith("/")) {
       // some advanced command here, TODO
@@ -315,14 +316,16 @@ class Setting extends AddonModule {
     this.historyNode.querySelector(".line:last-child").setAttribute("selected", "")
   }
 
-  public inputMessage(msg, t: number = 1) {
-    if (this.settingNode.style.display == "none") {
-      this.settingNode.style.display = ""
-    }
-    this.inputNode.setAttribute("placeholder", msg)
-    this.window.setTimeout(()=>{
-      this.inputNode.setAttribute("placeholder", this.tipText)
-    }, t * 1e3)
+  public inputMessage(msg, persist: number = 1, latency = 0) {
+    this.window.setTimeout(() => {
+      if (this.settingNode.style.display == "none") {
+        this.settingNode.style.display = ""
+      }
+      this.inputNode.setAttribute("placeholder", msg)
+      this.window.setTimeout(()=>{
+        this.inputNode.setAttribute("placeholder", this.tipText)
+      }, persist * 1e3)
+    }, latency * 1e3)
   }
 
   public createElement(name) {
