@@ -43,7 +43,7 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 
 ![](https://spr1ng.live/file/87ac5698538744a03d424.png)
 
-### 设置界面
+## 设置界面
 > 鼠标中键
 Mac用户可以设置Zotero.ZoteroStyle.progressOpacity=0来隐藏进度条=window用户鼠标右键
 Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置界面
@@ -88,6 +88,13 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 4. 本插件可与`Chartero`共存，若安装`Chartero`本插件将不再渲染进度条，因为这一功能我已合并到`Chartero`，而且`Chartero`支持同步数据
 
 🙌建议配合`Zotero Tag`&`Chartero`使用
+
+## 安装方法
+如果第一次安装，请直接在release界面下载xpi，拖入Zotero的插件界面内，然后重启即可
+如果已有ZoteroStyle更新最新版本，请卸载旧版本，重启Zotero后安装新版本
+
+## 修复BUG
+1.2.2 - tagSize返回0或者NaN导致宽度为0，所以不显示标签 - 已修复
 
 ## TODO
 - [ ] 阅读PDF时，悬停参考文献点击即可快速添加到Zotero
