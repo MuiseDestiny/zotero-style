@@ -59,6 +59,8 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 | Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |
 | /reference | 无 | 在阅读PDF界面使用，不离开Zotero软件就能导入参考文献 | 
 | /Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1) | 在命令中 | 用于指派标签颜色和位置（随心所欲） |
+
+
 ![](https://spr1ng.live/file/39bbe98fe67f8efd508b7.png)
 ![](https://spr1ng.live/file/e351445318a956ac10a7a.png)
 
