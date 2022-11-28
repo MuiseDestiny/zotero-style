@@ -368,7 +368,7 @@ class Setting extends AddonModule {
             this.historyNode.querySelectorAll(".line").forEach(line=>line.removeAttribute("selected"))
             lineNodes.slice(-1)[0].setAttribute("selected", "")
           } else {
-            this.inputMessage("settingHistory is empty")
+            this.inputMessage("settingHistory is empty", 0, 3)
           }
           return
         }
