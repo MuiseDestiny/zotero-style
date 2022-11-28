@@ -3,8 +3,8 @@ import AddonModule from "./module";
 import Setting from "./setting";
 
 class AddonEvents extends AddonModule {
-  public Zotero: any;
-  public window: any;
+  public Zotero: _ZoteroConstructable;
+  public window: Window;
   public document: any;
   public notifierCallback : any;
   public setting: any;
@@ -51,7 +51,7 @@ class AddonEvents extends AddonModule {
     }
   }
 
-  public async onInit(_Zotero: any) {
+  public async onInit(_Zotero: _ZoteroConstructable) {
     this.Zotero = _Zotero
     this.window = this.Zotero.getMainWindow()
     this.document = this.window.document
@@ -89,7 +89,7 @@ class AddonEvents extends AddonModule {
 
     this.window.addEventListener(
       "unload",
-      function (e) {
+      (e) => {
         this.Zotero.Notifier.unregisterObserver(notifierID);
       },
       false
@@ -408,7 +408,7 @@ class AddonEvents extends AddonModule {
   }
 
   private getReader(): any {
-    return this.Zotero.Reader.getByTabID(this.window.Zotero_Tabs.selectedID);
+    return this.Zotero.Reader.getByTabID(((this.window as any).Zotero_Tabs as typeof Zotero_Tabs).selectedID);
   }
 
   public recordReadTime(): void {
@@ -438,12 +438,12 @@ class AddonEvents extends AddonModule {
 
     // real read, record this recordInterval
     const totalPageNum = reader._iframeWindow.wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
-    const title = this.Zotero.Items.get(reader.itemID).parentItem._displayTitle;
+    const title = (this.Zotero.Items.get(reader.itemID).parentItem as any)._displayTitle;
 
     // get local record
     // console.log("saving");
     const recordKey = `Zotero.ZoteroStyle.record`;
-    let record = JSON.parse(this.Zotero.Prefs.get(recordKey) || "{}");
+    let record = JSON.parse(this.Zotero.Prefs.get(recordKey) as string || "{}");
     if (!record[title]) record[title] = {}
     record[title][this.state.pageIndex] = (
       this.isNumber(record[title][this.state.pageIndex]) 

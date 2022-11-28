@@ -7,7 +7,7 @@ class AddonModule {
   public setValue(k: string, v: string) {
     var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
       Components.interfaces.nsISupports
-    ).wrappedJSObject;
+    ).wrappedJSObject as _ZoteroConstructable;
     if (typeof(v) != "string") {
       v = JSON.stringify(v)
     }
@@ -17,8 +17,8 @@ class AddonModule {
   public getValue(k: string, v: any = undefined) {
     var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
       Components.interfaces.nsISupports
-    ).wrappedJSObject;
-    let _v = Zotero.Prefs.get(k)
+    ).wrappedJSObject as _ZoteroConstructable;;
+    let _v = Zotero.Prefs.get(k) as string
     // not stored or stored empty string, return
     if (_v == undefined || _v == "") { return v }
     // stored, maybe we needn't later processing or need string, return
