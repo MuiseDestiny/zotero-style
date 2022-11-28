@@ -5,17 +5,18 @@ class Setting extends AddonModule {
   public window: Window
   public document: Document
 
-  public settingNode: HTMLElement
+  public settingNode: HTMLDivElement
   public inputNode: HTMLInputElement
-  public historyNode: any
-  public keyset: XUL.Element
+  public historyNode: HTMLUListElement
+  public keyset: XUL.Element  
 
   public setValue: any
   public getValue: any
   public DOIRegex = /10\.\d{4,9}\/[-\._;\(\)\/:A-z0-9]+/
   public maxTotalLineNum = 12 // because the scroll in Zotero is too ugly
   public tipText = "Enter your command here..."
-  public DOIData = {}
+  public DOIData = {}  // doi's detail info
+  public DOIRefData = {}  // doi's all references
   public History = {
     k: "Zotero.ZoteroStyle.settingHistory",
     permanentSettingHistory: [
@@ -24,7 +25,10 @@ class Setting extends AddonModule {
       "Zotero.ZoteroStyle.tagPosition=3",
       "Zotero.ZoteroStyle.tagAlign=left",
       "Zotero.ZoteroStyle.progressColor=#5AC1BD",
-      "Zotero.ZoteroStyle.constantFields=['hasAttachment', 'title']"
+      "Zotero.ZoteroStyle.constantFields=['hasAttachment', 'title']",
+      `/Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1)`,
+      `/reference`,
+      `/search`
     ],
     render() {
       let allText = this.readAll()
@@ -47,7 +51,13 @@ class Setting extends AddonModule {
       console.log('after', this.readAll())
     },
     readAll() {
-      return this.getValue(this.k, this.permanentSettingHistory)
+      let textArray =  this.getValue(this.k, this.permanentSettingHistory)
+      let supplementArray = this.permanentSettingHistory.filter(text=>{
+        return textArray.filter(_text=>_text.includes(text.split("=")[0])).length == 0
+      })
+      textArray = [...supplementArray, ...textArray]
+      console.log(textArray)
+      return textArray
     },
     remove(text) {
       console.log(`remove - ${text}`)
@@ -141,6 +151,11 @@ class Setting extends AddonModule {
           text-overflow: ellipsis;
           white-space: nowrap;
       }
+      #Zotero-Style-Setting input {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
       #Zotero-Style-Setting .history .line:active {
           background-color: rgba(220, 240, 240, 1);;
       }
@@ -162,6 +177,7 @@ class Setting extends AddonModule {
     console.log("create element for setting")
     // root node
     let settingNode = this.createElement("div")
+    // settingNode.style.zIndex = "999"
     settingNode.style.zIndex = "999"
     settingNode.setAttribute("id", "Zotero-Style-Setting")
     // for viewing history or results
@@ -175,7 +191,7 @@ class Setting extends AddonModule {
     let span = this.createElement("span")
     span.innerText = "</>"
     inputbox.appendChild(span)
-    let inputNode = this.window.document.createElement("input")
+    let inputNode = this.createElement("input")
     inputNode.setAttribute("placeholder", this.tipText)
     inputbox.appendChild(inputNode)
     // append
@@ -210,8 +226,8 @@ class Setting extends AddonModule {
         line.removeAttribute("selected")
       }
     })
-    this.inputMessage(`Get ${totalNum} resluts`, 2)
-    this.inputMessage(`Press ESC key to exit the search result`, NaN, 2)
+    this.inputMessage(`Get ${totalNum} resluts`)
+    this.inputMessage(`Press ESC key to exit the search result`, 1)
     return true 
   }
 
@@ -235,6 +251,7 @@ class Setting extends AddonModule {
   }
 
   public async execLine(text: string) {
+    // the return value is used to determine whether to add the command to history
     console.log(`try to execute - ${text}`)
     if (text.includes("=")) {
       let [key, value] = text.split("=")
@@ -246,6 +263,7 @@ class Setting extends AddonModule {
       this.inputMessage("Finished", 1, 1)
       return true
     } else if (text.startsWith("/")) {
+      console.log("command")
       // some advanced command here, TODO
       text = text.slice(1)
       if (text == "reference") {
@@ -255,66 +273,60 @@ class Setting extends AddonModule {
           this.inputMessage(`Please select your reader: /${text}`)
           return false
         }
-        // find all doi
-        const host = "https://doi.org/"
+        // reading paper DOI
+        let itemData = this.Zotero.ZoteroStyle.events.getReadingItem()._itemData
+        let DOI = itemData[58]  // index 58 is the DOI
+        if (!this.DOIRegex.test(DOI)) {
+          // DOI is unvalid, get it from unpaywall
+          this.inputMessage("Get DOI from Unpaywall Api...")
+          let title = itemData[8]  // index 8 is the title
+          DOI = await this.getDOIInfo(title)
+        }
+        this.inputMessage("Requet references from Crossref Api...")
+        // clear historyNode
+        let refData = await this.getRefData(DOI)
+        console.log(refData)
+        this.historyNode.classList.add("/reference")
+        this.historyNode.style.display = ""
         this.historyNode.querySelectorAll(".line").forEach(e=>e.remove())
-        let DOISet = new Set()
-        reader._iframeWindow.document.querySelectorAll(`a[href^='${host}']`).forEach(node=>{
-          let DOI = node.getAttribute("href").replace(host, "")
-          let res = DOI.match(this.DOIRegex)
-          if (res.length == 0) return
-          DOISet.add(res[0])
-        })
-        let DOINum = [...DOISet].length
-        let lineNodes = {};
-        ([...DOISet]).forEach(async ( DOI: string, i: number)=>{
-          let text = await this.getDOIInfo(DOI)
-          if (!text) { text = DOI } 
+        this.inputMessage(`Get ${refData.length} references`)
+        // add line
+        refData.forEach((data: any, i: number) => {
           let lineNode = this.createElement("li")
           lineNode.setAttribute("class", "line")
-          lineNode.setAttribute("data", DOI)
-          lineNode.innerText = `[${i+1}] ` + text
-          lineNodes[i] = lineNode
+          lineNode.setAttribute("data", data.DOI)
+          let titleName = Object.keys(data).filter(key=>key.includes("title"))[0]
+          lineNode.innerText = `[${i+1}] ${data.author} et al., ${data.year}. ${data[titleName]}`
+          lineNode.style.display = refData.length - i > this.maxTotalLineNum ? "none" : ""
+          this.historyNode.appendChild(lineNode)
         })
-        // view in historyNode
-        console.log("clear the line in historyNode, prepare for references...")
-        this.inputMessage("Searching, please wait for me...", NaN)
-        let id = this.window.setInterval(() => {
-          let loadNum = Object.keys(lineNodes).length
-          if (loadNum<DOINum) {
-            this.inputMessage(`Loading ${loadNum}/${DOINum}...`, NaN, 1)
-            return 
-          }
-          this.inputMessage(`Finished`, NaN, 1)
-          this.historyNode.classList.add("/reference")
-          this.historyNode.style.display = ""
-          for (let i=0;i<DOINum;i++) {
-            if (DOINum - i >= this.maxTotalLineNum) {
-              lineNodes[i].style.display = "none"
-            }
-            this.historyNode.appendChild(lineNodes[i])
-          }
-          this.inputMessage("Please enter the search text, i.e., Polygon 2022", NaN, 2)
-          this.window.clearInterval(id)
-        }, 1e3)
+        this.inputMessage("Please enter the search text, i.e., Polygon 2022", 1)
+        return false
+      } else {
+        let res = eval(`
+          var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+            Components.interfaces.nsISupports
+          ).wrappedJSObject;
+          ${text};
+        `)
+        return false
       }
-      return false
     } else if (this.DOIRegex.test(text)) {
       let DOI = text
       var translate = new this.Zotero.Translate.Search();
-			translate.setIdentifier({"DOI": DOI});
+      translate.setIdentifier({"DOI": DOI});
 
-			let translators = await translate.getTranslators();
-			translate.setTranslator(translators);
-			try {
+      let translators = await translate.getTranslators();
+      translate.setTranslator(translators);
+      try {
         let libraryID = this.window.ZoteroPane.getSelectedLibraryID();
-				let collection = this.window.ZoteroPane.getSelectedCollection();
-				let collections = collection ? [collection.id] : false;
-				let refItem = (await translate.translate({
-					libraryID,
-					collections,
-					saveAttachments: true
-				}))[0];
+        let collection = this.window.ZoteroPane.getSelectedCollection();
+        let collections = collection ? [collection.id] : false;
+        let refItem = (await translate.translate({
+          libraryID,
+          collections,
+          saveAttachments: true
+        }))[0];
         console.log(refItem)
         // addRelatedItem
         let reader = this.Zotero.ZoteroStyle.events.getReader()
@@ -323,11 +335,13 @@ class Setting extends AddonModule {
         item.addRelatedItem(refItem)
         console.log("refItem.addRelatedItem(item)")
         refItem.addRelatedItem(item)
-			} catch (e) {
-				console.log(e);
-			}
+        await item.saveTx()
+        await refItem.saveTx()
+      } catch (e) {
+        console.log(e);
+      }
       this.inputNode.value = ""
-      this.inputMessage("Success, please open this paper in ther RelatedItem view", NaN)
+      this.inputMessage("Success, please open this paper in ther RelatedItem view")
       return false
     } else if (this.getValue(text)) {
       let v = this.getValue(text)
@@ -339,56 +353,67 @@ class Setting extends AddonModule {
       return false
     }
   }
-  
+
   public setEvent() {
     this.settingNode.addEventListener("keyup", async (event) => {
-      if (event.key=="ArrowUp") {
-          // 如果没显示history
-          if (this.historyNode.style.display=="none") {
-            let lastLine = this.historyNode.querySelector(".line:last-child")
-            if (lastLine) {
-              // 让他显示，并默认选择第一个
-              this.historyNode.style.display = ""
-              console.log("select the first")
-              this.historyNode.querySelectorAll(".line").forEach(line=>line.removeAttribute("selected"))
-              lastLine.setAttribute("selected", "")
-            } else {
-              this.inputMessage("settingHistory is empty")
-            }
-          }
-      } else if (event.key=="Enter") {
-          // 回车则获取当前selected，填入input
-          if (this.historyNode.style.display != "none" && this.inputNode.value.trim() == "") {
-            // line -> input
-            let selectedLine = this.historyNode.querySelector(".line[selected]")
-            let text
-            if (selectedLine.hasAttribute("data")) {
-              text = selectedLine.getAttribute("data")
-            } else {
-              text = selectedLine.innerText
-            }
-            this.inputNode.value = text
-            // 并且收起historyNode
-            this.historyNode.style.display = "none"
+      let key = event.key
+      if (key=="ArrowUp") {
+        // 如果没显示history
+        if (this.historyNode.style.display == "none") {
+          let lineNodes = [...this.historyNode.querySelectorAll(".line:last-child")].filter(e=>e.style.display != "none")
+          if (lineNodes.length > 0) {
+            // 让他显示，并默认选择第一个
+            this.historyNode.style.display = ""
+            console.log("select the first visible linNode")
+            this.historyNode.querySelectorAll(".line").forEach(line=>line.removeAttribute("selected"))
+            lineNodes.slice(-1)[0].setAttribute("selected", "")
           } else {
-            // input -> line
-            if ((await this.appendLine(this.inputNode.value))) {
-              this.historyNode.style.display = ""
-            }
+            this.inputMessage("settingHistory is empty")
           }
-      } else if (event.key=="Escape") {
-        if (this.historyNode.classList.length > 1) {
+          return
+        }
+      } else if (key=="Enter") {
+        // 回车则获取当前selected，填入input
+        if (this.historyNode.style.display != "none" && this.inputNode.value.trim() == "") {
+          // line -> input
+          let selectedLine = this.historyNode.querySelector(".line[selected]")
+          let text
+          if (selectedLine.hasAttribute("data")) {
+            text = selectedLine.getAttribute("data")
+            this.inputMessage(selectedLine.innerText, 3)
+          } else {
+            text = selectedLine.innerText
+          }
+          this.inputNode.value = text
+          // 并且收起historyNode
+          this.historyNode.style.display = "none"
+        } else {
+          // input -> line
+          if ((await this.appendLine(this.inputNode.value))) {
+            this.historyNode.style.display = ""
+          }
+        }
+      } else if (key=="Escape") {
+        if (this.historyNode.classList.length > 2) {
           this.historyNode.classList.remove([...this.historyNode.classList].slice(-1)[0])
-          console.log()
+          this.inputNode.focus()
+          key = "ArrowUp"
+        } else if (this.historyNode.classList.length == 2) {
+          this.historyNode.classList.remove([...this.historyNode.classList].slice(-1)[0])
+          this.inputNode.focus()
+          this.History.render()
         } else {
           this.History.render()
           if (this.historyNode.style.display != "none") {
             this.historyNode.style.display = "none"
+            this.inputNode.focus()
           } else {
             this.settingNode.style.display = "none"
+            this.inputNode.blur()
           }
         }
-      } else if (event.key=="Delete") {
+        
+      } else if (key=="Delete") {
         if (this.historyNode.style.display != "none") {
           // 删除选中
           let lines = this.historyNode.querySelectorAll(".line")
@@ -407,58 +432,65 @@ class Setting extends AddonModule {
         }
       }
       // arrow up down, select 
-      if (["ArrowUp", "ArrowDown"].indexOf(event.key) != -1) {
-          let lineNodes = [...this.historyNode.querySelectorAll(".line")]
-          if (this.historyNode.classList.contains("search-result")) {
-            // select in the search results
-            console.log("select in the search results")
-            lineNodes = lineNodes.filter(e=>e.style.display != "none")
-          }
-          if (!this.historyNode.querySelector(".line[selected]")) {
-            // select the first
-            console.log("select the first, return")
-            lineNodes.slice(-1)[0].setAttribute("selected", "")
-            return
-          }
-          let totalLineNum = lineNodes.length
-          for (let i=0;i<lineNodes.length;i++) {
-            if (lineNodes[i].hasAttribute("selected")) {
-              lineNodes[i].removeAttribute("selected")
-              if (event.key=="ArrowUp") {
-                  i -= 1
-              } else if (event.key=="ArrowDown") {
-                  i += 1
-              }
-              if (i==-1) {
-                  i = lineNodes.length - 1
-              }
-              if (i==lineNodes.length) {
-                  i = 0
-              }
-              lineNodes[i].setAttribute("selected", "")
-              if (this.historyNode.classList.contains("search-result")) { 
-                break 
-              }
-              const half = parseInt(String(this.maxTotalLineNum / 2))
-              console.log(half)
-              for (let j=0;j<totalLineNum;j++) {
-                if (
-                  (j > i ? j - i : i - j) <= half || 
-                  (i <= this.maxTotalLineNum && j <= this.maxTotalLineNum) || 
-                  (totalLineNum - i <= this.maxTotalLineNum && totalLineNum - j <= this.maxTotalLineNum)
-                ) {
-                  lineNodes[j].style.display = ""
-                } else {
-                  lineNodes[j].style.display = "none"
-                }
-              }
-              break
+      if (["ArrowUp", "ArrowDown"].indexOf(key) != -1) {
+        let lineNodes = [...this.historyNode.querySelectorAll(".line")]
+        if (this.historyNode.classList.contains("search-result")) {
+          // select in the search results
+          console.log("select in the search results")
+          lineNodes = lineNodes.filter(e=>e.style.display != "none")
+        }
+        if (!this.historyNode.querySelector(".line[selected]")) {
+          // select the first
+          console.log("select the first, return")
+          lineNodes.slice(-1)[0].setAttribute("selected", "")
+          return
+        }
+        let totalLineNum = lineNodes.length
+        for (let i=0;i<lineNodes.length;i++) {
+          if (lineNodes[i].hasAttribute("selected")) {
+            lineNodes[i].removeAttribute("selected")
+            if (key=="ArrowUp") {
+                i -= 1
+            } else if (key=="ArrowDown") {
+                i += 1
             }
+            if (i==-1) {
+                i = lineNodes.length - 1
+            }
+            if (i==lineNodes.length) {
+                i = 0
+            }
+            lineNodes[i].setAttribute("selected", "")
+            if (this.historyNode.classList.contains("search-result")) { 
+              break 
+            }
+            const half = parseInt(String(this.maxTotalLineNum / 2))
+            console.log(half)
+            // i - selected index; j - other index
+            let range
+            if (totalLineNum - half <= i && i <= totalLineNum) {
+              // bottom
+              range = [totalLineNum - this.maxTotalLineNum, totalLineNum]
+            } else if (0 <= i && i <= half) {
+              // top
+              range = [0, this.maxTotalLineNum]
+            } else {
+              // middle
+              range = [i - half, i + half]
+            }
+            for (let j=0;j<totalLineNum;j++) {
+              if (range[0] <= j && j <= range[1]) {
+                lineNodes[j].style.display = ""
+              } else {
+                lineNodes[j].style.display = "none"
+              }
+            }
+            break
           }
+        }
       }
     })
   }
-
   public selectLastLineNode() {
     this.historyNode.querySelectorAll(".line").forEach(e=>e.removeAttribute("selected"))
     this.historyNode.querySelector(".line:last-child").setAttribute("selected", "")
@@ -481,7 +513,7 @@ class Setting extends AddonModule {
     }
   }
 
-  public inputMessage(msg, persist: number = 1, latency: number = 0) {
+  public inputMessage(msg, latency: number = 0, persist: number = NaN) {
     console.log(msg, persist, latency)
     this.window.setTimeout(() => {
       if (this.settingNode.style.display == "none") {
@@ -530,7 +562,43 @@ class Setting extends AddonModule {
     this.document.getElementById("mainKeyset").parentNode.appendChild(keyset);
   }
 
-  public async getDOIInfo(DOI) {
+  public async getRefData(DOI) {
+    // request or read data
+    let refData
+    if (Object.keys(this.DOIData).indexOf(DOI) != -1) { 
+      refData = this.DOIRefData[DOI]
+    } else {
+      try {
+        const crossrefApi = `https://api.crossref.org/works/${DOI}/transform/application/vnd.citationstyles.csl+json`
+        let res = await this.Zotero.HTTP.request(
+          "GET",
+          crossrefApi,
+          {
+            responseType: "json"
+          }
+        )
+        refData = res.response
+      } catch {
+        return false
+      }
+    }
+    // analysis refData
+    return refData.reference
+  }
+
+  public async getDOIByTitle(title: string) {
+    const unpaywall = `https://api.unpaywall.org/v2/search?query=${title}&email=unpaywall_01@example.com`
+    let res = await this.Zotero.HTTP.request(
+      "GET",
+      unpaywall,
+      {
+        responseType: "json"
+      }
+    )
+    return res.response.resluts[0].response.doi
+  }
+
+  public async getDOIInfo(DOI: string) {
     let data
     if (Object.keys(this.DOIData).indexOf(DOI) != -1) { 
       data = this.DOIData[DOI]["title"] 

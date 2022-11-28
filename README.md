@@ -57,7 +57,8 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 | Zotero.ZoteroStyle.tagPosition | 4 | 1,2,3,4 |
 | Zotero.ZoteroStyle.tagAlign | left | left,right |
 | Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |
-
+| /reference | 无 | 在阅读PDF界面使用 | 
+| /Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1) | 在命令中 | 注意斜杠 |
 ![](https://spr1ng.live/file/39bbe98fe67f8efd508b7.png)
 ![](https://spr1ng.live/file/e351445318a956ac10a7a.png)
 
@@ -90,13 +91,17 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 2. 增加`只显示标题`按钮🌸
 3. 显示阅读进度，是否划水，一看便知👋
 4. 本插件可与`Chartero`共存，若安装`Chartero`本插件将不再渲染进度条，因为这一功能我已合并到`Chartero`，而且`Chartero`支持同步数据
-5. /reference（还在做，下面是预览图）
+5. 阅读界面快速检索参考文献，一键导入并关联至当前文献 （目前实验性功能）
+6. 自定义指派标签颜色位置
 
+> 5的图示
 ![](https://spr1ng.live/file/6c034034afb3f51309a76.png)
 ![](https://spr1ng.live/file/2c468b2d30abb704b8bf0.png)
 ![](https://spr1ng.live/file/f64a442981bcb66754feb.png)
 ![](http://tva1.sinaimg.cn/large/c5826cc9ly1h8k444nnclj20nk03m0w4.jpg)
 
+> 6的图示
+![](https://spr1ng.live/file/b7eaf4c526d5109558a9b.png)
 🙌建议配合`Zotero Tag`&`Chartero`使用
 
 ## 安装方法

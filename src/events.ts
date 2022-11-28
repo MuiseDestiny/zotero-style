@@ -111,7 +111,7 @@ class AddonEvents extends AddonModule {
     }
 
     // tip
-    this.setting.inputMessage("Zotero Style is running, have a nice day!", 3)
+    this.setting.inputMessage("Zotero Style is running, have a nice day!", 0, 5)
     this.window.setTimeout(() => {
       this.setting.settingNode.style.display = "none"
     }, 3000)
@@ -264,7 +264,6 @@ class AddonEvents extends AddonModule {
     // path: getMainWindow().ZoteroPane.itemsView._renderCell
     let id = this.window.setInterval(
       (() => {
-        console.log(this)
         let zoteroFunc = eval(`this.Zotero.${path}`)
         let zoteroFuncThis = eval(`this.Zotero.${path.match(/(.+)\.\w/)[1]}`)
         this._hookFunction[path] = {
@@ -292,7 +291,6 @@ class AddonEvents extends AddonModule {
     // 2693     _renderPrimaryCell(index, data, column)
     let document = Zotero.getMainWindow().document
     let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
-
     // render the tag
     if (primaryCell.querySelector(".tag-box")) return 
     let tagBoxNode = createElement("span")
@@ -305,6 +303,7 @@ class AddonEvents extends AddonModule {
       if (tagNode.style.backgroundColor.includes("rgb")) {
         tagNode.classList.add("zotero-tag")
         delta = .25
+        // change its color
       }
       tagNode.style[tagAlign] = `${i*1.25+delta}em`
       tagBoxNode.appendChild(tagNode)
@@ -411,6 +410,12 @@ class AddonEvents extends AddonModule {
     return this.Zotero.Reader.getByTabID(((this.window as any).Zotero_Tabs as typeof Zotero_Tabs).selectedID);
   }
 
+  private getReadingItem() {
+    let reader = this.getReader()
+    let item = this.Zotero.Items.get(reader.itemID).parentItem as any
+    return item
+  }
+
   public recordReadTime(): void {
     // is not reading
     // it return undefined if no reader selected, so we ignore it
@@ -438,7 +443,7 @@ class AddonEvents extends AddonModule {
 
     // real read, record this recordInterval
     const totalPageNum = reader._iframeWindow.wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
-    const title = (this.Zotero.Items.get(reader.itemID).parentItem as any)._displayTitle;
+    const title = this.getReadingItem()._displayTitle
 
     // get local record
     // console.log("saving");

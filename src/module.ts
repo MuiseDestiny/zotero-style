@@ -28,7 +28,7 @@ class AddonModule {
     try {
       _v = JSON.parse(_v)
     } catch (e) {
-      console.log(`Error in JSON.parse function - JSON.parse(${_v})`)
+      // console.log(`Error in JSON.parse function - JSON.parse(${_v})`)
       // i.e., JSON.parse("['1']") can not work, but eval can
     }
     // last try
