@@ -1,14 +1,14 @@
 import AddonModule from "./module";
 
 class Setting extends AddonModule {
-  public Zotero: any
-  public window: any
-  public document: any
+  public Zotero: _ZoteroConstructable
+  public window: Window
+  public document: Document
 
-  public settingNode: any
-  public inputNode: any
+  public settingNode: HTMLElement
+  public inputNode: HTMLInputElement
   public historyNode: any
-  public keyset: any
+  public keyset: XUL.Element
 
   public setValue: any
   public getValue: any
@@ -68,7 +68,7 @@ class Setting extends AddonModule {
     super(parent)
   }
 
-  public init(Zotero) {
+  public init(Zotero: _ZoteroConstructable) {
       this.Zotero = Zotero;
       this.window = this.Zotero.getMainWindow();
       this.document = this.window.document;
@@ -161,7 +161,7 @@ class Setting extends AddonModule {
     console.log("create element for setting")
     // root node
     let settingNode = this.createElement("div")
-    settingNode.style.zIndex = 999
+    settingNode.style.zIndex = "999"
     settingNode.setAttribute("id", "Zotero-Style-Setting")
     // for viewing history or results
     let historyNode = this.createElement("ul")
@@ -175,7 +175,7 @@ class Setting extends AddonModule {
     let span = this.createElement("span")
     span.innerText = "</>"
     inputbox.appendChild(span)
-    let inputNode = this.createElement("input")
+    let inputNode = this.window.document.createElement("input")
     inputNode.setAttribute("placeholder", this.tipText)
     inputbox.appendChild(inputNode)
     // append

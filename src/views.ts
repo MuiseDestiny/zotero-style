@@ -16,7 +16,7 @@ class AddonViews extends AddonModule {
     };
   }
 
-  public initViews(_Zotero) {
+  public initViews(_Zotero: _ZoteroConstructable) {
     // You can init the UI elements that
     // cannot be initialized with overlay.xul
     console.log("Initializing UI");
@@ -31,7 +31,7 @@ class AddonViews extends AddonModule {
     _window.document.querySelector("#zotero-itemmenu").appendChild(menuitem);
   }
 
-  public unInitViews(_Zotero) {
+  public unInitViews(_Zotero: _ZoteroConstructable) {
     console.log("Uninitializing UI");
     const _window: Window = _Zotero.getMainWindow();
     _window.document
