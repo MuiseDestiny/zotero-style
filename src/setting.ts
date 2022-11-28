@@ -12,8 +12,8 @@ class Setting extends AddonModule {
 
   public setValue: any
   public getValue: any
-
-  public maxlineNodeNum = 12 // because the scroll in Zotero is too ugly
+  public DOIRegex = /10\.\d{4,9}\/[-\._;\(\)\/:A-z0-9]+/
+  public maxTotalLineNum = 12 // because the scroll in Zotero is too ugly
   public tipText = "Enter your command here..."
   public DOIData = {}
   public History = {
@@ -55,8 +55,8 @@ class Setting extends AddonModule {
       this.setValue(this.k, arr)
       console.log(arr)
     },
-    removeStartsWidth(text) {
-      console.log(`removeStartsWidth - ${text} `)
+    removeStartsWith(text) {
+      console.log(`removeStartsWith - ${text} `)
       console.log('before', this.readAll())
       this.setValue(this.k, this.readAll().filter(_text=>!_text.startsWith(text)))
       console.log('after', this.readAll())
@@ -123,6 +123,7 @@ class Setting extends AddonModule {
       #Zotero-Style-Setting .history {
           width: 100%;
           margin-top: 0;
+          margin-bottom: 0;
           padding: 0;
           background-color: rgba(248, 240, 240, .4);
           max-height: 600px;
@@ -166,7 +167,6 @@ class Setting extends AddonModule {
     // for viewing history or results
     let historyNode = this.createElement("ul")
     historyNode.classList.add("history")
-    historyNode.classList.add("view")
     historyNode.style.display = "none"
     settingNode.appendChild(historyNode)
     // for entering text or accepting keycode
@@ -188,49 +188,53 @@ class Setting extends AddonModule {
     this.History.render()
   }
 
+  public searchLine(text: string) {
+    console.log(`try to search - ${text}`)
+    // search some 
+    let keywords = text.split(/[ ,-]/).filter(e=>e)
+    if (keywords.length == 0) { return }
+    console.log(keywords)
+    this.historyNode.classList.add("search-result")
+    let totalNum = 0
+    this.historyNode.querySelectorAll(".line").forEach(line=>{
+      let isAllIn = true
+      for (let i=0;i<keywords.length;i++) {
+        isAllIn = isAllIn && line.innerText.includes(keywords[i].trim()) 
+      }
+      if (isAllIn) {
+        line.style.display = ""
+        this.historyNode.insertBefore(line, this.historyNode.childNodes[0])
+        totalNum ++
+      } else {
+        line.style.display = "none"
+        line.removeAttribute("selected")
+      }
+    })
+    this.inputMessage(`Get ${totalNum} resluts`, 2)
+    this.inputMessage(`Press ESC key to exit the search result`, NaN, 2)
+    return true 
+  }
+
   public async appendLine(text: string) {
     // search
     console.log(this.historyNode.classList)
-    if (
-      [...this.historyNode.classList].filter(t=>t.startsWith("/")).length != 0
-    ) {
-      let searchText = this.inputNode.value
-      // search some 
-      let keywords = searchText.split(/[ ,-]/)
-      this.historyNode.classList.add("search-result")
-      let totalNum = 0
-      this.historyNode.querySelectorAll(".line").forEach(line=>{
-        let isAllIn = true
-        for (let i=0;i<keywords.length;i++) {
-          isAllIn = isAllIn && line.innerText.includes(keywords[i].trim()) 
-        }
-        if (isAllIn) {
-          line.style.display = ""
-          this.historyNode.insertBefore(line, this.historyNode.childNodes[0])
-          totalNum ++
-        } else {
-          line.style.display = "none"
-          line.removeAttribute("selected")
-        }
-      })
-      this.inputMessage(`get ${totalNum} resluts`, 2)
-      return
+    if (text.startsWith("/search")) {
+      return this.searchLine(text.replace("/search", ""))
     }
-    if (!this.execLine(text)) { return false }
+    if (!(await this.execLine(text))) { return false }
     if (text.includes("=")) {
-      this.History.removeStartsWidth(text.split("=")[0].trim())
+      this.History.removeStartsWith(text.split("=")[0].trim())
     } else {
       this.History.remove(text)
     }
     this.History.push(text)
     console.log("----", this.History.readAll())
     this.History.render()
-    this.selectLastLineNode()
+    // this.selectLastLineNode()
     return true
-    
   }
 
-  public execLine(text: string) {
+  public async execLine(text: string) {
     console.log(`try to execute - ${text}`)
     if (text.includes("=")) {
       let [key, value] = text.split("=")
@@ -254,28 +258,77 @@ class Setting extends AddonModule {
         // find all doi
         const host = "https://doi.org/"
         this.historyNode.querySelectorAll(".line").forEach(e=>e.remove())
-        reader._iframeWindow.document.querySelectorAll(`a[href^='${host}']`).forEach(async node=>{
+        let DOISet = new Set()
+        reader._iframeWindow.document.querySelectorAll(`a[href^='${host}']`).forEach(node=>{
           let DOI = node.getAttribute("href").replace(host, "")
-          let text = (await this.getDOIInfo(DOI))
-          if (!text) { return } 
+          let res = DOI.match(this.DOIRegex)
+          if (res.length == 0) return
+          DOISet.add(res[0])
+        })
+        let DOINum = [...DOISet].length
+        let lineNodes = {};
+        ([...DOISet]).forEach(async ( DOI: string, i: number)=>{
+          let text = await this.getDOIInfo(DOI)
+          if (!text) { text = DOI } 
           let lineNode = this.createElement("li")
           lineNode.setAttribute("class", "line")
           lineNode.setAttribute("data", DOI)
-          lineNode.innerText = text
-          this.historyNode.appendChild(lineNode)
+          lineNode.innerText = `[${i+1}] ` + text
+          lineNodes[i] = lineNode
         })
         // view in historyNode
         console.log("clear the line in historyNode, prepare for references...")
-        this.inputMessage("Searching, please wait for me...", 0)
-        this.inputMessage("Please enter the search text, i.e., Polygon 2022", 0, 1)
+        this.inputMessage("Searching, please wait for me...", NaN)
         let id = this.window.setInterval(() => {
-          if (this.historyNode.querySelectorAll(".line").length==0) return
-          this.window.clearInterval(id)
-          this.historyNode.style.display = ""
+          let loadNum = Object.keys(lineNodes).length
+          if (loadNum<DOINum) {
+            this.inputMessage(`Loading ${loadNum}/${DOINum}...`, NaN, 1)
+            return 
+          }
+          this.inputMessage(`Finished`, NaN, 1)
           this.historyNode.classList.add("/reference")
-          this.selectLastLineNode()
+          this.historyNode.style.display = ""
+          for (let i=0;i<DOINum;i++) {
+            if (DOINum - i >= this.maxTotalLineNum) {
+              lineNodes[i].style.display = "none"
+            }
+            this.historyNode.appendChild(lineNodes[i])
+          }
+          this.inputMessage("Please enter the search text, i.e., Polygon 2022", NaN, 2)
+          this.window.clearInterval(id)
         }, 1e3)
       }
+      return false
+    } else if (this.DOIRegex.test(text)) {
+      let DOI = text
+      var translate = new this.Zotero.Translate.Search();
+			translate.setIdentifier({"DOI": DOI});
+
+			let translators = await translate.getTranslators();
+			translate.setTranslator(translators);
+			try {
+        let libraryID = this.window.ZoteroPane.getSelectedLibraryID();
+				let collection = this.window.ZoteroPane.getSelectedCollection();
+				let collections = collection ? [collection.id] : false;
+				let refItem = (await translate.translate({
+					libraryID,
+					collections,
+					saveAttachments: true
+				}))[0];
+        console.log(refItem)
+        // addRelatedItem
+        let reader = this.Zotero.ZoteroStyle.events.getReader()
+        let item = this.Zotero.Items.get(reader.itemID).parentItem
+        console.log("item.addRelatedItem(refItem)")
+        item.addRelatedItem(refItem)
+        console.log("refItem.addRelatedItem(item)")
+        refItem.addRelatedItem(item)
+			} catch (e) {
+				console.log(e);
+			}
+      this.inputNode.value = ""
+      this.inputMessage("Success, please open this paper in ther RelatedItem view", NaN)
+      return false
     } else if (this.getValue(text)) {
       let v = this.getValue(text)
       console.log(`Prefs return - ${v}`)
@@ -289,118 +342,127 @@ class Setting extends AddonModule {
   
   public setEvent() {
     this.settingNode.addEventListener("keyup", async (event) => {
-        if (event.key=="ArrowUp") {
-            // 如果没显示history
-            if (this.historyNode.style.display=="none") {
-              let lastLine = this.historyNode.querySelector(".line:last-child")
-              if (lastLine) {
-                // 让他显示，并默认选择第一个
-                this.historyNode.style.display = ""
-                this.historyNode.querySelectorAll(".line").forEach(line=>line.removeAttribute("selected"))
-                lastLine.setAttribute("selected", "")
-                return 
-              } else {
-                this.inputMessage("settingHistory is empty")
-              }
-            }
-        } else if (event.key=="Enter") {
-            // 回车则获取当前selected，填入input
-            if (this.historyNode.style.display != "none" && this.inputNode.value.trim() == "") {
-              // line -> input
-              let selectedLine = this.historyNode.querySelector(".line[selected]")
-              let text
-              if (selectedLine.hasAttribute("data")) {
-                text = selectedLine.getAttribute("data")
-              } else {
-                text = selectedLine.innerText
-              }
-              this.inputNode.value = text
-              // 并且收起historyNode
-              this.historyNode.style.display = "none"
+      if (event.key=="ArrowUp") {
+          // 如果没显示history
+          if (this.historyNode.style.display=="none") {
+            let lastLine = this.historyNode.querySelector(".line:last-child")
+            if (lastLine) {
+              // 让他显示，并默认选择第一个
+              this.historyNode.style.display = ""
+              console.log("select the first")
+              this.historyNode.querySelectorAll(".line").forEach(line=>line.removeAttribute("selected"))
+              lastLine.setAttribute("selected", "")
             } else {
-              // input -> line
-              if ((await this.appendLine(this.inputNode.value))) {
-                this.historyNode.style.display = ""
-              }
+              this.inputMessage("settingHistory is empty")
             }
-        } else if (event.key=="Escape") {
+          }
+      } else if (event.key=="Enter") {
+          // 回车则获取当前selected，填入input
+          if (this.historyNode.style.display != "none" && this.inputNode.value.trim() == "") {
+            // line -> input
+            let selectedLine = this.historyNode.querySelector(".line[selected]")
+            let text
+            if (selectedLine.hasAttribute("data")) {
+              text = selectedLine.getAttribute("data")
+            } else {
+              text = selectedLine.innerText
+            }
+            this.inputNode.value = text
+            // 并且收起historyNode
+            this.historyNode.style.display = "none"
+          } else {
+            // input -> line
+            if ((await this.appendLine(this.inputNode.value))) {
+              this.historyNode.style.display = ""
+            }
+          }
+      } else if (event.key=="Escape") {
+        if (this.historyNode.classList.length > 1) {
+          this.historyNode.classList.remove([...this.historyNode.classList].slice(-1)[0])
+          console.log()
+        } else {
+          this.History.render()
           if (this.historyNode.style.display != "none") {
             this.historyNode.style.display = "none"
           } else {
             this.settingNode.style.display = "none"
           }
-        } else if (event.key=="Delete") {
-          if (this.historyNode.style.display != "none") {
-            // 删除选中
-            let lines = this.historyNode.querySelectorAll(".line")
-            for (let i=0;i<lines.length;i++) {
-              if (lines[i].hasAttribute("selected")) {
-                lines[i].remove()
-                this.History.remove(lines[i].innerText)
-                lines[i+1<lines.length ? i+1 : (lines.length-1 == i ? 0 : lines.length-1)].setAttribute("selected", "")
-                // 删除后没有line
-                if (this.historyNode.childNodes.length == 0) {
-                  this.settingNode.style.display = "none"
-                }
-                break
+        }
+      } else if (event.key=="Delete") {
+        if (this.historyNode.style.display != "none") {
+          // 删除选中
+          let lines = this.historyNode.querySelectorAll(".line")
+          for (let i=0;i<lines.length;i++) {
+            if (lines[i].hasAttribute("selected")) {
+              lines[i].remove()
+              this.History.remove(lines[i].innerText)
+              lines[i+1<lines.length ? i+1 : (lines.length-1 == i ? 0 : lines.length-1)].setAttribute("selected", "")
+              // 删除后没有line
+              if (this.historyNode.childNodes.length == 0) {
+                this.settingNode.style.display = "none"
               }
+              break
             }
           }
         }
-        // arrow up down, select 
-        if (["ArrowUp", "ArrowDown"].indexOf(event.key) != -1) {
-            let lineNodes
-            if (this.historyNode.classList.contains("search-result")) {
-              lineNodes = [...this.historyNode.querySelectorAll(".line")]
-                .filter(e=>e.style.display != "none")
-              if (!this.historyNode.querySelector(".line[selected]")) {
-                  // select the first
-                  lineNodes.slice(-1)[0].setAttribute("selected", "")
-                  return
+      }
+      // arrow up down, select 
+      if (["ArrowUp", "ArrowDown"].indexOf(event.key) != -1) {
+          let lineNodes = [...this.historyNode.querySelectorAll(".line")]
+          if (this.historyNode.classList.contains("search-result")) {
+            // select in the search results
+            console.log("select in the search results")
+            lineNodes = lineNodes.filter(e=>e.style.display != "none")
+          }
+          if (!this.historyNode.querySelector(".line[selected]")) {
+            // select the first
+            console.log("select the first, return")
+            lineNodes.slice(-1)[0].setAttribute("selected", "")
+            return
+          }
+          let totalLineNum = lineNodes.length
+          for (let i=0;i<lineNodes.length;i++) {
+            if (lineNodes[i].hasAttribute("selected")) {
+              lineNodes[i].removeAttribute("selected")
+              if (event.key=="ArrowUp") {
+                  i -= 1
+              } else if (event.key=="ArrowDown") {
+                  i += 1
+              }
+              if (i==-1) {
+                  i = lineNodes.length - 1
+              }
+              if (i==lineNodes.length) {
+                  i = 0
+              }
+              lineNodes[i].setAttribute("selected", "")
+              if (this.historyNode.classList.contains("search-result")) { 
+                break 
+              }
+              const half = parseInt(String(this.maxTotalLineNum / 2))
+              console.log(half)
+              for (let j=0;j<totalLineNum;j++) {
+                if (
+                  (j > i ? j - i : i - j) <= half || 
+                  (i <= this.maxTotalLineNum && j <= this.maxTotalLineNum) || 
+                  (totalLineNum - i <= this.maxTotalLineNum && totalLineNum - j <= this.maxTotalLineNum)
+                ) {
+                  lineNodes[j].style.display = ""
+                } else {
+                  lineNodes[j].style.display = "none"
                 }
-            } else {
-              lineNodes = this.historyNode.childNodes
+              }
+              break
             }
-            let lineNodeNum = lineNodes.length
-            for (let i=0;i<lineNodes.length;i++){
-                if (lineNodes[i].hasAttribute("selected")) {
-                  lineNodes[i].removeAttribute("selected")
-                    if (event.key=="ArrowUp") {
-                        i -= 1
-                    } else if (event.key=="ArrowDown") {
-                        i += 1
-                    }
-                    if (i==-1) {
-                        i = lineNodes.length - 1
-                    }
-                    if (i==lineNodes.length) {
-                        i = 0
-                    }
-                    lineNodes[i].setAttribute("selected", "")
-                    if (this.historyNode.classList.contains("search-result")) { break }
-                    const half = this.maxlineNodeNum / 2
-                    for (let j=0;j<lineNodeNum;j++) {
-                      if (
-                        (j > i ? j - i : i - j) <= half || 
-                        (i <= this.maxlineNodeNum && j <= this.maxlineNodeNum) || 
-                        (lineNodeNum - i <= this.maxlineNodeNum && lineNodeNum - j <= this.maxlineNodeNum)
-                      ) {
-                        lineNodes[j].style.display = ""
-                      } else {
-                        lineNodes[j].style.display = "none"
-                      }
-                      lineNodes[j].removeAttribute("selected")
-                    }
-                    break
-                }
-            }
-        }
+          }
+      }
     })
   }
 
   public selectLastLineNode() {
     this.historyNode.querySelectorAll(".line").forEach(e=>e.removeAttribute("selected"))
     this.historyNode.querySelector(".line:last-child").setAttribute("selected", "")
+    console.log(this.historyNode.querySelector(".line:last-child"))
   }
 
   public renderArray(arr) {
@@ -411,26 +473,26 @@ class Setting extends AddonModule {
       this.historyNode.appendChild(lineNode)
     })
     let lineNodes = this.historyNode.childNodes
-    let lineNodeNum = lineNodes.length
-    if (lineNodeNum > this.maxlineNodeNum) {
-      for (let i=0;i<lineNodeNum-this.maxlineNodeNum;i++) {
+    let totalLineNum = lineNodes.length
+    if (totalLineNum > this.maxTotalLineNum) {
+      for (let i=0;i<totalLineNum-this.maxTotalLineNum;i++) {
         lineNodes[i].style.display = "none"
       }
     }
   }
 
   public inputMessage(msg, persist: number = 1, latency: number = 0) {
+    console.log(msg, persist, latency)
     this.window.setTimeout(() => {
       if (this.settingNode.style.display == "none") {
         this.settingNode.style.display = ""
       }
       this.inputNode.value = ""
       this.inputNode.setAttribute("placeholder", msg)
-      if (persist) {
-        this.window.setTimeout(()=>{
-          this.inputNode.setAttribute("placeholder", this.tipText)
-        }, persist * 1e3)
-      }
+      if (isNaN(persist)) { return }
+      this.window.setTimeout(()=>{
+        this.inputNode.setAttribute("placeholder", this.tipText)
+      }, persist * 1e3)
     }, latency * 1e3)
   }
 
@@ -473,25 +535,25 @@ class Setting extends AddonModule {
     if (Object.keys(this.DOIData).indexOf(DOI) != -1) { 
       data = this.DOIData[DOI]["title"] 
     } else {
-      const unpaywall = `https://api.unpaywall.org/v2/${DOI}?email=zoterostyle@polygon.org`
-      let res = await this.Zotero.HTTP.request(
-        "GET",
-        unpaywall,
-        {
-          responseType: "json"
-        }
-      )
-      data = res.response
-      this.DOIData[DOI] = data
-    }
-    try {
-      let family = data.z_authors[0]["family"]
-      let year = data.year
-      let title = data.title
-      console.log(`${family} et al., ${year} ${title}`)
-      return `${family} et al., ${year}. ${title}`
-    } catch {
-      return false
+      try {
+        const unpaywall = `https://api.unpaywall.org/v2/${DOI}?email=zoterostyle@polygon.org`
+        let res = await this.Zotero.HTTP.request(
+          "GET",
+          unpaywall,
+          {
+            responseType: "json"
+          }
+        )
+        data = res.response
+        this.DOIData[DOI] = data
+        let family = data.z_authors[0]["family"]
+        let year = data.year
+        let title = data.title
+        // console.log(`${family} et al., ${year} ${title}`)
+        return `${family} et al., ${year}. ${title}`
+      } catch {
+        return false
+      }
     }
   }
 

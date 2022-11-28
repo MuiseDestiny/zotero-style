@@ -417,7 +417,7 @@ class AddonEvents extends AddonModule {
     const reader = this.getReader();
     // Zotero deactivate is ignored too
     if (!(reader && reader.state && this.state.activate)) return;
-    console.log("is reading")
+    // console.log("is reading")
     // is reading
     // hang up ? reference to Chartero.js
     const pageIndex = reader.state.pageIndex;
@@ -441,7 +441,7 @@ class AddonEvents extends AddonModule {
     const title = this.Zotero.Items.get(reader.itemID).parentItem._displayTitle;
 
     // get local record
-    console.log("saving");
+    // console.log("saving");
     const recordKey = `Zotero.ZoteroStyle.record`;
     let record = JSON.parse(this.Zotero.Prefs.get(recordKey) || "{}");
     if (!record[title]) record[title] = {}
