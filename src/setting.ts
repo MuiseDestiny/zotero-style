@@ -300,16 +300,20 @@ class Setting extends AddonModule {
         refData.forEach(async (data: any, i: number) => {
           let lineNode = this.createElement("li")
           lineNode.setAttribute("class", "line")
-          const DOI = data.DOI
-          lineNode.setAttribute("data", DOI)
-          // DOI is needed
-          // maybe this 
-          let titleName = Object.keys(data).filter(key=>key.includes("title"))[0]
+          
+          let titleName = "article-title"
           let title = data[titleName]
           let year = data.year
           let author = data.author
-          lineNode.innerText = `[${i+1}] ${author} et al., ${year}. ${title}`
-          if (!(title && year && author)) {
+
+          // DOI is needed
+          const DOI = data.DOI
+          lineNode.setAttribute("data", DOI)
+          if (!DOI) {
+            lineNode.setAttribute("data", title)
+          }
+          this.historyNode.appendChild(lineNode) 
+          if (!(title && year && author) && DOI) {
             // update DOIInfo by unpaywall
             let _data = await this.getDOIInfo(DOI)
             console.log(_data)
@@ -320,7 +324,6 @@ class Setting extends AddonModule {
           }
           lineNode.innerText = `[${i+1}] ${author} et al., ${year}. ${title}`
           lineNode.style.display = refData.length - i > this.maxTotalLineNum ? "none" : ""
-          this.historyNode.appendChild(lineNode) 
         })
         this.inputMessage("Please enter the search text, i.e., Polygon 2022", 1)
         return false
@@ -331,6 +334,7 @@ class Setting extends AddonModule {
           ).wrappedJSObject;
           ${text};
         `)
+        this.inputMessage("Success", 1)
         return false
       }
     } else if (this.DOIRegex.test(text)) {
@@ -378,9 +382,7 @@ class Setting extends AddonModule {
 
   public setEvent() {
     this.settingNode.addEventListener("keyup", async (event) => {
-      event.preventDefault();
       let key = event.key
-      console.log(event)
       if (key=="ArrowUp") {
         // 如果没显示history
         if (this.historyNode.style.display == "none") {
@@ -435,9 +437,7 @@ class Setting extends AddonModule {
             this.settingNode.style.display = "none"
             this.inputNode.blur()
           }
-          this.inputMessage("", 0, 0)
-        }
-        
+        } 
       } else if (key=="Delete") {
         if (this.historyNode.style.display != "none") {
           // 删除选中
@@ -527,7 +527,6 @@ class Setting extends AddonModule {
       //           |
       // i.e, /ref|erence
       // erence is the completed content
-      console.log(key)
       if (key == ".") { return }
       // generate keywords
       let keywordSet = new Set();
@@ -546,10 +545,8 @@ class Setting extends AddonModule {
       if (bestKeywords.length == 0) { return } 
       let suggestion = bestKeywords[0] as string 
       // select
-      console.log(suggestion)
       this.inputNode.setAttribute("suggestion", suggestion)
       // let range = this.window.createRang()
-
     })
   }
 
