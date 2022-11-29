@@ -1,5 +1,5 @@
 # Zotero Style
-
+> 致力于让Zotero有趣，
 [介绍视频](https://www.bilibili.com/video/BV1PK411o7JN/?share_source=copy_web&vd_source=7b57a26bb78f6cbbfdf8bff111682fa3)
 
 ![](https://spr1ng.live/file/8880fce2ffe1b5ead0cd1.png)
@@ -108,6 +108,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 
 > 6的图示
 ![](https://spr1ng.live/file/b7eaf4c526d5109558a9b.png)
+
 🙌建议配合`Zotero Tag`&`Chartero`使用
 
 ## 安装方法
@@ -115,13 +116,13 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 如果已有ZoteroStyle更新最新版本，请卸载旧版本，重启Zotero后安装新版本
 
 ## 修复BUG
-1.2.2 - tagSize返回0或者NaN导致宽度为0，所以不显示标签 -
+1.2.2 - tagSize返回0或者NaN导致宽度为0，所以不显示标签
 
 ## TODO
-- [ ] 阅读PDF时，悬停参考文献点击即可快速添加到Zotero
+- [x] 阅读PDF时，悬停参考文献点击即可快速添加到Zotero
 - [ ] 分区影响因子更美观的展示，现有插件是将这些信息写入条目的某些字段下
 - [x] 为插件添加设置界面，比如`颜色设置`，`最大化标题保留字段设置`...
-- [ ] 标签指派颜色替换为更好看的颜色或者自定义
+- [x] 标签指派颜色替换为更好看的颜色或者自定义
 - [ ] pdf标注颜色替换或自定义
 - [ ] 阅读进度数据同步至Notion，与Notion联动，我特别喜欢它的Timeline
 - [ ] 期待你提出的建议🌸
