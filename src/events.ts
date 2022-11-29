@@ -72,10 +72,6 @@ class AddonEvents extends AddonModule {
       "getMainWindow().ZoteroPane.itemsView._renderCell", 
       this.modifyRenderCell
     )
-    this.hookZoteroFunction(
-      "getMainWindow().ZoteroPane.itemsView.getColumns", 
-      this.modifyGetColumns
-    )
     
     // setting 
     this.setting = new Setting(AddonModule)
@@ -94,9 +90,9 @@ class AddonEvents extends AddonModule {
       },
       false
     );
-
+    
     // listen to Zotero's state
-    if (!this.Zotero.Chartero) {
+    if (!this.Zotero.Prefs.get("chartero.dataKey")) {
       this.window.addEventListener('activate', () => {
         this.state.activate = true
         // once Zotero is activated again, it will continue to record read time
@@ -232,7 +228,7 @@ class AddonEvents extends AddonModule {
         border-radius: 50%;
       }
       #zotero-items-tree .cell.primary .tag-swatch{
-        position: absolute;
+        ${tagPosition > 0 ? "position: absolute;" : ""}
         font-size: 1em;
         bottom: 0;
       }
@@ -241,7 +237,7 @@ class AddonEvents extends AddonModule {
       }
       .zotero-style-progress {
         position: absolute;
-        left: ${tagPosition == 4 ? 3.25 : 3.25 + tagSize}em !important;
+        left: ${[0, 4].indexOf(tagPosition) != -1 ? 3.25 : 3.25 + tagSize}em !important;
         top: 0;
         width: calc(100% - 3.5em - ${tagSize}em) !important;
         height: 100%;
@@ -292,38 +288,41 @@ class AddonEvents extends AddonModule {
     let document = Zotero.getMainWindow().document
     let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
     // render the tag
-    if (primaryCell.querySelector(".tag-box")) return 
-    let tagBoxNode = createElement("span")
-    tagBoxNode.setAttribute("class", "tag-box")
-    // special algin between font and span
     let obj = Zotero.ZoteroStyle.events
-    let tagAlign = obj.getValue("Zotero.ZoteroStyle.tagAlign", obj.tagAlign)
-    primaryCell.querySelectorAll(".tag-swatch").forEach((tagNode: any, i: number) => {
-      let delta = 0
-      if (tagNode.style.backgroundColor.includes("rgb")) {
-        tagNode.classList.add("zotero-tag")
-        delta = .25
-        // change its color
-      }
-      tagNode.style[tagAlign] = `${i*1.25+delta}em`
-      tagBoxNode.appendChild(tagNode)
-    })
     let tagPosition = obj.getValue("Zotero.ZoteroStyle.tagPosition", obj.tagPosition)
-    switch (tagPosition) {
-      case 4:
-        primaryCell.appendChild(tagBoxNode)
-        break
-      case 3:
-        primaryCell.insertBefore(tagBoxNode, primaryCell.childNodes[2])
-        break
-      case 2:
-        primaryCell.insertBefore(tagBoxNode, primaryCell.childNodes[1])
-        break
-      case 1:
-          primaryCell.insertBefore(tagBoxNode, primaryCell.childNodes[0])
+    if (tagPosition > 0) {
+      let tagBoxNode = createElement("span")
+      tagBoxNode.setAttribute("class", "tag-box")
+      // special algin between font and span
+      
+      let tagAlign = obj.getValue("Zotero.ZoteroStyle.tagAlign", obj.tagAlign)
+      primaryCell.querySelectorAll(".tag-swatch").forEach((tagNode: any, i: number) => {
+        let delta = 0
+        if (tagNode.style.backgroundColor.includes("rgb")) {
+          tagNode.classList.add("zotero-tag")
+          delta = .25
+          // change its color
+        }
+        tagNode.style[tagAlign] = `${i*1.25+delta}em`
+        tagBoxNode.appendChild(tagNode)
+      })
+      
+      switch (tagPosition) {
+        case 4:
+          primaryCell.appendChild(tagBoxNode)
           break
-      default:
-        console.log(`Not Support tagPosition=${tagPosition}`)
+        case 3:
+          primaryCell.insertBefore(tagBoxNode, primaryCell.childNodes[2])
+          break
+        case 2:
+          primaryCell.insertBefore(tagBoxNode, primaryCell.childNodes[1])
+          break
+        case 1:
+            primaryCell.insertBefore(tagBoxNode, primaryCell.childNodes[0])
+            break
+        default:
+          console.log(`Not Support tagPosition=${tagPosition}`)
+      }
     }
     if (Zotero.Chartero || primaryCell.querySelector(".zotero-style-progress")) {
       return primaryCell
@@ -402,10 +401,6 @@ class AddonEvents extends AddonModule {
     return cell
   }
 
-  private modifyGetColumns(columns: any[], args: any[], Zotero: any) {
-    return columns
-  }
-
   private getReader(): any {
     return this.Zotero.Reader.getByTabID(((this.window as any).Zotero_Tabs as typeof Zotero_Tabs).selectedID);
   }
@@ -424,7 +419,7 @@ class AddonEvents extends AddonModule {
     if (!(reader && reader.state && this.state.activate)) return;
     // console.log("is reading")
     // is reading
-    // hang up ? reference to Chartero.js
+    // hang up ?
     const pageIndex = reader.state.pageIndex;
     if (pageIndex == this.state.pageIndex) {
         if (reader.state.left == this.state.left && reader.state.top == this.state.top)
