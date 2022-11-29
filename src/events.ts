@@ -231,6 +231,7 @@ class AddonEvents extends AddonModule {
         ${tagPosition > 0 ? "position: absolute;" : ""}
         font-size: 1em;
         bottom: 0;
+        z-index: 999;
       }
       .zotero-style-progress[visible=false] {
         opacity: 0 !important;
@@ -287,6 +288,18 @@ class AddonEvents extends AddonModule {
     // 2693     _renderPrimaryCell(index, data, column)
     let document = Zotero.getMainWindow().document
     let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
+    let getEmojLength = (emoj) => {
+      let encodeEmoj = encodeURIComponent(emoj)
+      let emojLength = emoj.length
+      let encodeEmojSet = new Set()
+      const step = encodeEmoj.length / emojLength
+      for (let i=0;i<emojLength;i++) {
+        encodeEmojSet.add(encodeEmoj.slice(i*step, i*step+step))
+      }
+      if ([...encodeEmojSet].length == 1) { return emojLength }
+      emojLength = encodeEmoj.match(new RegExp([...encodeEmojSet].join(""), "g")).length
+      return emojLength
+    }
     // render the tag
     let obj = Zotero.ZoteroStyle.events
     let tagPosition = obj.getValue("Zotero.ZoteroStyle.tagPosition", obj.tagPosition)
@@ -294,17 +307,25 @@ class AddonEvents extends AddonModule {
       let tagBoxNode = createElement("span")
       tagBoxNode.setAttribute("class", "tag-box")
       // special algin between font and span
-      
       let tagAlign = obj.getValue("Zotero.ZoteroStyle.tagAlign", obj.tagAlign)
-      primaryCell.querySelectorAll(".tag-swatch").forEach((tagNode: any, i: number) => {
+      let preTagNum = 0
+      primaryCell.querySelectorAll(".tag-swatch").forEach((tagNode: any) => {
         let delta = 0
         if (tagNode.style.backgroundColor.includes("rgb")) {
           tagNode.classList.add("zotero-tag")
           delta = .25
           // change its color
         }
-        tagNode.style[tagAlign] = `${i*1.25+delta}em`
+        // tagNode.style[tagAlign] = `${preTagNum*1.25+delta}em`
+        tagNode.style[tagAlign] = `${preTagNum*1.375+delta}em`
         tagBoxNode.appendChild(tagNode)
+        preTagNum += 1
+        // length compute, because "🌸".length = 2
+        let emojLength = getEmojLength(tagNode.innerText)
+        console.log(tagNode.innerText, emojLength)
+        if (emojLength > 1) {
+          preTagNum += (emojLength - 1)
+        }
       })
       
       switch (tagPosition) {
