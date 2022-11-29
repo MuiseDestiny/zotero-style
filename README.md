@@ -54,7 +54,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 | Zotero.ZoteroStyle.progressColor | '#F06292' | 设置进度条颜色,注意引号,配色网站<https://colorhunt.co/> |
 | Zotero.ZoteroStyle.progressOpacity | 0.5 | 设置进度条透明度,0~1 |
 | Zotero.ZoteroStyle.tagSize | 8 | 设置标签宽度,单位em | 
-| Zotero.ZoteroStyle.tagPosition | 4 | 1,2,3,4 |
+| Zotero.ZoteroStyle.tagPosition | 4 | 0,1,2,3,4（0就是Zotero不安装插件时候标签在的位置） |
 | Zotero.ZoteroStyle.tagAlign | left | left,right |
 | Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |
 | /reference | 无 | 在阅读PDF界面使用，不离开Zotero软件就能导入参考文献 | 
