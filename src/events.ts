@@ -13,7 +13,7 @@ class AddonEvents extends AddonModule {
   public intervalID: number;
   public _hookFunction = {};
   public tagSize = 5;  // em
-  public tagPosition = 3; 
+  public tagPosition = 4; 
   public tagAlign = "left";  // em
   public progressOpacity = .7;
   public progressColor = "#5AC1BD";

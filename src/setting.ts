@@ -22,7 +22,7 @@ class Setting extends AddonModule {
     permanentSettingHistory: [
       "Zotero.ZoteroStyle.progressOpacity=.7",
       "Zotero.ZoteroStyle.tagSize=5",
-      "Zotero.ZoteroStyle.tagPosition=3",
+      "Zotero.ZoteroStyle.tagPosition=4",
       "Zotero.ZoteroStyle.tagAlign=left",
       "Zotero.ZoteroStyle.progressColor=#5AC1BD",
       "Zotero.ZoteroStyle.constantFields=['hasAttachment', 'title']",
@@ -31,11 +31,12 @@ class Setting extends AddonModule {
       `/search`
     ],
     render() {
-      let allText = this.readAll()
+      let allText = this.readAll(true)
       this.historyNode.querySelectorAll(".line").forEach(e=>{
         let innerText = e.innerText
         if (allText.includes(innerText)) {
           allText = allText.filter(text=>text!=innerText)
+          e.removeAttribute("selected")
         } else {
           e.remove()
         }
@@ -50,13 +51,14 @@ class Setting extends AddonModule {
       this.setValue(this.k, arr) 
       console.log('after', this.readAll())
     },
-    readAll() {
+    readAll(supplement: boolean = false) {
       let textArray =  this.getValue(this.k, this.permanentSettingHistory)
-      let supplementArray = this.permanentSettingHistory.filter(text=>{
-        return textArray.filter(_text=>_text.includes(text.split("=")[0])).length == 0
-      })
-      textArray = [...supplementArray, ...textArray]
-      console.log(textArray)
+      if (supplement) {
+        let supplementArray = this.permanentSettingHistory.filter(text=>{
+          return textArray.filter(_text=>_text.includes(text.split("=")[0])).length == 0
+        })
+        textArray = [...textArray, ...supplementArray]
+      }
       return textArray
     },
     remove(text) {
@@ -67,10 +69,9 @@ class Setting extends AddonModule {
     },
     removeStartsWith(text) {
       console.log(`removeStartsWith - ${text} `)
-      console.log('before', this.readAll())
+      console.log(JSON.stringify(this.readAll()))
       this.setValue(this.k, this.readAll().filter(_text=>!_text.startsWith(text)))
-      console.log('after', this.readAll())
-
+      console.log(JSON.stringify(this.readAll()))
     }
   }
 
@@ -234,10 +235,14 @@ class Setting extends AddonModule {
   public async appendLine(text: string) {
     // search
     console.log(this.historyNode.classList)
+    // high level command
     if (text.startsWith("/search")) {
       return this.searchLine(text.replace("/search", ""))
     }
+
+    // other command
     if (!(await this.execLine(text))) { return false }
+    
     if (text.includes("=")) {
       this.History.removeStartsWith(text.split("=")[0].trim())
     } else {
@@ -246,6 +251,8 @@ class Setting extends AddonModule {
     this.History.push(text)
     console.log("----", this.History.readAll())
     this.History.render()
+    // select the last node
+    this.historyNode.querySelector(".line:last-child").setAttribute("selected", "")
     // this.selectLastLineNode()
     return true
   }
@@ -259,7 +266,7 @@ class Setting extends AddonModule {
       console.log(`execute - setValue(${key}, ${value})`)
       this.Zotero.ZoteroStyle.events.refresh()
       this.inputNode.value = ""
-      this.inputMessage("Refresh", 2)
+      this.inputMessage("Refresh", 0, 1)
       this.inputMessage("Finished", 1, 1)
       return true
     } else if (text.startsWith("/")) {
@@ -291,14 +298,30 @@ class Setting extends AddonModule {
         this.historyNode.querySelectorAll(".line").forEach(e=>e.remove())
         this.inputMessage(`Get ${refData.length} references`)
         // add line
-        refData.forEach((data: any, i: number) => {
+        refData.forEach(async (data: any, i: number) => {
           let lineNode = this.createElement("li")
           lineNode.setAttribute("class", "line")
-          lineNode.setAttribute("data", data.DOI)
+          const DOI = data.DOI
+          lineNode.setAttribute("data", DOI)
+          // DOI is needed
+          // maybe this 
           let titleName = Object.keys(data).filter(key=>key.includes("title"))[0]
-          lineNode.innerText = `[${i+1}] ${data.author} et al., ${data.year}. ${data[titleName]}`
+          let title = data[titleName]
+          let year = data.year
+          let author = data.author
+          lineNode.innerText = `[${i+1}] ${author} et al., ${year}. ${title}`
+          if (!(title && year && author)) {
+            // update DOIInfo by unpaywall
+            let _data = await this.getDOIInfo(DOI)
+            console.log(_data)
+            author = _data.z_authors[0]["family"]
+            year = _data.year
+            title = _data.title
+            this.inputMessage("Request missing information from unpaywall...", 0, 1)
+          }
+          lineNode.innerText = `[${i+1}] ${author} et al., ${year}. ${title}`
           lineNode.style.display = refData.length - i > this.maxTotalLineNum ? "none" : ""
-          this.historyNode.appendChild(lineNode)
+          this.historyNode.appendChild(lineNode) 
         })
         this.inputMessage("Please enter the search text, i.e., Polygon 2022", 1)
         return false
@@ -394,14 +417,14 @@ class Setting extends AddonModule {
           }
         }
       } else if (key=="Escape") {
-        if (this.historyNode.classList.length > 2) {
-          this.historyNode.classList.remove([...this.historyNode.classList].slice(-1)[0])
+        let classList = [...this.historyNode.classList]
+        let lastClassName = [...classList].slice(-1)[0]
+        if (classList.length > 1) {
+          this.historyNode.classList.remove(lastClassName)
           this.inputNode.focus()
+          if (classList.length == 2) { this.History.render() }
+          this.inputMessage(`Exit ${lastClassName}...`, 0, 1)
           key = "ArrowUp"
-        } else if (this.historyNode.classList.length == 2) {
-          this.historyNode.classList.remove([...this.historyNode.classList].slice(-1)[0])
-          this.inputNode.focus()
-          this.History.render()
         } else {
           this.History.render()
           if (this.historyNode.style.display != "none") {
@@ -411,7 +434,9 @@ class Setting extends AddonModule {
             this.settingNode.style.display = "none"
             this.inputNode.blur()
           }
+          this.inputMessage("", 0, 0)
         }
+        
         
       } else if (key=="Delete") {
         if (this.historyNode.style.display != "none") {
@@ -601,7 +626,7 @@ class Setting extends AddonModule {
   public async getDOIInfo(DOI: string) {
     let data
     if (Object.keys(this.DOIData).indexOf(DOI) != -1) { 
-      data = this.DOIData[DOI]["title"] 
+      data = this.DOIData[DOI]
     } else {
       try {
         const unpaywall = `https://api.unpaywall.org/v2/${DOI}?email=zoterostyle@polygon.org`
@@ -614,15 +639,11 @@ class Setting extends AddonModule {
         )
         data = res.response
         this.DOIData[DOI] = data
-        let family = data.z_authors[0]["family"]
-        let year = data.year
-        let title = data.title
-        // console.log(`${family} et al., ${year} ${title}`)
-        return `${family} et al., ${year}. ${title}`
       } catch {
         return false
       }
     }
+    return data
   }
 
   public createElement(name) {
