@@ -322,7 +322,6 @@ class AddonEvents extends AddonModule {
         preTagNum += 1
         // length compute, because "🌸".length = 2
         let emojLength = getEmojLength(tagNode.innerText)
-        console.log(tagNode.innerText, emojLength)
         if (emojLength > 1) {
           preTagNum += (emojLength - 1)
         }
