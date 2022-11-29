@@ -253,7 +253,6 @@ class Setting extends AddonModule {
     this.History.render()
     // select the last node
     this.historyNode.querySelector(".line:last-child").setAttribute("selected", "")
-    // this.selectLastLineNode()
     return true
   }
 
@@ -372,14 +371,16 @@ class Setting extends AddonModule {
       this.inputNode.value = v
       return true
     } else {
-      this.inputMessage(`Not Support: ${text}`)
+      this.inputMessage(`Not Support: ${text}`, 0, 1)
       return false
     }
   }
 
   public setEvent() {
     this.settingNode.addEventListener("keyup", async (event) => {
+      event.preventDefault();
       let key = event.key
+      console.log(event)
       if (key=="ArrowUp") {
         // 如果没显示history
         if (this.historyNode.style.display == "none") {
@@ -437,7 +438,6 @@ class Setting extends AddonModule {
           this.inputMessage("", 0, 0)
         }
         
-        
       } else if (key=="Delete") {
         if (this.historyNode.style.display != "none") {
           // 删除选中
@@ -455,6 +455,13 @@ class Setting extends AddonModule {
             }
           }
         }
+      } else if (key=="ArrowRight") {
+        let text = this.inputNode.value
+        let suggestion = this.inputNode.getAttribute("suggestion")
+        if (suggestion) {
+          this.inputNode.value = text.replace(/(\w+)$/, suggestion)
+        }
+        return 
       }
       // arrow up down, select 
       if (["ArrowUp", "ArrowDown"].indexOf(key) != -1) {
@@ -514,12 +521,36 @@ class Setting extends AddonModule {
           }
         }
       }
+
+      // other, Simple Auto-Completion
+      //         cursor
+      //           |
+      // i.e, /ref|erence
+      // erence is the completed content
+      console.log(key)
+      if (key == ".") { return }
+      // generate keywords
+      let keywordSet = new Set();
+      this.History.readAll(true).forEach(text=>{
+        text.split(/[(=]/)[0].split(/[\/\.]/)
+          .filter(e=>e)
+          .forEach(keyword=>{
+            if (keyword == "/") { return }
+            keywordSet.add(keyword)
+          })
+      });
+      let keywordArray = [...keywordSet]
+      let bestKeywords = keywordArray.filter((keyword: string)=>{
+        return keyword.startsWith(this.inputNode.value.split(/[\/\.]/).slice(-1)[0])
+      })
+      if (bestKeywords.length == 0) { return } 
+      let suggestion = bestKeywords[0] as string 
+      // select
+      console.log(suggestion)
+      this.inputNode.setAttribute("suggestion", suggestion)
+      // let range = this.window.createRang()
+
     })
-  }
-  public selectLastLineNode() {
-    this.historyNode.querySelectorAll(".line").forEach(e=>e.removeAttribute("selected"))
-    this.historyNode.querySelector(".line:last-child").setAttribute("selected", "")
-    console.log(this.historyNode.querySelector(".line:last-child"))
   }
 
   public renderArray(arr) {
