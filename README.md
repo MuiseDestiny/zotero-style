@@ -59,6 +59,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 | Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |
 | /reference | 无 | 在阅读PDF界面使用，不离开Zotero软件就能导入参考文献 | 
 | /Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1) | 在命令中 | 用于指派标签颜色和位置（随心所欲） |
+| Zotero.ZoteroStyle.gitee=URL#Token | 无 | 用于同步阅读进度数据（安装Chartero用户无需同步请忽略此条） |
 
 > Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1)对应下图，第一个1固定，第二个"tagName"是你要改变的标签， '#AAAAAA'对应下图颜色，1对应下图位置，如，假设有标签”a、b、c、d，abcd中a的位置为1，b为2...
 ![](https://spr1ng.live/file/734085f010b319cb867f4.png)
@@ -96,7 +97,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 1. 标签右对齐，标签由`圆角正方形`->`圆形`
 2. 增加`只显示标题`按钮🌸
 3. 显示阅读进度，是否划水，一看便知👋
-4. 本插件可与`Chartero`共存，若安装`Chartero`本插件将不再渲染进度条，因为这一功能我已合并到`Chartero`，而且`Chartero`支持同步数据
+4. 本插件可与`Chartero`共存，若安装`Chartero`本插件将不再渲染进度条，因为这一功能我已合并到`Chartero`，而且`Chartero`支持同步数据（仅安装Style可通过Gitee同步，配置相对繁琐）
 5. 阅读界面快速检索参考文献，一键导入并关联至当前文献 （目前实验性功能）
 6. 自定义指派标签颜色位置
 
@@ -127,7 +128,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 - [x] 为插件添加设置界面，比如`颜色设置`，`最大化标题保留字段设置`...
 - [x] 标签指派颜色替换为更好看的颜色或者自定义
 - [ ] pdf标注颜色替换或自定义
-- [ ] 阅读进度数据同步至Notion，与Notion联动，我特别喜欢它的Timeline
+- [x] 阅读进度数据同步至Notion，与Notion联动，我特别喜欢它的Timeline（过于复杂且网络不稳定，目前已实现基于gitee的同步）
 - [ ] 期待你提出的建议🌸
 
 ## 致谢

@@ -14,11 +14,11 @@ class AddonModule {
     this._Addon = parent;
   }
   
-  public setValue(k: string, v: string) {
+  public setValue(k: string, v: string | boolean) {
     var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
       Components.interfaces.nsISupports
     ).wrappedJSObject as _ZoteroConstructable;
-    if (typeof(v) != "string") {
+    if (typeof(v) != "boolean" && typeof(v) != "string") {
       v = JSON.stringify(v)
     }
     Zotero.Prefs.set(k, v)

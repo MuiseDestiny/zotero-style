@@ -14,6 +14,7 @@ class AddonSetting extends AddonModule {
   public History = {
     k: "Zotero.ZoteroStyle.settingHistory",
     permanentSettingHistory: [
+      "Zotero.ZoteroStyle.gitee=URL#Token",
       "Zotero.ZoteroStyle.progressOpacity=.7",
       "Zotero.ZoteroStyle.tagSize=5",
       "Zotero.ZoteroStyle.tagPosition=4",
@@ -271,12 +272,12 @@ class AddonSetting extends AddonModule {
           return false
         }
         // reading paper DOI
-        let itemData = this._Addon.events.getReadingItem()._itemData
-        let DOI = itemData[58]  // index 58 is the DOI
+        let item = this._Addon.events.getReadingItem()
+        let DOI = item.getField("DOI")
         if (!this.DOIRegex.test(DOI)) {
           // DOI is unvalid, get it from unpaywall
           this.inputMessage("Get DOI from Unpaywall Api...")
-          let title = itemData[8]  // index 8 is the title
+          let title = item.getField("title")
           DOI = await this.getDOIInfo(title)
         }
         this.inputMessage("Requet references from Crossref Api...")

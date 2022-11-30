@@ -1,6 +1,8 @@
 import { Addon, addonName } from "./addon";
 import AddonModule from "./module";
-import Setting from "./setting";
+import AddonSetting from "./setting";
+import Gitee from "./gitee";
+
 
 class AddonEvents extends AddonModule {
   public notifierCallback : any;
@@ -8,7 +10,9 @@ class AddonEvents extends AddonModule {
   public toolbarbutton: any;
   public style: any;
   public intervalID: number;
+  public gitee: any;
   public _hookFunction = {};
+  public record: {};
   public tagSize = 5;  // em
   public tagPosition = 4; 
   public tagAlign = "left";  // em
@@ -37,12 +41,13 @@ class AddonEvents extends AddonModule {
         ids: Array<number | string>,
         extraData: object
       ) => {
-        if (event == "open" && type == "file") {
+        if (event == "open") {
           // open a pdf
-          
+          console.log(ids, extraData)
+          await this.gitee.updateFile(JSON.stringify(this.record), "open")
         } 
-        if (event == "close" && type == "file") {
-          // close a pdf
+        if (event == "close") {
+          await this.gitee.updateFile(JSON.stringify(this.record), "close")
         }
       }
     }
@@ -68,26 +73,26 @@ class AddonEvents extends AddonModule {
     )
     
     // setting 
-    this.setting = new Setting(AddonModule)
-    this.setting._Addon = this._Addon
+    this.setting = new AddonSetting(AddonModule)
     this.setting.init()
     this.setting.settingNode.style.display = "none"
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(
       this.notifierCallback,
-      ["file"]
+      ["file", "tab", "item"]
     );
 
     this.window.addEventListener(
       "unload",
-      (e) => {
+      async (e) => {
+        await this.gitee.updateFile(JSON.stringify(this.record), "Zotero is closed")
         this.Zotero.Notifier.unregisterObserver(notifierID);
       },
       false
     );
     
-    // listen to Zotero's state
-    if (!this.Zotero.Prefs.get("chartero.dataKey")) {
+    // listen to Zotero's state if no Chartero
+    if (!this.Zotero.Chartero) {
       this.window.addEventListener('activate', () => {
         this.state.activate = true
         // once Zotero is activated again, it will continue to record read time
@@ -109,6 +114,9 @@ class AddonEvents extends AddonModule {
 
     // try refresh
     this.refresh()
+
+    // async
+    await this.prepareGitee()
   }
 
   private addSwitchButton(): void {
@@ -371,10 +379,9 @@ class AddonEvents extends AddonModule {
     primaryCell.appendChild(progressNode)
     primaryCell.querySelector(".cell-text").style.zIndex = 999
     // create sub span in this progress node
-    const recordKey = `Zotero.ZoteroStyle.record`;
-    let record = JSON.parse(Zotero.Prefs.get(recordKey) || "{}");
+    let record = this.record
     // i.e.
-    const testTitle = "Satellite remote sensing of aerosol optical depth: advances, challenges, and perspectives"
+    const testTitle = "Test Progress"
     record[testTitle] = {
         0: 60 * 3,
         1: 60 * 6,
@@ -437,6 +444,30 @@ class AddonEvents extends AddonModule {
     return cell
   }
 
+  private async prepareGitee() {
+    let giteePrefs = this.getValue("Zotero.ZoteroStyle.gitee")
+    giteePrefs = "https://gitee.com/MuiseDestiny/BiliBili/blob/master/ZoteroStyle.json#86057f3169606ea30a7a72e30c223e5c"
+    if (giteePrefs) {      
+      this.gitee = new Gitee()
+      let [url, access_token] = giteePrefs.split("#")
+      // i.e., https://gitee.com/MuiseDestiny/BiliBili/blob/master/ZoteroStyle.json
+      let [owner, repo, path] = url.match(/https:\/\/gitee.com\/(.+)\/(.+)\/blob\/master\/(.+)/).slice(1)
+      this.gitee.init(this.Zotero, access_token, owner, repo, path)
+      // local
+      let record = this.getValue("Zotero.ZoteroStyle.record", {})
+      let isUpdate = this.getValue("Zotero.ZoteroStyle.update", false)
+      console.log("isUpdate", isUpdate)
+      console.log(record)
+      if (!isUpdate) {
+        await this.gitee.updateFile(JSON.stringify(record), "first")
+        this.setValue("Zotero.ZoteroStyle.update", true)
+      }
+      // gitee -> addon
+      record = JSON.parse((await this.gitee.getContent()).content)
+      this.record = record
+    }
+  }
+
   private getReader(): any {
     return this.Zotero.Reader.getByTabID(((this.window as any).Zotero_Tabs as typeof Zotero_Tabs).selectedID);
   }
@@ -474,23 +505,17 @@ class AddonEvents extends AddonModule {
 
     // real read, record this recordInterval
     const totalPageNum = reader._iframeWindow.wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
-    const title = this.getReadingItem()._displayTitle
+    const title = this.getReadingItem().getField("title")
 
     // get local record
     // console.log("saving");
-    const recordKey = `Zotero.ZoteroStyle.record`;
-    let record = JSON.parse(this.Zotero.Prefs.get(recordKey) as string || "{}");
-    if (!record[title]) record[title] = {}
-    record[title][this.state.pageIndex] = (
-      this.isNumber(record[title][this.state.pageIndex]) 
-      ? record[title][this.state.pageIndex]
+    if (!this.record[title]) this.record[title] = {}
+    this.record[title][this.state.pageIndex] = (
+      this.isNumber(this.record[title][this.state.pageIndex]) 
+      ? this.record[title][this.state.pageIndex]
       : 0
     ) + this.recordInterval;
-    record[title]["total"] = totalPageNum;
-    this.Zotero.Prefs.set(
-      recordKey, 
-      JSON.stringify(record)
-    );
+    this.record[title]["total"] = totalPageNum;
   }
 
   private isNumber(arg: any): boolean {
