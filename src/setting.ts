@@ -1,17 +1,11 @@
 import AddonModule from "./module";
 
-class Setting extends AddonModule {
-  public Zotero: _ZoteroConstructable
-  public window: Window
-  public document: Document
-
+class AddonSetting extends AddonModule {
   public settingNode: HTMLDivElement
   public inputNode: HTMLInputElement
   public historyNode: HTMLUListElement
   public keyset: XUL.Element  
 
-  public setValue: any
-  public getValue: any
   public DOIRegex = /10\.\d{4,9}\/[-\._;\(\)\/:A-z0-9]+/
   public maxTotalLineNum = 12 // because the scroll in Zotero is too ugly
   public tipText = "Enter your command here..."
@@ -79,10 +73,7 @@ class Setting extends AddonModule {
     super(parent)
   }
 
-  public init(Zotero: _ZoteroConstructable) {
-      this.Zotero = Zotero;
-      this.window = this.Zotero.getMainWindow();
-      this.document = this.window.document;
+  public init() {
       console.log(this.History)
       Object.assign(this.History, this, 
         {
@@ -263,7 +254,7 @@ class Setting extends AddonModule {
       let [key, value] = text.split("=")
       this.setValue(key.trim(), value.trim())
       console.log(`execute - setValue(${key}, ${value})`)
-      this.Zotero.ZoteroStyle.events.refresh()
+      this._Addon.events.refresh()
       this.inputNode.value = ""
       this.inputMessage("Refresh", 0, 1)
       this.inputMessage("Finished", 1, 1)
@@ -273,14 +264,14 @@ class Setting extends AddonModule {
       // some advanced command here, TODO
       text = text.slice(1)
       if (text == "reference") {
-        let reader = this.Zotero.ZoteroStyle.events.getReader()
+        let reader = this._Addon.events.getReader()
         if (!reader) {
           console.log("no reader")
           this.inputMessage(`Please select your reader: /${text}`)
           return false
         }
         // reading paper DOI
-        let itemData = this.Zotero.ZoteroStyle.events.getReadingItem()._itemData
+        let itemData = this._Addon.events.getReadingItem()._itemData
         let DOI = itemData[58]  // index 58 is the DOI
         if (!this.DOIRegex.test(DOI)) {
           // DOI is unvalid, get it from unpaywall
@@ -309,23 +300,28 @@ class Setting extends AddonModule {
           // DOI is needed
           const DOI = data.DOI
           lineNode.setAttribute("data", DOI)
-          if (!DOI) {
-            lineNode.setAttribute("data", title)
+          if (!DOI) { lineNode.setAttribute("data", title) }
+          lineNode.innerText = `[${i+1}]`
+          this.historyNode.appendChild(lineNode)
+          if (!(author && year && title)) {
+            if (data.unstructured) {
+              lineNode.innerText = `[${i+1}] ${data.unstructured}`
+            } else if (DOI) {
+              lineNode.innerText = `[${i+1}] Update from unpaywall...`
+              // update DOIInfo by unpaywall
+              let _data = await this.getDOIInfo(DOI)
+              console.log(_data)
+              author = _data.z_authors[0]["family"]
+              year = _data.year
+              title = _data.title
+              lineNode.innerText = `[${i+1}] ${author} et al., ${year}. ${title}`
+            } 
+          } else {
+            lineNode.innerText = `[${i+1}] ${author} et al., ${year}. ${title}`
           }
-          this.historyNode.appendChild(lineNode) 
-          if (!(title && year && author) && DOI) {
-            // update DOIInfo by unpaywall
-            let _data = await this.getDOIInfo(DOI)
-            console.log(_data)
-            author = _data.z_authors[0]["family"]
-            year = _data.year
-            title = _data.title
-            this.inputMessage("Request missing information from unpaywall...", 0, 1)
-          }
-          lineNode.innerText = `[${i+1}] ${author} et al., ${year}. ${title}`
           lineNode.style.display = refData.length - i > this.maxTotalLineNum ? "none" : ""
         })
-        this.inputMessage("Please enter the search text, i.e., Polygon 2022", 1)
+        this.inputMessage("Please enter the search text, i.e., Polygon 2022")
         return false
       } else {
         let res = eval(`
@@ -355,8 +351,8 @@ class Setting extends AddonModule {
         }))[0];
         console.log(refItem)
         // addRelatedItem
-        let reader = this.Zotero.ZoteroStyle.events.getReader()
-        let item = this.Zotero.Items.get(reader.itemID).parentItem
+        let reader = this._Addon.events.getReader()
+        let item = this.Zotero.Items.get(reader.itemID).parentItem as _ZoteroItem
         console.log("item.addRelatedItem(refItem)")
         item.addRelatedItem(refItem)
         console.log("refItem.addRelatedItem(item)")
@@ -386,7 +382,7 @@ class Setting extends AddonModule {
       if (key=="ArrowUp") {
         // 如果没显示history
         if (this.historyNode.style.display == "none") {
-          let lineNodes = [...this.historyNode.querySelectorAll(".line:last-child")].filter(e=>e.style.display != "none")
+          let lineNodes = [...this.historyNode.querySelectorAll(".line")].filter(e=>e.style.display != "none")
           if (lineNodes.length > 0) {
             // 让他显示，并默认选择第一个
             this.historyNode.style.display = ""
@@ -456,11 +452,25 @@ class Setting extends AddonModule {
           }
         }
       } else if (key=="ArrowRight") {
-        let text = this.inputNode.value
-        let suggestion = this.inputNode.getAttribute("suggestion")
-        if (suggestion) {
-          this.inputNode.value = text.replace(/(\w+)$/, suggestion)
-        }
+        let inputText = this.inputNode.value
+        if (inputText.endsWith(".")) { return }
+        // generate keywords
+        let keywordSet = new Set();
+        this.History.readAll(true).forEach(text=>{
+          text.split(/[(=]/)[0].split(/[\/\.]/)
+            .filter(e=>e)
+            .forEach(keyword=>{
+              if (keyword == "/") { return }
+              keywordSet.add(keyword)
+            })
+        });
+        let keywordArray = [...keywordSet]
+        let bestKeywords = keywordArray.filter((keyword: string)=>{
+          return keyword.startsWith(this.inputNode.value.split(/[\/\.]/).slice(-1)[0])
+        })
+        if (bestKeywords.length == 0) { return } 
+        let suggestion = bestKeywords[0] as string 
+        this.inputNode.value = inputText.replace(/(\w+)$/, suggestion)
         return 
       }
       // arrow up down, select 
@@ -521,32 +531,6 @@ class Setting extends AddonModule {
           }
         }
       }
-
-      // other, Simple Auto-Completion
-      //         cursor
-      //           |
-      // i.e, /ref|erence
-      // erence is the completed content
-      if (key == ".") { return }
-      // generate keywords
-      let keywordSet = new Set();
-      this.History.readAll(true).forEach(text=>{
-        text.split(/[(=]/)[0].split(/[\/\.]/)
-          .filter(e=>e)
-          .forEach(keyword=>{
-            if (keyword == "/") { return }
-            keywordSet.add(keyword)
-          })
-      });
-      let keywordArray = [...keywordSet]
-      let bestKeywords = keywordArray.filter((keyword: string)=>{
-        return keyword.startsWith(this.inputNode.value.split(/[\/\.]/).slice(-1)[0])
-      })
-      if (bestKeywords.length == 0) { return } 
-      let suggestion = bestKeywords[0] as string 
-      // select
-      this.inputNode.setAttribute("suggestion", suggestion)
-      // let range = this.window.createRang()
     })
   }
 
@@ -674,9 +658,6 @@ class Setting extends AddonModule {
     return data
   }
 
-  public createElement(name) {
-    return this.document.createElementNS("http://www.w3.org/1999/xhtml", name)
-  }
 }
 
-export default Setting;
+export default AddonSetting;

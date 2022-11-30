@@ -1,6 +1,16 @@
 class AddonModule {
   protected _Addon: any;
+  public Zotero: _ZoteroConstructable;
+  public window: any;
+  public document: any;
+
   constructor(parent: any) {
+    var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+      Components.interfaces.nsISupports
+    ).wrappedJSObject as _ZoteroConstructable
+    this.Zotero = Zotero
+    this.window = this.Zotero.getMainWindow()
+    this.document = this.window.document
     this._Addon = parent;
   }
   
@@ -39,6 +49,11 @@ class AddonModule {
     }
     return (typeof(_v) == typeof(v) ? _v : v)
   }
+
+  public createElement(nodeName: string): HTMLElement {
+    return this.document.createElementNS("http://www.w3.org/1999/xhtml", nodeName)
+  }
+
 }
 
 export default AddonModule;

@@ -3,9 +3,6 @@ import AddonModule from "./module";
 import Setting from "./setting";
 
 class AddonEvents extends AddonModule {
-  public Zotero: _ZoteroConstructable;
-  public window: Window;
-  public document: any;
   public notifierCallback : any;
   public setting: any;
   public toolbarbutton: any;
@@ -51,10 +48,7 @@ class AddonEvents extends AddonModule {
     }
   }
 
-  public async onInit(_Zotero: _ZoteroConstructable) {
-    this.Zotero = _Zotero
-    this.window = this.Zotero.getMainWindow()
-    this.document = this.window.document
+  public async onInit() {
     console.log(`${addonName}: init called`);
 
     // add style about tag
@@ -75,7 +69,8 @@ class AddonEvents extends AddonModule {
     
     // setting 
     this.setting = new Setting(AddonModule)
-    this.setting.init(this.Zotero)
+    this.setting._Addon = this._Addon
+    this.setting.init()
     this.setting.settingNode.style.display = "none"
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(
@@ -253,14 +248,10 @@ class AddonEvents extends AddonModule {
     if (this.style) this.style.remove()
   }
 
-  private createElement(nodeName: string): HTMLElement {
-    return this.document.createElementNS("http://www.w3.org/1999/xhtml", nodeName)
-  }
-
   private hookZoteroFunction(path: string, func: Function) {
     // path: getMainWindow().ZoteroPane.itemsView._renderCell
     let id = this.window.setInterval(
-      (() => {
+      () => {
         let zoteroFunc = eval(`this.Zotero.${path}`)
         let zoteroFuncThis = eval(`this.Zotero.${path.match(/(.+)\.\w/)[1]}`)
         this._hookFunction[path] = {
@@ -269,16 +260,42 @@ class AddonEvents extends AddonModule {
         }
         if (zoteroFunc === undefined) return
         // zoteroFunc is the function that needs to be modified
-        let modifyFunc = function (...args: any[]) {
+        let modifyFunc = (...args: any[]) => {
           let zoteroFunctionReturn = zoteroFunc.apply(zoteroFuncThis, args)
           var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
             Components.interfaces.nsISupports
           ).wrappedJSObject;
-          return func(zoteroFunctionReturn, args, Zotero)
+          return func.call(this, zoteroFunctionReturn, args, Zotero)
         }
         eval(`this.Zotero.${path} = ${modifyFunc.toString()}`)
         this.window.clearInterval(id)
-      }).bind(this),
+      },
+      1e3
+    )
+  }
+
+  private _hookZoteroFunction(path: string, func: Function) {
+    // path: getMainWindow().ZoteroPane.itemsView._renderCell
+    let id = this.window.setInterval(
+      () => {
+        let zoteroFunc = eval(`this.Zotero.${path}`)
+        let zoteroFuncThis = eval(`this.Zotero.${path.match(/(.+)\.\w/)[1]}`)
+        this._hookFunction[path] = {
+          zoteroFunc,
+          zoteroFuncThis
+        }
+        if (zoteroFunc === undefined) return
+        // zoteroFunc is the function that needs to be modified
+        let modifyFunc = (...args: any[]) => {
+          let zoteroFunctionReturn = zoteroFunc.apply(zoteroFuncThis, args)
+          var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+            Components.interfaces.nsISupports
+          ).wrappedJSObject;
+          return func.call(this, zoteroFunctionReturn, args, Zotero)
+        }
+        eval(`this.Zotero.${path} = ${modifyFunc.toString()}`)
+        this.window.clearInterval(id)
+      },
       1e3
     )
   }
@@ -301,13 +318,13 @@ class AddonEvents extends AddonModule {
       return emojLength
     }
     // render the tag
-    let obj = Zotero.ZoteroStyle.events
-    let tagPosition = obj.getValue("Zotero.ZoteroStyle.tagPosition", obj.tagPosition)
+    // let obj = Zotero.ZoteroStyle.events
+    let tagPosition = this.getValue("Zotero.ZoteroStyle.tagPosition", this.tagPosition)
     if (tagPosition > 0) {
       let tagBoxNode = createElement("span")
       tagBoxNode.setAttribute("class", "tag-box")
       // special algin between font and span
-      let tagAlign = obj.getValue("Zotero.ZoteroStyle.tagAlign", obj.tagAlign)
+      let tagAlign = this.getValue("Zotero.ZoteroStyle.tagAlign", this.tagAlign)
       let preTagNum = 0
       primaryCell.querySelectorAll(".tag-swatch").forEach((tagNode: any) => {
         let delta = 0
@@ -386,8 +403,8 @@ class AddonEvents extends AddonModule {
       maxSec = meanSec + (maxSec - meanSec) * .5
       const minSec = 60
       const pct = 1 / total * 100
-      let progressColor = obj.getValue("Zotero.ZoteroStyle.progressColor", obj.progressColor)
-      let [r, g, b] = obj.toRGB(progressColor)
+      let progressColor = this.getValue("Zotero.ZoteroStyle.progressColor", this.progressColor)
+      let [r, g, b] = this.toRGB(progressColor)
       for (let i=0; i<total; i++) {
         // pageSpan represent a page, color represent the length of read time
         let pageSpan = createElement("span")
@@ -406,8 +423,7 @@ class AddonEvents extends AddonModule {
 
   private modifyRenderCell(cell: any, args: any[], Zotero: any): any {
     const k = "Zotero.ZoteroStyle.constantFields"
-    let obj = Zotero.ZoteroStyle.events
-    let constantFields = obj.getValue(k, obj.constantFields)
+    let constantFields = this.getValue(k, this.constantFields)
     if (
       // these classnames is visible
       constantFields.filter(
