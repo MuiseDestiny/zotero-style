@@ -2,6 +2,13 @@
 > 致力于让Zotero有趣，
 [介绍视频](https://www.bilibili.com/video/BV1PK411o7JN/?share_source=copy_web&vd_source=7b57a26bb78f6cbbfdf8bff111682fa3)
 
+<details>
+<summary>Title</summary>
+
+content!!!
+</details>
+
+
 ![](https://spr1ng.live/file/8880fce2ffe1b5ead0cd1.png)
 
 <center><font color="deeppink"><b>效果预览</b></font></center>
