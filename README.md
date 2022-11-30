@@ -55,17 +55,28 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 Mac用户可以设置Zotero.ZoteroStyle.progressOpacity=0来隐藏进度条=window用户鼠标右键
 Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置界面
 
-| 命令 | 默认值 | 描述 |
-| ----------- | ----------- | ----------- |
-| Zotero.ZoteroStyle.progressColor | '#F06292' | 设置进度条颜色,注意引号,配色网站<https://colorhunt.co/> |
-| Zotero.ZoteroStyle.progressOpacity | 0.5 | 设置进度条透明度,0~1 |
-| Zotero.ZoteroStyle.tagSize | 8 | 设置标签宽度,单位em | 
-| Zotero.ZoteroStyle.tagPosition | 4 | 0,1,2,3,4（0就是Zotero不安装插件时候标签在的位置） |
-| Zotero.ZoteroStyle.tagAlign | left | left,right |
-| Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |
-| /reference | 无 | 在阅读PDF界面使用，不离开Zotero软件就能导入参考文献 | 
-| /Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1) | 在命令中 | 用于指派标签颜色和位置（随心所欲） |
-| Zotero.ZoteroStyle.gitee=URL#Token | 无 | 用于同步阅读进度数据（安装Chartero用户无需同步请忽略此条） |
+| 命令 | 默认值 | 描述 | 是否需要重启（默认否） |
+| ----------- | ----------- | ----------- | ----------- |
+| Zotero.ZoteroStyle.progressColor | '#F06292' | 设置进度条颜色,注意引号,配色网站<https://colorhunt.co/> |  |
+| Zotero.ZoteroStyle.progressOpacity | 0.5 | 设置进度条透明度,0~1 |  |
+| Zotero.ZoteroStyle.tagSize | 8 | 设置标签宽度,单位em |  |
+| Zotero.ZoteroStyle.tagPosition | 4 | 0,1,2,3,4（0就是Zotero不安装插件时候标签在的位置） |  |
+| Zotero.ZoteroStyle.tagAlign | left | left,right |  |
+| Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |  |
+| /reference | 无 | 在阅读PDF界面使用，不离开Zotero软件就能导入参考文献 |  | 
+| /Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1) | 在命令中 | 用于指派标签颜色和位置（随心所欲） |  |
+| Zotero.ZoteroStyle.gitee=URL#Token | URL#Token | 用于同步阅读进度数据（安装Chartero用户无需同步请忽略此条） | 是 |
+
+
+> URL是用户的Gitee仓库的一个json文件如`https://gitee.com/MuiseDestiny/BiliBili/blob/master/ZoteroStyle.json`,Token在`https://gitee.com/profile/personal_access_tokens`创建
+
+<details>
+<summary>同步逻辑</summary>
+首先，当Zotero被打开，插件初始化过程中会检测是否配置Gitee，若配置，监测是否有本地数据，若有同步到Gitee
+然后，从Gitee获取数据作为一个`record`变量，变量会记录阅读数据
+一下几种行为会触发将`record`变量更新到Gitee：1.打开一些东西（如file，tab，item）；2.关闭一些东西；3.关闭Zotero；
+除此之外，每一分钟自动更新一次。
+</details>
 
 
 <details>

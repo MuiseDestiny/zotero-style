@@ -22,23 +22,35 @@ class Gitee {
   }
 
   public async updateFile(text: string, message: string = "update") {
-    console.log("gitee update...")
-    let data = {
-        access_token: this.access_token,
-        content: CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text)),
-        sha: (await this.getContent()).sha,
-        message: message
-    }
-    let res = await this.Zotero.HTTP.request(
-      "PUT",
-      `https://gitee.com/api/v5/repos/${this.owner}/${this.repo}/contents/${this.path}`, 
-      {
-        responseType: "json",
-        headers: { "Content-Type": "application/json;charset=UTF-8" },
-        body: JSON.stringify(data)
+    if (text == "{}") { return }
+    console.log("update...", text)
+    if (this.access_token) {
+      console.log("update record by Gitee")
+      let data = {
+          access_token: this.access_token,
+          content: CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text)),
+          sha: (await this.getContent()).sha,
+          message: message
       }
-    )
-    return res.response
+      let res = await this.Zotero.HTTP.request(
+        "PUT",
+        `https://gitee.com/api/v5/repos/${this.owner}/${this.repo}/contents/${this.path}`, 
+        {
+          responseType: "json",
+          headers: { "Content-Type": "application/json;charset=UTF-8" },
+          body: JSON.stringify(data)
+        }
+      )
+      if (res.status != 200) {
+        console.log("retry update by Gitee...")
+        await this.Zotero.Promise.delay(1000)
+        return await this.updateFile(text, message)
+      }
+      return res.response
+    } else {
+      console.log("update record in local")
+      this.Zotero.Prefs.set("Zotero.ZoteroStyle.record", text)
+    }
   }
 
   public async getContent() {
@@ -49,9 +61,24 @@ class Gitee {
         responseType: "json"
       }
     )
-    let response = res.response
-    response.content = CryptoJS.enc.Base64.parse(response.content).toString(CryptoJS.enc.Utf8)
     return res.response
+  }
+
+  public async readFile() {
+    let record
+    if (this.access_token) {
+      // console.log("read record from Gitee")
+      record = JSON.parse(
+        CryptoJS.enc.Base64.parse((await this.getContent()).content).toString(CryptoJS.enc.Utf8)
+      )
+    } else {
+      console.log("read record from local")
+      record = JSON.parse(
+        this.Zotero.Prefs.get("Zotero.ZoteroStyle.record") as string || "{}"
+      )
+    }
+    console.log(record)
+    return record
   }
 }
 

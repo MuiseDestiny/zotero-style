@@ -12,14 +12,15 @@ class AddonEvents extends AddonModule {
   public intervalID: number;
   public gitee: any;
   public _hookFunction = {};
-  public record: {};
+  public record = {};
   public tagSize = 5;  // em
   public tagPosition = 4; 
   public tagAlign = "left";  // em
   public progressOpacity = .7;
   public progressColor = "#5AC1BD";
   public constantFields = ["hasAttachment", "title"];
-  public recordInterval = 5;  // s
+  public recordInterval = 3;  // s
+  public updateInterval = 60;  // s
   public maxHangTime = 60;  // s
   public mode = "normal";  // default
   public progress = true;
@@ -61,7 +62,7 @@ class AddonEvents extends AddonModule {
 
     // add button
     this.addSwitchButton()
-  
+
     // modify Zotero render function
     this.hookZoteroFunction(
       "getMainWindow().ZoteroPane.itemsView._renderPrimaryCell", 
@@ -75,6 +76,7 @@ class AddonEvents extends AddonModule {
     // setting 
     this.setting = new AddonSetting(AddonModule)
     this.setting.init()
+    this.setting._Addon = this._Addon
     this.setting.settingNode.style.display = "none"
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(
@@ -93,17 +95,22 @@ class AddonEvents extends AddonModule {
     
     // listen to Zotero's state if no Chartero
     if (!this.Zotero.Chartero) {
-      this.window.addEventListener('activate', () => {
+      this.window.addEventListener('activate', async () => {
         this.state.activate = true
         // once Zotero is activated again, it will continue to record read time
         this.intervalID = this.window.setInterval(this.recordReadTime.bind(this), this.recordInterval * 1e3)
+        await this.gitee.updateFile(JSON.stringify(this.record), "activate")
       }, true);
-      this.window.addEventListener('deactivate', () => {
+      this.window.addEventListener('deactivate', async () => {
         this.state.activate = false
         this.state.hangCount = 0;
         // once Zotero is deactivate again, it will stop to record read time
         this.window.clearInterval(this.intervalID)
+        await this.gitee.updateFile(JSON.stringify(this.record), "deactivate")
       }, true);
+      this.window.setInterval(async () => {
+        await this.gitee.updateFile(JSON.stringify(this.record), "updateInterval")
+      }, this.updateInterval * 1e3);
     }
 
     // tip
@@ -117,6 +124,7 @@ class AddonEvents extends AddonModule {
 
     // async
     await this.prepareGitee()
+
   }
 
   private addSwitchButton(): void {
@@ -379,21 +387,20 @@ class AddonEvents extends AddonModule {
     primaryCell.appendChild(progressNode)
     primaryCell.querySelector(".cell-text").style.zIndex = 999
     // create sub span in this progress node
-    let record = this.record
     // i.e.
-    const testTitle = "Test Progress"
-    record[testTitle] = {
-        0: 60 * 3,
-        1: 60 * 6,
-        2: 5,
-        3: 60 * 3,
-        4: 60 * 7,
-        5: 60 * 2,
-        "total": 12
-    }
+    // const testTitle = "Test Progress"
+    // this.record[testTitle] = {
+    //     0: 60 * 3,
+    //     1: 60 * 6,
+    //     2: 5,
+    //     3: 60 * 3,
+    //     4: 60 * 7,
+    //     5: 60 * 2,
+    //     "total": 12
+    // }
     const title = args[1]
-    if (record && record[title]) {
-      let recordTimeObj = record[title]
+    if (this.record && this.record[title]) {
+      let recordTimeObj = this.record[title]
       const total = recordTimeObj["total"]
       let maxSec = 0
       let s = 0
@@ -446,26 +453,27 @@ class AddonEvents extends AddonModule {
 
   private async prepareGitee() {
     let giteePrefs = this.getValue("Zotero.ZoteroStyle.gitee")
-    giteePrefs = "https://gitee.com/MuiseDestiny/BiliBili/blob/master/ZoteroStyle.json#86057f3169606ea30a7a72e30c223e5c"
+    this.gitee = new Gitee()
     if (giteePrefs) {      
-      this.gitee = new Gitee()
       let [url, access_token] = giteePrefs.split("#")
       // i.e., https://gitee.com/MuiseDestiny/BiliBili/blob/master/ZoteroStyle.json
       let [owner, repo, path] = url.match(/https:\/\/gitee.com\/(.+)\/(.+)\/blob\/master\/(.+)/).slice(1)
       this.gitee.init(this.Zotero, access_token, owner, repo, path)
       // local
       let record = this.getValue("Zotero.ZoteroStyle.record", {})
-      let isUpdate = this.getValue("Zotero.ZoteroStyle.update", false)
+      let isUpdate = this.getValue("Zotero.ZoteroStyle.firstUpdate", false)
       console.log("isUpdate", isUpdate)
       console.log(record)
       if (!isUpdate) {
         await this.gitee.updateFile(JSON.stringify(record), "first")
-        this.setValue("Zotero.ZoteroStyle.update", true)
+        this.setValue("Zotero.ZoteroStyle.firstUpdate", true)
       }
-      // gitee -> addon
-      record = JSON.parse((await this.gitee.getContent()).content)
-      this.record = record
+    } else {
+      this.gitee.init(this.Zotero, "", "", "", "")
     }
+    // gitee -> addon
+    this.record = await this.gitee.readFile()
+    console.log(this.record)
   }
 
   private getReader(): any {
@@ -509,7 +517,7 @@ class AddonEvents extends AddonModule {
 
     // get local record
     // console.log("saving");
-    if (!this.record[title]) this.record[title] = {}
+    if (!this.record[title]) { this.record[title] = {} }
     this.record[title][this.state.pageIndex] = (
       this.isNumber(this.record[title][this.state.pageIndex]) 
       ? this.record[title][this.state.pageIndex]
