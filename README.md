@@ -47,7 +47,9 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 
 <details>
 <summary>按钮详解</summary>
+
 ![](https://spr1ng.live/file/87ac5698538744a03d424.png)
+
 </details>
 
 ## 设置界面
