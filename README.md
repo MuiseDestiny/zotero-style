@@ -1,8 +1,10 @@
 # Zotero Style
-> 致力于让Zotero有趣，
+> 让Zotero更有趣
+
+
 [介绍视频](https://www.bilibili.com/video/BV1PK411o7JN/?share_source=copy_web&vd_source=7b57a26bb78f6cbbfdf8bff111682fa3)
 
-![](https://spr1ng.live/file/8880fce2ffe1b5ead0cd1.png)
+![](https://spr1ng.live/file/3c2add1666eb24eed58b0.png)
 
 <center><font color="deeppink"><b>效果预览</b></font></center>
 
@@ -16,8 +18,9 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 
 如果你也有类似痛点欢迎提出，我们共同解决。
 
-## 功能预览
 
+<details>
+<summary>功能预览</summary>
 <center><font color="#27ae60"><b>原始Zotero</b></font></center>
 
 ![](https://spr1ng.live/file/d38124d3529d6dd682dd3.png)
@@ -39,10 +42,12 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 ![](https://spr1ng.live/file/ed09ed3b676eef4d09bd2.png)
 ![](https://spr1ng.live/file/447b7d8912422770731a5.png)
 > 颜色越深阅读时间越久，同时可显示整体阅读进度，这个部分参考<https://github.com/volatile-static/Chartero>，`Chartero`对于这方面实现的更为彻底，本插件相当于实现了一个初级，简化的版本。
+</details>
 
-<center><font color="#2c3e50"><b>按钮详解</b></font></center>
-
+<details>
+<summary>按钮详解</summary>
 ![](https://spr1ng.live/file/87ac5698538744a03d424.png)
+</details>
 
 ## 设置界面
 > 鼠标中键
@@ -60,6 +65,10 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 | /reference | 无 | 在阅读PDF界面使用，不离开Zotero软件就能导入参考文献 | 
 | /Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1) | 在命令中 | 用于指派标签颜色和位置（随心所欲） |
 | Zotero.ZoteroStyle.gitee=URL#Token | 无 | 用于同步阅读进度数据（安装Chartero用户无需同步请忽略此条） |
+
+
+<details>
+<summary>部分命令参数图解</summary>
 
 > Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1)对应下图，第一个1固定，第二个"tagName"是你要改变的标签， '#AAAAAA'对应下图颜色，1对应下图位置，如，假设有标签”a、b、c、d，abcd中a的位置为1，b为2...
 ![](https://spr1ng.live/file/734085f010b319cb867f4.png)
@@ -92,6 +101,8 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 注意`[]`内字段名要用引号引起来,`=`右边应该可以被js的eval函数执行返回一个Array
 相关问题<https://github.com/MuiseDestiny/ZoteroStyle/issues/2>
 
+</details>
+
 ## 主要功能
 
 1. 标签右对齐，标签由`圆角正方形`->`圆形`
@@ -100,6 +111,10 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 4. 本插件可与`Chartero`共存，若安装`Chartero`本插件将不再渲染进度条，因为这一功能我已合并到`Chartero`，而且`Chartero`支持同步数据（仅安装Style可通过Gitee同步，配置相对繁琐）
 5. 阅读界面快速检索参考文献，一键导入并关联至当前文献 （目前实验性功能）
 6. 自定义指派标签颜色位置
+
+🙌建议配合`Zotero Tag`&`Chartero`使用
+<details>
+<summary>部分功能图示</summary>
 
 > 5的图示
 ![](https://spr1ng.live/file/6c034034afb3f51309a76.png)
@@ -110,7 +125,8 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 > 6的图示
 ![](https://spr1ng.live/file/b7eaf4c526d5109558a9b.png)
 
-🙌建议配合`Zotero Tag`&`Chartero`使用
+</details>
+
 
 ## 安装方法
 如果第一次安装，请直接在release界面下载xpi，拖入Zotero的插件界面内，然后重启即可
