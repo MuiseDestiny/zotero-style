@@ -460,12 +460,14 @@ class AddonEvents extends AddonModule {
       let [owner, repo, path] = url.match(/https:\/\/gitee.com\/(.+)\/(.+)\/blob\/master\/(.+)/).slice(1)
       this.gitee.init(this.Zotero, access_token, owner, repo, path)
       // local
-      let record = this.getValue("Zotero.ZoteroStyle.record", {})
+      let localRecord = this.getValue("Zotero.ZoteroStyle.record", {})
+      let remoteRecord = await this.gitee.readFile()
       let isUpdate = this.getValue("Zotero.ZoteroStyle.firstUpdate", false)
       console.log("isUpdate", isUpdate)
-      console.log(record)
+      console.log(localRecord)
+      console.log(remoteRecord)
       if (!isUpdate) {
-        await this.gitee.updateFile(JSON.stringify(record), "first")
+        await this.gitee.updateFile(JSON.stringify({...remoteRecord, ...localRecord,}), "first")
         this.setValue("Zotero.ZoteroStyle.firstUpdate", true)
       }
     } else {
