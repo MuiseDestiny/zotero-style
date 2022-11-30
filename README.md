@@ -74,9 +74,12 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 
 <details>
 <summary>同步逻辑</summary>
-首先，当Zotero被打开，插件初始化过程中会检测是否配置Gitee，若配置，监测是否有本地数据，若有同步到Gitee
-然后，从Gitee获取数据作为一个`record`变量，变量会记录阅读数据
-一下几种行为会触发将`record`变量更新到Gitee：1.打开一些东西（如file，tab，item）；2.关闭一些东西；3.关闭Zotero；
+
+首先，当Zotero被打开，插件初始化过程中会检测是否配置Gitee，若配置，检测是否有本地数据，若有则同步到Gitee（本地记录使命结束，以后都会同步到Gitee的数据）
+
+然后，从Gitee获取记录数据作为一个`record`变量（在打开Zotero时诞生，关闭Zotero时毁灭），变量会记录阅读数据
+一下几种行为会触发将`record`变量更新到Gitee：1.打开一些东西（如file，tab，item）；2.关闭一些东西；3.切换应用；4.关闭Zotero；
+
 除此之外，每一分钟自动更新一次。
 </details>
 
