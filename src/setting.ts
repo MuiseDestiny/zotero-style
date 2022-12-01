@@ -1,3 +1,4 @@
+import { sync } from "replace-in-file";
 import AddonModule from "./module";
 
 class AddonSetting extends AddonModule {
@@ -310,7 +311,6 @@ class AddonSetting extends AddonModule {
               lineNode.innerText = `[${i+1}] Update from unpaywall...`
               // update DOIInfo by unpaywall
               let _data = await this.getDOIInfo(DOI)
-              console.log(_data)
               author = _data.z_authors[0]["family"]
               year = _data.year
               title = _data.title
@@ -385,9 +385,69 @@ class AddonSetting extends AddonModule {
         }
       })
     }
+
+    let arrowUpDown = (key) => {
+      let lineNodes = [...this.historyNode.querySelectorAll(".line")]
+      if (this.inputNode.value.length && this.historyNode.querySelector(".match")) {
+        // select in the search results
+        console.log("select in the search results")
+        lineNodes = lineNodes.filter(e=>e.classList.contains("match"))
+        console.log(lineNodes)
+      }
+      if (!this.historyNode.querySelector(".line[selected]")) {
+        // select the first
+        console.log("select the first, return")
+        lineNodes.slice(-1)[0].setAttribute("selected", "")
+        return
+      }
+      let totalLineNum = lineNodes.length
+      for (let i=0;i<lineNodes.length;i++) {
+        if (lineNodes[i].hasAttribute("selected")) {
+          lineNodes[i].removeAttribute("selected")
+          if (key=="ArrowUp") {
+              i -= 1
+          } else if (key=="ArrowDown") {
+              i += 1
+          }
+          if (i==-1) {
+              i = lineNodes.length - 1
+          }
+          if (i==lineNodes.length) {
+              i = 0
+          }
+          lineNodes[i].setAttribute("selected", "")
+          // if (this.inputNode.value.length) { break }
+          const half = parseInt(String(this.maxTotalLineNum / 2))
+          console.log(half)
+          // i - selected index; j - other index
+          let range
+          if (totalLineNum - half <= i && i <= totalLineNum) {
+            // bottom
+            range = [totalLineNum - this.maxTotalLineNum, totalLineNum]
+          } else if (0 <= i && i <= half) {
+            // top
+            range = [0, this.maxTotalLineNum]
+          } else {
+            // middle
+            range = [i - half, i + half]
+          }
+          for (let j=0;j<totalLineNum;j++) {
+            if (range[0] <= j && j <= range[1]) {
+              lineNodes[j].style.display = ""
+            } else {
+              lineNodes[j].style.display = "none"
+            }
+          }
+          break
+        }
+      }
+      return
+    }
+    
     this.settingNode.addEventListener("keyup", async (event) => {
       let key = event.key
-      event.preventDefault()
+      console.log(key)
+      // event.preventDefault()
       if (key=="ArrowUp") {
         // 如果没显示history
         if (this.historyNode.style.display == "none") {
@@ -437,7 +497,7 @@ class AddonSetting extends AddonModule {
           this.inputNode.focus()
           if (classList.length == 2) { this.History.render() }
           this.inputMessage(`Exit ${lastClassName}...`, 0, 1)
-          key = "ArrowUp"
+          arrowUpDown("ArrowUp")
         } else {
           this.History.render()
           if (this.historyNode.style.display != "none") {
@@ -486,66 +546,6 @@ class AddonSetting extends AddonModule {
         let suggestion = bestKeywords[0] as string 
         this.inputNode.value = inputText.replace(/(\w+)$/, suggestion)
       }
-
-      // arrow up down, select 
-      if (["ArrowUp", "ArrowDown"].indexOf(key) != -1) {
-        let lineNodes = [...this.historyNode.querySelectorAll(".line")]
-        if (this.inputNode.value.length && this.historyNode.querySelector(".match")) {
-          // select in the search results
-          console.log("select in the search results")
-          lineNodes = lineNodes.filter(e=>e.classList.contains("match"))
-          console.log(lineNodes)
-        }
-        if (!this.historyNode.querySelector(".line[selected]")) {
-          // select the first
-          console.log("select the first, return")
-          lineNodes.slice(-1)[0].setAttribute("selected", "")
-          return
-        }
-        let totalLineNum = lineNodes.length
-        for (let i=0;i<lineNodes.length;i++) {
-          if (lineNodes[i].hasAttribute("selected")) {
-            lineNodes[i].removeAttribute("selected")
-            if (key=="ArrowUp") {
-                i -= 1
-            } else if (key=="ArrowDown") {
-                i += 1
-            }
-            if (i==-1) {
-                i = lineNodes.length - 1
-            }
-            if (i==lineNodes.length) {
-                i = 0
-            }
-            lineNodes[i].setAttribute("selected", "")
-            // if (this.inputNode.value.length) { break }
-            const half = parseInt(String(this.maxTotalLineNum / 2))
-            console.log(half)
-            // i - selected index; j - other index
-            let range
-            if (totalLineNum - half <= i && i <= totalLineNum) {
-              // bottom
-              range = [totalLineNum - this.maxTotalLineNum, totalLineNum]
-            } else if (0 <= i && i <= half) {
-              // top
-              range = [0, this.maxTotalLineNum]
-            } else {
-              // middle
-              range = [i - half, i + half]
-            }
-            for (let j=0;j<totalLineNum;j++) {
-              if (range[0] <= j && j <= range[1]) {
-                lineNodes[j].style.display = ""
-              } else {
-                lineNodes[j].style.display = "none"
-              }
-            }
-            break
-          }
-        }
-        return
-      }
-
       // if historyNode has childNodes, search
       console.log(key)
       clearMatch()
@@ -616,6 +616,14 @@ class AddonSetting extends AddonModule {
         [...this.historyNode.querySelectorAll(".line")].slice(-this.maxTotalLineNum).forEach(e=>{
           e.style.display = ""
         })
+      }
+    })
+
+    this.settingNode.addEventListener("keydown", async (event) => {
+      let key = event.key
+      // arrow up down, select 
+      if (["ArrowUp", "ArrowDown"].indexOf(key) != -1) {
+        arrowUpDown(key)
       }
     })
   }
