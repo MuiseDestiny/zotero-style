@@ -100,7 +100,7 @@ class AddonSetting extends AddonModule {
         bottom: 10%;
         width: 40%;
         border-radius: var(---radius---);
-        border: 1px solid black;
+        border: 1px solid #dcdcdc;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -116,19 +116,18 @@ class AddonSetting extends AddonModule {
       #Zotero-Style-Setting input {
           width: 90%;
           height: 45px;
-          border: 1px solid red;
           border: none;
           outline: none;
           border-radius: 5px;
           font-size: 20px;
           margin-left: .3em;
+          background-color: #ffffff;
       }
       #Zotero-Style-Setting .history {
           width: 100%;
           margin-top: 0;
           margin-bottom: 0;
           padding: 0;
-          background-color: rgba(248, 240, 240, .4);
           max-height: 600px;
           overflow-y: hidden;
       }
@@ -150,13 +149,38 @@ class AddonSetting extends AddonModule {
         white-space: nowrap;
       }
       #Zotero-Style-Setting .history .line:active {
-          background-color: rgba(220, 240, 240, 1);;
+          background-color: rgba(220, 240, 240, 1);
       }
       #Zotero-Style-Setting .history .line[selected] {
           background-color: rgba(220, 240, 240, 1);
       }
       #Zotero-Style-Setting .history .line:first-child {
           border-radius: var(---radius---) var(---radius---) 0 0;
+      }
+
+      .zotero-style-setting-tip {
+          display: flex;
+          flex-direction: row;
+          width: 100%;
+          align-items: center;
+          justify-content: center;
+          margin: auto;
+          opacity: .5;
+          background-color: rgba(248, 240, 240, .4);
+          font-size: 12px;
+          margin-top: 0;
+          margin-bottom: 10px;
+      }
+      .zotero-style-setting-tip .box {
+          display: flex;
+          align-items: center;
+          margin-left: 10px;
+          margin-right: 10px;
+          width: 50px;
+          justify-content: space-between;
+      }
+      .zotero-style-setting-tip .box:last-child {
+        width: 60px;
       }
     `
     let style = this.createElement("style")
@@ -170,14 +194,40 @@ class AddonSetting extends AddonModule {
     console.log("create element for setting")
     // root node
     let settingNode = this.createElement("div")
-    // settingNode.style.zIndex = "999"
     settingNode.style.zIndex = "999"
     settingNode.setAttribute("id", "Zotero-Style-Setting")
     // for viewing history or results
     let historyNode = this.createElement("ul")
     historyNode.classList.add("history")
-    historyNode.style.display = "none"
+    // historyNode.style.display = "none"
     settingNode.appendChild(historyNode)
+    // tip 
+    let tipNode = this.createElement("div")
+    tipNode.setAttribute("class", "zotero-style-setting-tip")
+    let box1 = this.createElement("div")
+    box1.setAttribute("class", "box 1")
+    box1.innerHTML = `
+      <svg t="1669890200032" class="icon" viewBox="0 0 1275 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2730" width="15" height="15"><path d="M434.01678069 96.35177165a94.289884 94.289884 0 0 0-133.25765214 0L123.48607034 273.6248307A40.38110706 40.38110706 0 0 0 180.5243836 331.26886006l146.48246438-146.98722794v683.24832532a40.38110706 40.38110706 0 0 0 80.76221328 0V184.28163212L554.25152647 331.26886006c0.60571692 0.70666946 1.31238556 1.31238556 2.01905503 2.01905585a40.38110706 40.38110706 0 0 0 55.01925824-59.15832165zM1151.48809462 650.58246162a40.38110706 40.38110706 0 0 0-57.03831326-2.01905503 19.08007305 19.08007305 0 0 0-2.01905503 2.01905503l-146.28055929 146.38151184V113.71564814a40.38110706 40.38110706 0 0 0-80.76221329 0v683.24832532l-146.38151184-146.38151184a40.38110706 40.38110706 0 0 0-59.15832166 55.01925824l2.01905502 2.01905503 177.37401161 177.27305822a93.98702554 93.98702554 0 0 0 133.15669958 0l177.27305823-177.27305822a40.38110706 40.38110706 0 0 0 1.81714993-57.03831327z" p-id="2731"></path></svg>
+      <span>导航</span>
+    `
+    tipNode.appendChild(box1)
+
+    let box2 = this.createElement("div")
+    box2.setAttribute("class", "box 2")
+    box2.innerHTML = `
+      <svg t="1669891408569" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="11255" width="15" height="15"><path d="M832 256v384H269.248l105.408-105.344-45.248-45.312-160 160a32 32 0 0 0 0 45.312l160 160 45.248-45.312L269.248 704H832a64 64 0 0 0 64-64V256h-64z" fill="#000000" fill-opacity=".9" p-id="11256"></path></svg>
+      <span>使用</span>
+    `
+    tipNode.appendChild(box2)
+
+    let box3 = this.createElement("div")
+    box3.setAttribute("class", "box 3")
+    box3.innerHTML = `
+      <span style="font-size: 15px;">esc</span>
+      <span>退出</span>
+    `
+    tipNode.appendChild(box3)
+
     // for entering text or accepting keycode
     let inputbox = this.createElement("div")
     inputbox.setAttribute("class", "input-box")
@@ -189,6 +239,7 @@ class AddonSetting extends AddonModule {
     inputbox.appendChild(inputNode)
     // append
     settingNode.appendChild(inputbox)
+    settingNode.appendChild(tipNode)
     this.document.querySelector('#main-window').appendChild(settingNode)
     this.settingNode = settingNode
     this.inputNode = inputNode
@@ -335,6 +386,7 @@ class AddonSetting extends AddonModule {
       }
     } else if (this.DOIRegex.test(text)) {
       let DOI = text
+      this.inputMessage(`Start - ${DOI}`, .1)
       var translate = new this.Zotero.Translate.Search();
       translate.setIdentifier({"DOI": DOI});
 
@@ -349,6 +401,7 @@ class AddonSetting extends AddonModule {
           collections,
           saveAttachments: true
         }))[0];
+        this.inputMessage(`Pending - ${refItem.getField("title")}`, .1)
         console.log(refItem)
         // addRelatedItem
         let reader = this._Addon.events.getReader()
@@ -359,11 +412,10 @@ class AddonSetting extends AddonModule {
         refItem.addRelatedItem(item)
         await item.saveTx()
         await refItem.saveTx()
+        this.inputMessage(`Done - ${refItem.getField("title")}`)
       } catch (e) {
         console.log(e);
       }
-      this.inputNode.value = ""
-      this.inputMessage("Success, please open this paper in ther RelatedItem view")
       return false
     } else if (this.getValue(text)) {
       let v = this.getValue(text)
@@ -386,7 +438,7 @@ class AddonSetting extends AddonModule {
       })
     }
 
-    let arrowUpDown = (key) => {
+    let arrowEvent = (key) => {
       let lineNodes = [...this.historyNode.querySelectorAll(".line")]
       if (this.inputNode.value.length && this.historyNode.querySelector(".match")) {
         // select in the search results
@@ -446,25 +498,10 @@ class AddonSetting extends AddonModule {
     
     this.settingNode.addEventListener("keyup", async (event) => {
       let key = event.key
+      console.log("keyup", key)
       console.log(key)
       // event.preventDefault()
-      if (key=="ArrowUp") {
-        // 如果没显示history
-        if (this.historyNode.style.display == "none") {
-          this.historyNode.style.display = ""
-          // let lineNodes = [...this.historyNode.querySelectorAll(".line")].filter(e=>e.style.display != "none")
-          // if (lineNodes.length > 0) {
-          //   // 让他显示，并默认选择第一个
-          //   this.historyNode.style.display = ""
-          //   console.log("select the first visible linNode")
-          //   this.historyNode.querySelectorAll(".line").forEach(line=>line.removeAttribute("selected"))
-          //   lineNodes.slice(-1)[0].setAttribute("selected", "")
-          // } else {
-          //   this.inputMessage("settingHistory is empty", 0, 3)
-          // }
-          return
-        }
-      } else if (key=="Enter") {
+      if (key=="Enter") {
         // 回车则获取当前selected，填入input
         if (
           (this.historyNode.style.display != "none")
@@ -474,7 +511,6 @@ class AddonSetting extends AddonModule {
           let text
           if (selectedLine.hasAttribute("data")) {
             text = selectedLine.getAttribute("data")
-            this.inputMessage(selectedLine.innerText, 3)
           } else {
             text = selectedLine.innerText
           }
@@ -497,7 +533,7 @@ class AddonSetting extends AddonModule {
           this.inputNode.focus()
           if (classList.length == 2) { this.History.render() }
           this.inputMessage(`Exit ${lastClassName}...`, 0, 1)
-          arrowUpDown("ArrowUp")
+          arrowEvent("ArrowUp")
         } else {
           this.History.render()
           if (this.historyNode.style.display != "none") {
@@ -546,6 +582,7 @@ class AddonSetting extends AddonModule {
         let suggestion = bestKeywords[0] as string 
         this.inputNode.value = inputText.replace(/(\w+)$/, suggestion)
       }
+      if (["ArrowUp", "ArrowDown"].indexOf(key) != -1) { return }
       // if historyNode has childNodes, search
       console.log(key)
       clearMatch()
@@ -621,9 +658,20 @@ class AddonSetting extends AddonModule {
 
     this.settingNode.addEventListener("keydown", async (event) => {
       let key = event.key
+      console.log("keydown", key)
+      if (["ArrowUp", "ArrowDown"].indexOf(key) != -1) {
+        event.preventDefault();
+      }
+      if (key=="ArrowUp") {
+        // 如果没显示history
+        if (this.historyNode.style.display == "none") {
+          this.historyNode.style.display = ""
+          return
+        }
+      }
       // arrow up down, select 
       if (["ArrowUp", "ArrowDown"].indexOf(key) != -1) {
-        arrowUpDown(key)
+        arrowEvent(key)
       }
     })
   }

@@ -112,12 +112,6 @@ class AddonEvents extends AddonModule {
       }, this.updateInterval * 1e3);
     }
 
-    // tip
-    this.setting.inputMessage("Zotero Style is running, have a nice day!", 0, 5)
-    this.window.setTimeout(() => {
-      this.setting.settingNode.style.display = "none"
-    }, 3000)
-
     // try refresh
     this.refresh()
 
