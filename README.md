@@ -57,7 +57,7 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 Mac用户可以设置Zotero.ZoteroStyle.progressOpacity=0来隐藏进度条=window用户鼠标右键
 Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置界面
 
-| 命令 | 默认值 | 描述 | 是否需要重启（默认否） |
+| 命令 | 默认值 | 描述 | 重启 |
 | ----------- | ----------- | ----------- | ----------- |
 | Zotero.ZoteroStyle.progressColor | '#F06292' | 设置进度条颜色,注意引号,配色网站<https://colorhunt.co/> |  |
 | Zotero.ZoteroStyle.progressOpacity | 0.5 | 设置进度条透明度,0~1 |  |
@@ -71,6 +71,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 
 
 > URL是用户的Gitee仓库的一个json文件如`https://gitee.com/MuiseDestiny/BiliBili/blob/master/ZoteroStyle.json`,Token在`https://gitee.com/profile/personal_access_tokens`创建
+> 同步是实验性功能，如果使用该功能要保持一直联网，不然有可能会有阅读数据丢失。这个同步不如Chartero的方案好。
 
 <details>
 <summary>关于同步</summary>
