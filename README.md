@@ -71,6 +71,7 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 
 
 > URL是用户的Gitee仓库的一个json文件如`https://gitee.com/MuiseDestiny/BiliBili/blob/master/ZoteroStyle.json`,Token在`https://gitee.com/profile/personal_access_tokens`创建
+
 > 同步是实验性功能，如果使用该功能要保持一直联网，不然有可能会有阅读数据丢失。这个同步不如Chartero的方案好。
 
 <details>
