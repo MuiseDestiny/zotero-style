@@ -23,9 +23,9 @@ class Gitee {
 
   public async updateFile(text: string, message: string = "update") {
     if (text == "{}") { return }
-    console.log("update...", text)
+    // console.log("update...", text)
     if (this.access_token) {
-      console.log("update record by Gitee")
+      // console.log("update record by Gitee")
       let data = {
           access_token: this.access_token,
           content: CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text)),
@@ -48,7 +48,7 @@ class Gitee {
       }
       return res.response
     } else {
-      console.log("update record in local")
+      // console.log("update record in local")
       this.Zotero.Prefs.set("Zotero.ZoteroStyle.record", text)
     }
   }
@@ -72,7 +72,7 @@ class Gitee {
         CryptoJS.enc.Base64.parse((await this.getContent()).content).toString(CryptoJS.enc.Utf8)
       )
     } else {
-      console.log("read record from local")
+      // console.log("read record from local")
       record = JSON.parse(
         this.Zotero.Prefs.get("Zotero.ZoteroStyle.record") as string || "{}"
       )

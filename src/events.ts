@@ -74,9 +74,8 @@ class AddonEvents extends AddonModule {
     )
     
     // setting 
-    this.setting = new AddonSetting(AddonModule)
+    this.setting = this._Addon.setting
     this.setting.init()
-    this.setting._Addon = this._Addon
     this.setting.settingNode.style.display = "none"
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(

@@ -14,8 +14,8 @@ class Addon {
   public setting: AddonModule;
 
   constructor() {
-    this.events = new AddonEvents(this);
     this.setting = new AddonSetting(this);
+    this.events = new AddonEvents(this);
     this.views = new AddonViews(this);
     this.prefs = new AddonPrefs(this);
   }

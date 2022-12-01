@@ -3,7 +3,7 @@ import AddonModule from "./module";
 class AddonSetting extends AddonModule {
   public settingNode: HTMLDivElement
   public inputNode: HTMLInputElement
-  public historyNode: HTMLUListElement
+  public historyNode: any
   public keyset: XUL.Element  
 
   public DOIRegex = /10\.\d{4,9}\/[-\._;\(\)\/:A-z0-9]+/
@@ -22,8 +22,7 @@ class AddonSetting extends AddonModule {
       "Zotero.ZoteroStyle.progressColor=#5AC1BD",
       "Zotero.ZoteroStyle.constantFields=['hasAttachment', 'title']",
       `/Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1)`,
-      `/reference`,
-      `/search`
+      `/reference`
     ],
     render() {
       let allText = this.readAll(true)
@@ -228,9 +227,9 @@ class AddonSetting extends AddonModule {
     // search
     console.log(this.historyNode.classList)
     // high level command
-    if (text.startsWith("/search")) {
-      return this.searchLine(text.replace("/search", ""))
-    }
+    // if (text.startsWith("/search")) {
+    //   return this.searchLine(text.replace("/search", ""))
+    // }
 
     // other command
     if (!(await this.execLine(text))) { return false }
@@ -280,7 +279,7 @@ class AddonSetting extends AddonModule {
           let title = item.getField("title")
           DOI = await this.getDOIInfo(title)
         }
-        this.inputMessage("Requet references from Crossref Api...")
+        this.inputMessage("Request references from Crossref Api...")
         // clear historyNode
         let refData = await this.getRefData(DOI)
         console.log(refData)
@@ -378,26 +377,38 @@ class AddonSetting extends AddonModule {
   }
 
   public setEvent() {
+    let clearMatch = () => {
+      this.historyNode.querySelectorAll(".line").forEach(line=>{
+        line.innerText = line.innerText.replace(/<\/?b>/g, "")
+        if (line.classList.contains("match")) {
+          line.classList.remove("match")
+        }
+      })
+    }
     this.settingNode.addEventListener("keyup", async (event) => {
       let key = event.key
+      event.preventDefault()
       if (key=="ArrowUp") {
         // 如果没显示history
         if (this.historyNode.style.display == "none") {
-          let lineNodes = [...this.historyNode.querySelectorAll(".line")].filter(e=>e.style.display != "none")
-          if (lineNodes.length > 0) {
-            // 让他显示，并默认选择第一个
-            this.historyNode.style.display = ""
-            console.log("select the first visible linNode")
-            this.historyNode.querySelectorAll(".line").forEach(line=>line.removeAttribute("selected"))
-            lineNodes.slice(-1)[0].setAttribute("selected", "")
-          } else {
-            this.inputMessage("settingHistory is empty", 0, 3)
-          }
+          this.historyNode.style.display = ""
+          // let lineNodes = [...this.historyNode.querySelectorAll(".line")].filter(e=>e.style.display != "none")
+          // if (lineNodes.length > 0) {
+          //   // 让他显示，并默认选择第一个
+          //   this.historyNode.style.display = ""
+          //   console.log("select the first visible linNode")
+          //   this.historyNode.querySelectorAll(".line").forEach(line=>line.removeAttribute("selected"))
+          //   lineNodes.slice(-1)[0].setAttribute("selected", "")
+          // } else {
+          //   this.inputMessage("settingHistory is empty", 0, 3)
+          // }
           return
         }
       } else if (key=="Enter") {
         // 回车则获取当前selected，填入input
-        if (this.historyNode.style.display != "none" && this.inputNode.value.trim() == "") {
+        if (
+          (this.historyNode.style.display != "none")
+        ) {
           // line -> input
           let selectedLine = this.historyNode.querySelector(".line[selected]")
           let text
@@ -410,6 +421,7 @@ class AddonSetting extends AddonModule {
           this.inputNode.value = text
           // 并且收起historyNode
           this.historyNode.style.display = "none"
+          // this.historyNode.querySelectorAll(".match").forEach(e=>e.classList.remove("match"))
         } else {
           // input -> line
           if ((await this.appendLine(this.inputNode.value))) {
@@ -417,6 +429,7 @@ class AddonSetting extends AddonModule {
           }
         }
       } else if (key=="Escape") {
+        clearMatch()
         let classList = [...this.historyNode.classList]
         let lastClassName = [...classList].slice(-1)[0]
         if (classList.length > 1) {
@@ -434,7 +447,7 @@ class AddonSetting extends AddonModule {
             this.settingNode.style.display = "none"
             this.inputNode.blur()
           }
-        } 
+        }
       } else if (key=="Delete") {
         if (this.historyNode.style.display != "none") {
           // 删除选中
@@ -472,15 +485,16 @@ class AddonSetting extends AddonModule {
         if (bestKeywords.length == 0) { return } 
         let suggestion = bestKeywords[0] as string 
         this.inputNode.value = inputText.replace(/(\w+)$/, suggestion)
-        return 
       }
+
       // arrow up down, select 
       if (["ArrowUp", "ArrowDown"].indexOf(key) != -1) {
         let lineNodes = [...this.historyNode.querySelectorAll(".line")]
-        if (this.historyNode.classList.contains("search-result")) {
+        if (this.inputNode.value.length && this.historyNode.querySelector(".match")) {
           // select in the search results
           console.log("select in the search results")
-          lineNodes = lineNodes.filter(e=>e.style.display != "none")
+          lineNodes = lineNodes.filter(e=>e.classList.contains("match"))
+          console.log(lineNodes)
         }
         if (!this.historyNode.querySelector(".line[selected]")) {
           // select the first
@@ -504,9 +518,7 @@ class AddonSetting extends AddonModule {
                 i = 0
             }
             lineNodes[i].setAttribute("selected", "")
-            if (this.historyNode.classList.contains("search-result")) { 
-              break 
-            }
+            // if (this.inputNode.value.length) { break }
             const half = parseInt(String(this.maxTotalLineNum / 2))
             console.log(half)
             // i - selected index; j - other index
@@ -531,6 +543,79 @@ class AddonSetting extends AddonModule {
             break
           }
         }
+        return
+      }
+
+      // if historyNode has childNodes, search
+      console.log(key)
+      clearMatch()
+      if (this.inputNode.value) {
+        if (this.historyNode.querySelector(".line")) {
+          let inputText = this.inputNode.value.replace(/ /g, "")
+          let matchLineNodes = []
+          this.historyNode.querySelectorAll(".line").forEach(line=>{
+            let lineHTML = line.innerHTML
+            let matchNum = 0
+            let innerHTML = ""
+            let tightness = 0
+            let lasti = undefined
+            for (let i=0;i<lineHTML.length;i++) {
+              if (inputText[matchNum].toLowerCase() == lineHTML[i].toLowerCase()) {
+                if (lasti == undefined) {
+                  lasti = i
+                }
+                tightness += (i - lasti)
+                matchNum ++
+                innerHTML += `<b>${lineHTML[i]}</b>`
+              } else {
+                innerHTML += lineHTML[i]
+              }
+              if (matchNum == inputText.length) {
+                innerHTML += lineHTML.slice(i+1)
+                try {
+                  line.innerHTML = innerHTML
+                } catch {
+                  line.innerHTML = lineHTML
+                }
+                matchLineNodes.push([tightness, line, line.innerText])
+                break
+              }
+            }
+            line.style.display = "none"
+            line.removeAttribute("selected")
+          })
+          // select 3
+          matchLineNodes = matchLineNodes.sort((x, y)=>(y[0]-x[0])).slice(-3)
+          // compute rmse
+          let tightnessArray = matchLineNodes.map(e=>e[0])
+          // mean
+          let s = 0
+          for (let i=0;i<tightnessArray.length;i++) {
+            s += tightnessArray[i]
+          }
+          let mean = s / tightnessArray.length
+          // variance
+          let v = 0
+          for (let i=0;i<tightnessArray.length;i++) {
+            v += (mean - tightnessArray[i]) ** 2
+          }
+          v = v / tightnessArray.length
+          console.log("variance", v)
+          if (v > 200) {
+            matchLineNodes = matchLineNodes.slice(-1)
+          }
+          matchLineNodes.forEach((arr, i)=>{
+            let line = arr[1]
+            line.classList.add("match")
+            if (matchLineNodes.length - i < this.maxTotalLineNum) {
+              line.style.display = ""
+            }
+          })
+        }
+      } else {
+        [...this.historyNode.querySelectorAll(".line")].slice(-this.maxTotalLineNum).forEach(e=>{
+          e.style.display = ""
+        })
       }
     })
   }
