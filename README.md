@@ -7,7 +7,7 @@
 
 ![](https://spr1ng.live/file/e18118d599b661035d11e.png)
 
-![](https://spr1ng.live/file/f27598f657300171b184a.png)
+![image](https://user-images.githubusercontent.com/51939531/205204555-b70dab10-a517-4ed4-931d-129d3a89b373.png)
 
 <center><font color="deeppink"><b>效果预览</b></font></center>
 
