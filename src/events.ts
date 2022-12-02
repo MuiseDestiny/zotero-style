@@ -418,7 +418,6 @@ class AddonEvents extends AddonModule {
     } else {
       this.record = await this._Addon.item.readNoteItemsAsData()
     }
-    
     console.log("this.record", this.record)
   }
 

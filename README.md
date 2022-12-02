@@ -83,6 +83,10 @@ Zotero Style的阅读进度数据自动同步,无需任何配置
 
 </details>
 
+<details>
+<summary>关于导入参考文献</summary>
+目前已知与scihub插件不兼容
+</details>
 
 <details>
 <summary>部分命令参数图解</summary>

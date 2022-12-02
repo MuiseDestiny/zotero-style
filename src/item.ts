@@ -1,7 +1,4 @@
 import AddonModule from "./module";
-// 效果：
-// 新建一个zotero-style条目
-// 条目下会新建笔记，每个笔记对应一篇文献的阅读记录
 
 
 class AddonItem extends AddonModule {
