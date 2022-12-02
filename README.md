@@ -69,28 +69,17 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 | Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |  |
 | /reference | 无 | 在阅读PDF界面使用，不离开Zotero软件就能导入参考文献 |  | 
 | /Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1) | 在命令中 | 用于指派标签颜色和位置（随心所欲） |  |
-| Zotero.ZoteroStyle.gitee=URL#Token | URL#Token | 用于同步阅读进度数据（安装Chartero用户无需同步请忽略此条） | 是 |
 
-
-> URL是用户的Gitee仓库的一个json文件如`https://gitee.com/MuiseDestiny/BiliBili/blob/master/ZoteroStyle.json`,Token在`https://gitee.com/profile/personal_access_tokens`创建
-
-> 同步是实验性功能，如果使用该功能要保持一直联网，不然有可能会有阅读数据丢失。这个同步不如Chartero的方案好。
 
 <details>
 <summary>关于同步</summary>
+Zotero Style的阅读进度数据自动同步,无需任何配置
+安装插件后,阅读文献后,在未分类条目下,会出现下图条目,它记录了每篇文献的阅读时间,以JSON格式储存
 
-首先，当Zotero被打开，插件初始化过程中会检测是否配置Gitee，若配置，检测是否有本地数据，若有则同步到Gitee（本地记录使命结束，以后都会同步到Gitee的数据）
+![](https://spr1ng.live/file/7351db074aef6d05986d6.png)
 
-然后，从Gitee获取记录数据作为一个`record`变量（在打开Zotero时诞生，关闭Zotero时毁灭），变量会记录阅读数据。
-
-以下几种行为会触发将`record`变量更新到Gitee：1.打开一些东西（如file，tab，item）；2.关闭一些东西；3.切换应用；4.关闭Zotero；
-
-除此之外，每一分钟自动更新一次。
-
-当你频繁在A/B电脑切换，需要在AB上分别配置一次Zotero.ZoteroStyle.gitee变量，且两次的URL#Token应相同。
-这样AB每次打开都会从Gitee同一文件获取阅读数据，且不断更新。
-
-如果担心数据隐私，可以设置仓库不公开。
+当你在多台设备间切换时,前提是他们都安装了Zotero Style,Zotero都登录同一账号,这样上图条目加上笔记会自动同步
+插件初始化时,会检索名为ZoteroStyle的条目(所以不要更改它的名字),然后将条目下的笔记读取并储存为一个变量,当发生阅读行为,变量数据和笔记数据会随之更新,而笔记数据又如上述所说会被Zotero自动同步.
 
 </details>
 
@@ -136,8 +125,8 @@ Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置�
 1. 标签右对齐，标签由`圆角正方形`->`圆形`
 2. 增加`只显示标题`按钮🌸
 3. 显示阅读进度，是否划水，一看便知👋
-4. 本插件可与`Chartero`共存，若安装`Chartero`本插件将不再渲染进度条，因为这一功能我已合并到`Chartero`，而且`Chartero`支持同步数据（仅安装Style可通过Gitee同步，配置相对繁琐）
-5. 阅读界面快速检索参考文献，一键导入并关联至当前文献 （目前实验性功能）
+4. 实现进度条同步
+5. 阅读界面快速检索参考文献，一键导入并关联至当前文献 （目前很好用）
 6. 自定义指派标签颜色位置
 
 🙌建议配合`Zotero Tag`&`Chartero`使用

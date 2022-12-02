@@ -1,7 +1,5 @@
 import { Addon, addonName } from "./addon";
 import AddonModule from "./module";
-import AddonSetting from "./setting";
-import Gitee from "./gitee";
 
 
 class AddonEvents extends AddonModule {
@@ -19,7 +17,7 @@ class AddonEvents extends AddonModule {
   public progressOpacity = .7;
   public progressColor = "#5AC1BD";
   public constantFields = ["hasAttachment", "title"];
-  public recordInterval = 3;  // s
+  public recordInterval = 5;  // s
   public updateInterval = 60;  // s
   public maxHangTime = 60;  // s
   public mode = "normal";  // default
@@ -43,12 +41,9 @@ class AddonEvents extends AddonModule {
         extraData: object
       ) => {
         if (event == "open") {
-          // open a pdf
           console.log(ids, extraData)
-          await this.gitee.updateFile(JSON.stringify(this.record), "open")
         } 
         if (event == "close") {
-          await this.gitee.updateFile(JSON.stringify(this.record), "close")
         }
       }
     }
@@ -86,38 +81,37 @@ class AddonEvents extends AddonModule {
     this.window.addEventListener(
       "unload",
       async (e) => {
-        await this.gitee.updateFile(JSON.stringify(this.record), "Zotero is closed")
         this.Zotero.Notifier.unregisterObserver(notifierID);
       },
       false
     );
     
     // listen to Zotero's state if no Chartero
-    if (!this.Zotero.Chartero) {
-      this.window.addEventListener('activate', async () => {
-        this.state.activate = true
-        // once Zotero is activated again, it will continue to record read time
-        this.intervalID = this.window.setInterval(this.recordReadTime.bind(this), this.recordInterval * 1e3)
-        await this.gitee.updateFile(JSON.stringify(this.record), "activate")
-      }, true);
-      this.window.addEventListener('deactivate', async () => {
-        this.state.activate = false
-        this.state.hangCount = 0;
-        // once Zotero is deactivate again, it will stop to record read time
-        this.window.clearInterval(this.intervalID)
-        await this.gitee.updateFile(JSON.stringify(this.record), "deactivate")
-      }, true);
-      this.window.setInterval(async () => {
-        await this.gitee.updateFile(JSON.stringify(this.record), "updateInterval")
-      }, this.updateInterval * 1e3);
-    }
-
-    // try refresh
-    this.refresh()
+    this.window.addEventListener('activate', async () => {
+      this.state.activate = true
+      // once Zotero is activated again, it will continue to record read time
+      this.intervalID = this.window.setInterval(this.recordReadTime.bind(this), this.recordInterval * 1e3)
+    }, true);
+    this.window.addEventListener('deactivate', async () => {
+      this.state.activate = false
+      this.state.hangCount = 0;
+      // once Zotero is deactivate again, it will stop to record read time
+      this.window.clearInterval(this.intervalID)
+    }, true);
 
     // async
-    await this.prepareGitee()
-
+    let count = 30
+    while (count) {
+      try {
+        await this.initAddonItem()
+        break
+      } catch {
+        await this.Zotero.Promise.delay(100)
+        count -- 
+      }
+    }
+    // try refresh
+    this.refresh()
   }
 
   private addSwitchButton(): void {
@@ -152,7 +146,6 @@ class AddonEvents extends AddonModule {
         Components.interfaces.nsISupports
       ).wrappedJSObject;
       if (event.button == 0) {
-        console.log("left click")
         if (this.classList.contains('max')) {
           _Zotero.ZoteroStyle.events.mode = "normal"
           this.classList.remove("max")
@@ -175,7 +168,6 @@ class AddonEvents extends AddonModule {
           settingNode.style.display = "none"
         }
       } else if (event.button == 2) {
-        console.log("right click")
         _Zotero.ZoteroStyle.events.progress  = !_Zotero.ZoteroStyle.events.progress
         _Zotero.getMainWindow().document.querySelectorAll(".zotero-style-progress").forEach(node=>{
           node.setAttribute("visible", String(node.getAttribute("visible") == "false"))
@@ -283,32 +275,6 @@ class AddonEvents extends AddonModule {
     )
   }
 
-  private _hookZoteroFunction(path: string, func: Function) {
-    // path: getMainWindow().ZoteroPane.itemsView._renderCell
-    let id = this.window.setInterval(
-      () => {
-        let zoteroFunc = eval(`this.Zotero.${path}`)
-        let zoteroFuncThis = eval(`this.Zotero.${path.match(/(.+)\.\w/)[1]}`)
-        this._hookFunction[path] = {
-          zoteroFunc,
-          zoteroFuncThis
-        }
-        if (zoteroFunc === undefined) return
-        // zoteroFunc is the function that needs to be modified
-        let modifyFunc = (...args: any[]) => {
-          let zoteroFunctionReturn = zoteroFunc.apply(zoteroFuncThis, args)
-          var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
-            Components.interfaces.nsISupports
-          ).wrappedJSObject;
-          return func.call(this, zoteroFunctionReturn, args, Zotero)
-        }
-        eval(`this.Zotero.${path} = ${modifyFunc.toString()}`)
-        this.window.clearInterval(id)
-      },
-      1e3
-    )
-  }
-
   private modifyRenderPrimaryCell(primaryCell: any, args: any[], Zotero: any): any {
     // https://github.com/zotero/zotero/blob/1c8554d527390ab0cda0352e885d461a13af767c/chrome/content/zotero/itemTree.jsx
     // 2693     _renderPrimaryCell(index, data, column)
@@ -370,7 +336,7 @@ class AddonEvents extends AddonModule {
           console.log(`Not Support tagPosition=${tagPosition}`)
       }
     }
-    if (Zotero.Chartero || primaryCell.querySelector(".zotero-style-progress")) {
+    if (primaryCell.querySelector(".zotero-style-progress")) {
       return primaryCell
     }
     // render the read progress
@@ -378,44 +344,33 @@ class AddonEvents extends AddonModule {
     progressNode.setAttribute("class", "zotero-style-progress")
     progressNode.setAttribute("visible", String(Zotero.ZoteroStyle.events.progress))
     primaryCell.appendChild(progressNode)
-    primaryCell.querySelector(".cell-text").style.zIndex = 999
+    primaryCell.querySelector(".cell-text").style.zIndex = "999"
     // create sub span in this progress node
-    // i.e.
-    // const testTitle = "Test Progress"
-    // this.record[testTitle] = {
-    //     0: 60 * 3,
-    //     1: 60 * 6,
-    //     2: 5,
-    //     3: 60 * 3,
-    //     4: 60 * 7,
-    //     5: 60 * 2,
-    //     "total": 12
-    // }
     const title = args[1]
     if (this.record && this.record[title]) {
       let recordTimeObj = this.record[title]
-      const total = recordTimeObj["total"]
+      const pageNum = recordTimeObj.pageNum
       let maxSec = 0
       let s = 0
       let n = 0
-      for (let i=0; i<total; i++) {
-        if (!(recordTimeObj[i])) continue
-        if (recordTimeObj[i] > maxSec) {
-          maxSec = recordTimeObj[i]
+      for (let i=0; i<pageNum; i++) {
+        if (!(recordTimeObj.pageTime[i])) continue
+        if (recordTimeObj.pageTime[i] > maxSec) {
+          maxSec = recordTimeObj.pageTime[i]
         }
-        s += recordTimeObj[i]
+        s += recordTimeObj.pageTime[i]
         n += 1
       }
       const meanSec = s / n
       maxSec = meanSec + (maxSec - meanSec) * .5
       const minSec = 60
-      const pct = 1 / total * 100
+      const pct = 1 / pageNum * 100
       let progressColor = this.getValue("Zotero.ZoteroStyle.progressColor", this.progressColor)
       let [r, g, b] = this.toRGB(progressColor)
-      for (let i=0; i<total; i++) {
+      for (let i=0; i<pageNum; i++) {
         // pageSpan represent a page, color represent the length of read time
         let pageSpan = createElement("span")
-        let alpha = (recordTimeObj[i] || 0) / (maxSec > minSec ? maxSec : minSec)
+        let alpha = (recordTimeObj.pageTime[i] || 0) / (maxSec > minSec ? maxSec : minSec)
         pageSpan.style = `
           width: ${pct}%;
           height: 100%;
@@ -444,31 +399,27 @@ class AddonEvents extends AddonModule {
     return cell
   }
 
-  private async prepareGitee() {
-    let giteePrefs = this.getValue("Zotero.ZoteroStyle.gitee")
-    this.gitee = new Gitee()
-    if (giteePrefs) {      
-      let [url, access_token] = giteePrefs.split("#")
-      // i.e., https://gitee.com/MuiseDestiny/BiliBili/blob/master/ZoteroStyle.json
-      let [owner, repo, path] = url.match(/https:\/\/gitee.com\/(.+)\/(.+)\/blob\/master\/(.+)/).slice(1)
-      this.gitee.init(this.Zotero, access_token, owner, repo, path)
-      // local
-      let localRecord = this.getValue("Zotero.ZoteroStyle.record", {})
-      let remoteRecord = await this.gitee.readFile()
-      let isUpdate = this.getValue("Zotero.ZoteroStyle.firstUpdate", false)
-      console.log("isUpdate", isUpdate)
-      console.log(localRecord)
-      console.log(remoteRecord)
-      if (!isUpdate) {
-        await this.gitee.updateFile(JSON.stringify({...remoteRecord, ...localRecord,}), "first")
-        this.setValue("Zotero.ZoteroStyle.firstUpdate", true)
-      }
-    } else {
-      this.gitee.init(this.Zotero, "", "", "", "")
+  private async initAddonItem() {
+    console.log("initAddonItem is called")
+    let localRecord = this.getValue("Zotero.ZoteroStyle.record", {})
+    let isUpdate = this.getValue("Zotero.ZoteroStyle.firstUpdate", false)
+    console.log("isUpdate", isUpdate)
+    // // for test
+    // isUpdate = false
+    if (!isUpdate) {
+      await this.Zotero.Promise.delay(3000)
     }
-    // gitee -> addon
-    this.record = await this.gitee.readFile()
-    console.log(this.record)
+    console.log("isUpdate", isUpdate)
+    await this._Addon.item.init(this.Zotero)
+    if (localRecord && !isUpdate) {
+      await this._Addon.item.updateNoteItems(localRecord)
+      this.setValue("Zotero.ZoteroStyle.firstUpdate", true)
+      this.record = localRecord
+    } else {
+      this.record = await this._Addon.item.readNoteItemsAsData()
+    }
+    
+    console.log("this.record", this.record)
   }
 
   private getReader(): any {
@@ -507,18 +458,26 @@ class AddonEvents extends AddonModule {
     if (this.state.hangCount * this.recordInterval > this.maxHangTime) return;
 
     // real read, record this recordInterval
-    const totalPageNum = reader._iframeWindow.wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
+    const PageNum = reader._iframeWindow.wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
     const title = this.getReadingItem().getField("title")
 
     // get local record
     // console.log("saving");
-    if (!this.record[title]) { this.record[title] = {} }
-    this.record[title][this.state.pageIndex] = (
-      this.isNumber(this.record[title][this.state.pageIndex]) 
-      ? this.record[title][this.state.pageIndex]
+    if (!this.record[title]) { 
+      this.record[title] = {
+        pageTime: {},
+        noteTitle: title,
+        title: title,
+        pageNum: 0
+      } 
+    }
+    this.record[title].pageTime[this.state.pageIndex] = (
+      this.isNumber(this.record[title].pageTime[this.state.pageIndex]) 
+      ? this.record[title].pageTime[this.state.pageIndex]
       : 0
     ) + this.recordInterval;
-    this.record[title]["total"] = totalPageNum;
+    this.record[title].pageNum = PageNum;
+    this._Addon.item.updateNoteItem(this.record[title])
   }
 
   private isNumber(arg: any): boolean {

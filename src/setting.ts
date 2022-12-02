@@ -1,4 +1,3 @@
-import { sync } from "replace-in-file";
 import AddonModule from "./module";
 
 class AddonSetting extends AddonModule {
@@ -75,19 +74,18 @@ class AddonSetting extends AddonModule {
   }
 
   public init() {
-      console.log(this.History)
-      Object.assign(this.History, this, 
-        {
-          getValue: this.getValue, 
-          setValue: this.setValue, 
-          createElement: this.createElement, 
-          renderArray: this.renderArray
-        }
-      )
-      this.createStyle()
-      this.createHTML()
-      this.setEvent()
-      this.initKeys()
+    Object.assign(this.History, this, 
+      {
+        getValue: this.getValue, 
+        setValue: this.setValue, 
+        createElement: this.createElement, 
+        renderArray: this.renderArray
+      }
+    )
+    this.createStyle()
+    this.createHTML()
+    this.setEvent()
+    this.initKeys()
   }
 
   public createStyle() {
@@ -107,7 +105,7 @@ class AddonSetting extends AddonModule {
         align-items: center;
         background-color: white;
         font-size: 18px;
-        box-shadow: 0.3em 0.3em 1em rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 .5em .5em rgba(0, 0, 0, 0.1)
       }
       #Zotero-Style-Setting .input-box {
         width: 100%;
@@ -166,7 +164,6 @@ class AddonSetting extends AddonModule {
           justify-content: center;
           margin: auto;
           opacity: .5;
-          background-color: rgba(248, 240, 240, .4);
           font-size: 12px;
           margin-top: 0;
           margin-bottom: 10px;
@@ -498,9 +495,6 @@ class AddonSetting extends AddonModule {
     
     this.settingNode.addEventListener("keyup", async (event) => {
       let key = event.key
-      console.log("keyup", key)
-      console.log(key)
-      // event.preventDefault()
       if (key=="Enter") {
         // 回车则获取当前selected，填入input
         if (
@@ -658,7 +652,6 @@ class AddonSetting extends AddonModule {
 
     this.settingNode.addEventListener("keydown", async (event) => {
       let key = event.key
-      console.log("keydown", key)
       if (["ArrowUp", "ArrowDown"].indexOf(key) != -1) {
         event.preventDefault();
       }
