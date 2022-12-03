@@ -160,6 +160,15 @@ Zotero Style的阅读进度数据自动同步，无需任何配置。
 如果已有ZoteroStyle更新最新版本，请卸载旧版本，重启Zotero后安装新版本
 
 ## 修复BUG
+1.3.4 - 存在参数为定义获取默认值失败的bug，需要手动设置一下参数，具体步骤为：
+shift+p，然后依次输入以下指定并回车
+`Zotero.ZoteroStyle.progressOpacity=.7`
+`Zotero.ZoteroStyle.tagSize=5`
+`Zotero.ZoteroStyle.tagPosition=4`
+`Zotero.ZoteroStyle.tagAlign=left`
+`Zotero.ZoteroStyle.progressColor=#5AC1BD`
+`Zotero.ZoteroStyle.constantFields=['hasAttachment', 'title']`
+`Zotero.ZoteroStyle.progressColor=#FF9E9E`
 
 1.3.2 - "🌸🌸🌸🌸"类似这种标签会与其他标签重叠，"🌸".length=2
 
