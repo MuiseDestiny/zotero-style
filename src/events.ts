@@ -278,6 +278,7 @@ class AddonEvents extends AddonModule {
   private modifyRenderPrimaryCell(primaryCell: any, args: any[], Zotero: any): any {
     // https://github.com/zotero/zotero/blob/1c8554d527390ab0cda0352e885d461a13af767c/chrome/content/zotero/itemTree.jsx
     // 2693     _renderPrimaryCell(index, data, column)
+    const itemKey = Zotero.getMainWindow().ZoteroPane.getSortedItems()[args[0]].key
     let document = Zotero.getMainWindow().document
     let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
     let getEmojLength = (emoj) => {
@@ -347,8 +348,8 @@ class AddonEvents extends AddonModule {
     primaryCell.querySelector(".cell-text").style.zIndex = "999"
     // create sub span in this progress node
     const title = args[1]
-    if (this.record && this.record[title]) {
-      let recordTimeObj = this.record[title]
+    let recordTimeObj = this.record[itemKey] || this.record[title]
+    if (this.record && recordTimeObj) {
       const pageNum = recordTimeObj.pageNum
       let maxSec = 0
       let s = 0
@@ -402,12 +403,14 @@ class AddonEvents extends AddonModule {
   private async initAddonItem() {
     console.log("initAddonItem is called")
     let localRecord = this.getValue("Zotero.ZoteroStyle.record", {})
+    // localRecord = {"How to deal with resale price maintenance: What can we learn from empirical results?":{"0":38,"2":15,"4":53,"5":36,"6":18,"7":45,"8":123,"16":30,"17":25,"18":5,"19":40,"20":25,"total":26},"An unexpectedly large count of trees in the West African Sahara and Sahel":{"0":33,"1":48,"2":12,"3":57,"4":2331,"total":21},"Tversky Loss Function for Image Segmentation Using 3D Fully Convolutional Deep Networks":{"0":3,"total":9},"Characterization of CRCS Dunhuang test site and vicarious calibration utilization for Fengyun (FY) series sensors":{"0":3,"total":19},"Preliminary Investigation of a New AHI Aerosol Optical Depth (AOD) Retrieval Algorithm and Evaluation with Multiple Source AOD Measurements in China":{"0":3,"1":45,"15":3,"16":651,"17":372,"18":21,"total":19},"Retrieval of Atmospheric Aerosol Optical Depth from AVHRR over Land with Global Coverage Using Machine Learning Method":{"0":144,"9":21,"10":21,"11":9,"total":12},"Evaluation of MODIS Dark Target AOD Product with 3 and 10 km Resolution in Amazonia":{"10":60,"total":16},"Information content of space-borne hyperspectral infrared observations with respect to mineral dust properties":{"0":27,"total":16},"Satellite remote sensing of aerosol optical depth: advances, challenges, and perspectives":{"0":72,"1":18,"2":252,"3":6,"32":3,"73":3,"total":87},"Radiative Forcing Estimation of Aerosols at an Urban Site near the Thar Desert Using Ground-Based Remote Sensing Measurements":{"0":6,"total":11},"RNA modifications modulate gene expression during development":{"0":51,"1":3,"total":12},"Performance evaluation for retrieving aerosol optical depth from the Directional Polarimetric Camera (DPC) based on the GRASP algorithm":{"0":360,"1":438,"2":165,"3":297,"4":354,"5":276,"6":36,"7":129,"8":108,"9":159,"10":18,"11":9,"total":15},"Retrieval and validation of long-term aerosol optical depth from AVHRR data over China":{"0":3,"1":192,"2":489,"3":144,"4":33,"5":174,"6":72,"7":219,"8":90,"9":12,"10":42,"11":15,"12":96,"13":27,"total":17},"Spatiotemporally Continuous Reconstruction of Retrieved PM2.5 Data Using an Autogeoi-Stacking Model in the Beijing-Tianjin-Hebei Region, China":{"0":312,"1":3,"2":9,"3":12,"5":3,"6":12,"7":3,"8":3,"10":3,"11":3,"12":6,"13":3,"14":6,"15":3,"16":3,"total":21},"Accuracy assessment of CAMS and MERRA-2 reanalysis PM2.5 and PM10 concentrations over China":{"0":81,"1":72,"2":3,"3":3,"5":3,"6":3,"8":3,"10":12,"11":6,"12":6,"13":6,"14":3,"total":17},"Validation of the aerosol optical property products derived by the GRASP/Component approach from multi-angular polarimetric observations":{"0":63,"1":3,"2":72,"total":17}}
     let isUpdate = this.getValue("Zotero.ZoteroStyle.firstUpdate", false)
     console.log("isUpdate", isUpdate)
     // // for test
     // isUpdate = false
     if (!isUpdate) {
-      await this.Zotero.Promise.delay(3000)
+      await this.Zotero.Promise.delay(10000)
+      this._Addon.setting.inputMessage("The data migration begins", 0, 3)
     }
     console.log("isUpdate", isUpdate)
     await this._Addon.item.init(this.Zotero)
@@ -458,25 +461,32 @@ class AddonEvents extends AddonModule {
 
     // real read, record this recordInterval
     const PageNum = reader._iframeWindow.wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
-    const title = this.getReadingItem().getField("title")
+    const item = this.getReadingItem()
+    const title = item.getField("title")
+    const itemKey = item.key
 
     // get local record
     // console.log("saving");
-    if (!this.record[title]) { 
-      this.record[title] = {
-        pageTime: {},
-        noteTitle: title,
-        title: title,
-        pageNum: 0
-      } 
+    if (!this.record[itemKey]) {
+      if (this.record[title]) {
+        this.record[itemKey] = this.record[title]
+        this.record[itemKey].itemKey = itemKey
+      } else {
+        this.record[itemKey] = {
+          pageTime: {},
+          noteKey: itemKey,
+          title: title,
+          pageNum: 0
+        } 
+      }
     }
-    this.record[title].pageTime[this.state.pageIndex] = (
-      this.isNumber(this.record[title].pageTime[this.state.pageIndex]) 
-      ? this.record[title].pageTime[this.state.pageIndex]
+    this.record[itemKey].pageTime[this.state.pageIndex] = (
+      this.isNumber(this.record[itemKey].pageTime[this.state.pageIndex]) 
+      ? this.record[itemKey].pageTime[this.state.pageIndex]
       : 0
     ) + this.recordInterval;
-    this.record[title].pageNum = PageNum;
-    this._Addon.item.updateNoteItem(this.record[title])
+    this.record[itemKey].pageNum = PageNum;
+    this._Addon.item.updateNoteItem(this.record[itemKey])
   }
 
   private isNumber(arg: any): boolean {

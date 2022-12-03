@@ -51,7 +51,7 @@ class AddonItem extends AddonModule {
     console.log("update", data)
     // Object.keys(data) includes "title" and "key"
     // get key notitem
-    let noteItem = await this.getNoteItem(data.noteTitle)
+    let noteItem = await this.getNoteItem(data.noteKey)
     if (!noteItem) {
       noteItem = await this.createNoteItem()
     }
@@ -59,21 +59,28 @@ class AddonItem extends AddonModule {
     return true
   }
 
-  public async writeDataToNote(data, noteItem) { 
-    noteItem.setNote(`${data.noteTitle}\n${JSON.stringify(data, null, 2)}`)
+  public async writeDataToNote(data, noteItem) {
+    noteItem.setNote(`${data.title || data.noteKey}\n${JSON.stringify(data, null, 2)}`)
     await noteItem.saveTx()
   }
 
   public readNoteAsData(noteItem) {
-    return JSON.parse(noteItem.note.replace(/^.+\n/, ""))
+    try {
+      return JSON.parse(noteItem.note.replace(/<.+?>/g, "").replace(/^.+\n/, ""))
+    } catch {
+      console.log(noteItem.note, noteItem.note.replace(/<.+?>/g, "").replace(/^.+\n/, ""))
+      return {noteKey: undefined}
+    }
   }
 
-  public async getNoteItem(noteTitle: string) {
+  public async getNoteItem(noteKey: string) {
     const ids = await this.addonItem.getNotes()
     let noteItem = undefined
     for (let i=0;i<ids.length;i++) {
       let _noteItem = await this.Zotero.Items.getAsync(ids[i])
-      if (this.readNoteAsData(_noteItem).noteTitle == noteTitle) {
+      let _data = this.readNoteAsData(_noteItem)
+      let _noteKey = _data.noteKey || _data.noteTitle
+      if (_noteKey == noteKey) {
         noteItem = _noteItem
         break
       }
@@ -87,9 +94,8 @@ class AddonItem extends AddonModule {
     let data = {}
     ids.forEach(async (id: number)=> {
       let noteItem = await this.Zotero.Items.getAsync(id)
-      let noteTitle = this.readNoteAsData(noteItem).noteTitle
       let _data = this.readNoteAsData(noteItem)
-      data[noteTitle] = _data
+      data[_data.noteKey] = _data
     })
     return data
   }
@@ -99,10 +105,10 @@ class AddonItem extends AddonModule {
     Object.keys(data).forEach(key => {
       // for old data
       let _data = data[key]
-      if (Object.keys(_data).indexOf("noteTitle") == -1) {
-        _data.noteTitle = key
+      if (!_data.noteKey) {
+        _data.noteKey = key
       }
-      if (Object.keys(_data).indexOf("pageTime") == -1) {
+      if (!_data.pageTime) {
         _data.pageTime = {}
         for (let i=0;i<_data.total;i++) {
           _data.pageTime[i] = _data[i] || 0
