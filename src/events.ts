@@ -9,6 +9,7 @@ class AddonEvents extends AddonModule {
   public style: any;
   public intervalID: number;
   public gitee: any;
+  public idForBtn: number;
   public _hookFunction = {};
   public record = {};
   public tagSize = 5;  // em
@@ -57,6 +58,11 @@ class AddonEvents extends AddonModule {
 
     // add button
     this.addSwitchButton()
+    this.idForBtn = this.window.setInterval(() => {
+      if (!this.document.querySelector("#zotero-items-toolbar #zotero-tb-switch-itemtree")) {
+        this.addSwitchButton()
+      }
+    }, 1e3)
 
     // modify Zotero render function
     this.hookZoteroFunction(
@@ -178,8 +184,8 @@ class AddonEvents extends AddonModule {
     let toolbarbutton = toolbar.querySelector("toolbarbutton").cloneNode()
     toolbarbutton.setAttribute("id", "zotero-tb-switch-itemtree")
     toolbarbutton.setAttribute("tooltiptext", "Zotero Style For You")
+    toolbarbutton.setAttribute("class", "zotero-tb-button")
     toolbarbutton.setAttribute("type", "")
-    toolbarbutton.setAttribute("class", "")
     toolbarbutton.setAttribute("onmousedown", "")
     toolbarbutton.innerHTML = normalSvg
     toolbarbutton.addEventListener("click", callback)
@@ -535,6 +541,7 @@ class AddonEvents extends AddonModule {
       let func = function(...args: any[]) {return obj.zoteroFunc.apply(obj.zoteroFuncThis, args)}
       eval(`this.Zotero.${path} = ${func.toString()}`)
     }
+    this.window.clearInterval(this.idForBtn)
     this.Zotero.ZoteroStyle = undefined;
   }
 }
