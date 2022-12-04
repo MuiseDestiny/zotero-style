@@ -9,11 +9,9 @@ class AddonItem extends AddonModule {
   }
 
   public async init(Zotero) {
-    console.log("AddonItem init is called")
     // create a note in the zotero-style item
     this.Zotero = Zotero
     await this.initAddonItem()
-    console.log("AddonItem init is done")
 
   }
 
@@ -58,6 +56,7 @@ class AddonItem extends AddonModule {
     await this.writeDataToNote(data, noteItem)
     return true
   }
+  
 
   public async writeDataToNote(data, noteItem) {
     noteItem.setNote(`${data.title || data.noteKey}\n${JSON.stringify(data, null, 2)}`)

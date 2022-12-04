@@ -1,5 +1,6 @@
 import { Addon, addonName } from "./addon";
 import AddonModule from "./module";
+import AddonPrompt from "./prompt"
 
 
 class AddonEvents extends AddonModule {
@@ -53,9 +54,6 @@ class AddonEvents extends AddonModule {
   public async onInit() {
     console.log(`${addonName}: init called`);
 
-    // add style about tag
-    this.addStyle();
-
     // add button
     this.addSwitchButton()
     this.idForBtn = this.window.setInterval(() => {
@@ -64,15 +62,7 @@ class AddonEvents extends AddonModule {
       }
     }, 1e3)
 
-    // modify Zotero render function
-    this.hookZoteroFunction(
-      "getMainWindow().ZoteroPane.itemsView._renderPrimaryCell", 
-      this.modifyRenderPrimaryCell
-    )
-    this.hookZoteroFunction(
-      "getMainWindow().ZoteroPane.itemsView._renderCell", 
-      this.modifyRenderCell
-    )
+    
     
     // setting 
     this.setting = this._Addon.setting
@@ -105,19 +95,26 @@ class AddonEvents extends AddonModule {
       this.window.clearInterval(this.intervalID)
     }, true);
 
-    // async
-    let count = 30
-    while (count) {
-      try {
-        await this.initAddonItem()
-        break
-      } catch {
-        await this.Zotero.Promise.delay(100)
-        count -- 
-      }
+    // console.log("new AddonPrompt()")
+    // let prompt = new AddonPrompt()
+    // prompt.init(this.Zotero)
+
+    this.hookZoteroFunction(
+      "getMainWindow().ZoteroPane.itemsView._renderPrimaryCell", 
+      this.modifyRenderPrimaryCell
+    )
+    this.hookZoteroFunction(
+      "getMainWindow().ZoteroPane.itemsView._renderCell", 
+      this.modifyRenderCell
+    )
+    this.addStyle()
+    
+    console.log("wait for collectionTreeRow")
+    while (!this.window.ZoteroPane.itemsView.collectionTreeRow) {
+      await this.Zotero.Promise.delay(10)
     }
-    // try refresh
-    this.refresh()
+    console.log("collectionTreeRow is ready")
+    await this.initAddonItem()
   }
 
   private addSwitchButton(): void {
@@ -407,20 +404,14 @@ class AddonEvents extends AddonModule {
   }
 
   private async initAddonItem() {
-    console.log("initAddonItem is called")
     let localRecord = this.getValue("Zotero.ZoteroStyle.record", {})
-    // localRecord = {"How to deal with resale price maintenance: What can we learn from empirical results?":{"0":38,"2":15,"4":53,"5":36,"6":18,"7":45,"8":123,"16":30,"17":25,"18":5,"19":40,"20":25,"total":26},"An unexpectedly large count of trees in the West African Sahara and Sahel":{"0":33,"1":48,"2":12,"3":57,"4":2331,"total":21},"Tversky Loss Function for Image Segmentation Using 3D Fully Convolutional Deep Networks":{"0":3,"total":9},"Characterization of CRCS Dunhuang test site and vicarious calibration utilization for Fengyun (FY) series sensors":{"0":3,"total":19},"Preliminary Investigation of a New AHI Aerosol Optical Depth (AOD) Retrieval Algorithm and Evaluation with Multiple Source AOD Measurements in China":{"0":3,"1":45,"15":3,"16":651,"17":372,"18":21,"total":19},"Retrieval of Atmospheric Aerosol Optical Depth from AVHRR over Land with Global Coverage Using Machine Learning Method":{"0":144,"9":21,"10":21,"11":9,"total":12},"Evaluation of MODIS Dark Target AOD Product with 3 and 10 km Resolution in Amazonia":{"10":60,"total":16},"Information content of space-borne hyperspectral infrared observations with respect to mineral dust properties":{"0":27,"total":16},"Satellite remote sensing of aerosol optical depth: advances, challenges, and perspectives":{"0":72,"1":18,"2":252,"3":6,"32":3,"73":3,"total":87},"Radiative Forcing Estimation of Aerosols at an Urban Site near the Thar Desert Using Ground-Based Remote Sensing Measurements":{"0":6,"total":11},"RNA modifications modulate gene expression during development":{"0":51,"1":3,"total":12},"Performance evaluation for retrieving aerosol optical depth from the Directional Polarimetric Camera (DPC) based on the GRASP algorithm":{"0":360,"1":438,"2":165,"3":297,"4":354,"5":276,"6":36,"7":129,"8":108,"9":159,"10":18,"11":9,"total":15},"Retrieval and validation of long-term aerosol optical depth from AVHRR data over China":{"0":3,"1":192,"2":489,"3":144,"4":33,"5":174,"6":72,"7":219,"8":90,"9":12,"10":42,"11":15,"12":96,"13":27,"total":17},"Spatiotemporally Continuous Reconstruction of Retrieved PM2.5 Data Using an Autogeoi-Stacking Model in the Beijing-Tianjin-Hebei Region, China":{"0":312,"1":3,"2":9,"3":12,"5":3,"6":12,"7":3,"8":3,"10":3,"11":3,"12":6,"13":3,"14":6,"15":3,"16":3,"total":21},"Accuracy assessment of CAMS and MERRA-2 reanalysis PM2.5 and PM10 concentrations over China":{"0":81,"1":72,"2":3,"3":3,"5":3,"6":3,"8":3,"10":12,"11":6,"12":6,"13":6,"14":3,"total":17},"Validation of the aerosol optical property products derived by the GRASP/Component approach from multi-angular polarimetric observations":{"0":63,"1":3,"2":72,"total":17}}
     let isUpdate = this.getValue("Zotero.ZoteroStyle.firstUpdate", false)
-    console.log("isUpdate", isUpdate)
-    // // for test
-    // isUpdate = false
     if (!isUpdate) {
       await this.Zotero.Promise.delay(10000)
-      this._Addon.setting.inputMessage("The data migration begins", 0, 3)
     }
-    console.log("isUpdate", isUpdate)
     await this._Addon.item.init(this.Zotero)
     if (localRecord && !isUpdate) {
+      this._Addon.setting.inputMessage("The data migration begins", 0, 3)
       await this._Addon.item.updateNoteItems(localRecord)
       this.setValue("Zotero.ZoteroStyle.firstUpdate", true)
       this.record = localRecord
@@ -428,9 +419,10 @@ class AddonEvents extends AddonModule {
       this.record = await this._Addon.item.readNoteItemsAsData()
     }
     console.log("this.record", this.record)
+    this.refresh()
   }
 
-  private getReader(): any {
+  private getReader() {
     return this.Zotero.Reader.getByTabID(((this.window as any).Zotero_Tabs as typeof Zotero_Tabs).selectedID);
   }
 
@@ -440,7 +432,7 @@ class AddonEvents extends AddonModule {
     return item
   }
 
-  public recordReadTime(): void {
+  public recordReadTime() {
     // is not reading
     // it return undefined if no reader selected, so we ignore it
     const reader = this.getReader();
@@ -525,8 +517,10 @@ class AddonEvents extends AddonModule {
   public refresh() {
     this.addStyle()
     try {
-      this.Zotero.getMainWindow().ZoteroPane.itemsView.refreshAndMaintainSelection()
-    } catch (e) {}
+      this.window.ZoteroPane.itemsView.refreshAndMaintainSelection()
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   public onUnInit(): void {

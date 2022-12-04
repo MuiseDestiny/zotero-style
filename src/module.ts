@@ -28,7 +28,7 @@ class AddonModule {
     var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
       Components.interfaces.nsISupports
     ).wrappedJSObject as _ZoteroConstructable;;
-    let _v = Zotero.Prefs.get(k) as string
+    let _v = Zotero.Prefs.get(k)
     // not stored or stored empty string, return
     if (_v == undefined || _v == "") { return v }
     // stored, maybe we needn't later processing or need string, return
@@ -36,17 +36,19 @@ class AddonModule {
     // json or number, but Number("") = 0, eval("") = undefined, so we use latter
     // try json
     try {
+      _v = String(_v)
       _v = JSON.parse(_v)
     } catch (e) {
       // console.log(`Error in JSON.parse function - JSON.parse(${_v})`)
       // i.e., JSON.parse("['1']") can not work, but eval can
+      try {
+        _v = String(_v)
+        _v = eval(_v)
+      } catch (e) {
+        console.log(`Error in eval function - eval(${_v})`)
+      }
     }
     // last try
-    try {
-      _v = eval(_v)
-    } catch (e) {
-      console.log(`Error in eval function - eval(${_v})`)
-    }
     return (typeof(_v) == typeof(v) ? _v : v)
   }
 

@@ -1,20 +1,19 @@
 import AddonModule from "./module";
 
 class AddonSetting extends AddonModule {
-  public settingNode: HTMLDivElement
-  public inputNode: HTMLInputElement
+  public settingNode: any
+  public inputNode: any
   public historyNode: any
   public keyset: XUL.Element  
 
   public DOIRegex = /10\.\d{4,9}\/[-\._;\(\)\/:A-z0-9]+/
-  public maxTotalLineNum = 12 // because the scroll in Zotero is too ugly
+  public maxTotalLineNum = 10 // because the scroll in Zotero is too ugly
   public tipText = "Enter your command here..."
   public DOIData = {}  // doi's detail info
   public DOIRefData = {}  // doi's all references
   public History = {
     k: "Zotero.ZoteroStyle.settingHistory",
     permanentSettingHistory: [
-      "Zotero.ZoteroStyle.gitee=URL#Token",
       "Zotero.ZoteroStyle.progressOpacity=.7",
       "Zotero.ZoteroStyle.tagSize=5",
       "Zotero.ZoteroStyle.tagPosition=4",
@@ -98,48 +97,50 @@ class AddonSetting extends AddonModule {
         bottom: 10%;
         width: 40%;
         border-radius: var(---radius---);
-        border: 1px solid #dcdcdc;
+        border: 1px solid #bdbdbd;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         background-color: white;
         font-size: 18px;
-        box-shadow: 0 0 .5em .5em rgba(0, 0, 0, 0.1)
+        box-shadow: 0px 1.8px 7.3px rgba(0, 0, 0, 0.071),
+                    0px 6.3px 24.7px rgba(0, 0, 0, 0.112),
+                    0px 30px 90px rgba(0, 0, 0, 0.2);
       }
       #Zotero-Style-Setting .input-box {
         width: 100%;
         padding-left: 20px;
       }
       #Zotero-Style-Setting input {
-          width: 90%;
-          height: 45px;
-          border: none;
-          outline: none;
-          border-radius: 5px;
-          font-size: 20px;
-          margin-left: .3em;
-          background-color: #ffffff;
+        width: 90%;
+        height: 45px;
+        border: none;
+        outline: none;
+        border-radius: 5px;
+        font-size: 20px;
+        margin-left: .3em;
+        background-color: #ffffff;
       }
       #Zotero-Style-Setting .history {
-          width: 100%;
-          margin-top: 0;
-          margin-bottom: 0;
-          padding: 0;
-          max-height: 600px;
-          overflow-y: hidden;
+        width: 100%;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding: 0;
+        max-height: 500px;
+        overflow-y: hidden;
       }
       #Zotero-Style-Setting .history .line {
-          list-style-type: none;
-          width: calc(100% - 40px);
-          line-height: 2.5em;
-          padding: auto 10px;
-          display: inline-block;
-          padding-left: 20px;
-          padding-right: 20px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+        list-style-type: none;
+        width: calc(100% - 40px);
+        line-height: 2.5em;
+        padding: auto 10px;
+        display: inline-block;
+        padding-left: 20px;
+        padding-right: 20px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       #Zotero-Style-Setting input {
         overflow: hidden;
@@ -147,37 +148,37 @@ class AddonSetting extends AddonModule {
         white-space: nowrap;
       }
       #Zotero-Style-Setting .history .line:active {
-          background-color: rgba(220, 240, 240, 1);
+        background-color: rgba(220, 240, 240, 1);
       }
       #Zotero-Style-Setting .history .line[selected] {
-          background-color: rgba(220, 240, 240, 1);
+        background-color: rgba(220, 240, 240, 1);
       }
       #Zotero-Style-Setting .history .line:first-child {
-          border-radius: var(---radius---) var(---radius---) 0 0;
+        border-radius: var(---radius---) var(---radius---) 0 0;
       }
-
       .zotero-style-setting-tip {
-          display: flex;
-          flex-direction: row;
-          width: 100%;
-          align-items: center;
-          justify-content: center;
-          margin: auto;
-          opacity: .5;
-          font-size: 12px;
-          margin-top: 0;
-          margin-bottom: 10px;
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+        margin: auto;
+        opacity: .5;
+        font-size: 12px;
+        margin-top: 0;
+        margin-bottom: 10px;
       }
       .zotero-style-setting-tip .box {
-          display: flex;
-          align-items: center;
-          margin-left: 10px;
-          margin-right: 10px;
-          width: 50px;
-          justify-content: space-between;
+        display: flex;
+        align-items: center;
+        margin-left: 10px;
+        margin-right: 10px;
+        justify-content: space-between;
       }
-      .zotero-style-setting-tip .box:last-child {
-        width: 60px;
+      .zotero-style-setting-tip .box span:first-child {
+        font-weight: 600; 
+        filter: contrast(6.89);
+        margin-right: 4px;
       }
     `
     let style = this.createElement("style")
@@ -204,7 +205,7 @@ class AddonSetting extends AddonModule {
     let box1 = this.createElement("div")
     box1.setAttribute("class", "box 1")
     box1.innerHTML = `
-      <svg t="1669890200032" class="icon" viewBox="0 0 1275 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2730" width="15" height="15"><path d="M434.01678069 96.35177165a94.289884 94.289884 0 0 0-133.25765214 0L123.48607034 273.6248307A40.38110706 40.38110706 0 0 0 180.5243836 331.26886006l146.48246438-146.98722794v683.24832532a40.38110706 40.38110706 0 0 0 80.76221328 0V184.28163212L554.25152647 331.26886006c0.60571692 0.70666946 1.31238556 1.31238556 2.01905503 2.01905585a40.38110706 40.38110706 0 0 0 55.01925824-59.15832165zM1151.48809462 650.58246162a40.38110706 40.38110706 0 0 0-57.03831326-2.01905503 19.08007305 19.08007305 0 0 0-2.01905503 2.01905503l-146.28055929 146.38151184V113.71564814a40.38110706 40.38110706 0 0 0-80.76221329 0v683.24832532l-146.38151184-146.38151184a40.38110706 40.38110706 0 0 0-59.15832166 55.01925824l2.01905502 2.01905503 177.37401161 177.27305822a93.98702554 93.98702554 0 0 0 133.15669958 0l177.27305823-177.27305822a40.38110706 40.38110706 0 0 0 1.81714993-57.03831327z" p-id="2731"></path></svg>
+      <span>↑↓</span>
       <span>导航</span>
     `
     tipNode.appendChild(box1)
@@ -212,7 +213,7 @@ class AddonSetting extends AddonModule {
     let box2 = this.createElement("div")
     box2.setAttribute("class", "box 2")
     box2.innerHTML = `
-      <svg t="1669891408569" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="11255" width="15" height="15"><path d="M832 256v384H269.248l105.408-105.344-45.248-45.312-160 160a32 32 0 0 0 0 45.312l160 160 45.248-45.312L269.248 704H832a64 64 0 0 0 64-64V256h-64z" fill="#000000" fill-opacity=".9" p-id="11256"></path></svg>
+      <span>enter</span>
       <span>使用</span>
     `
     tipNode.appendChild(box2)
@@ -220,10 +221,18 @@ class AddonSetting extends AddonModule {
     let box3 = this.createElement("div")
     box3.setAttribute("class", "box 3")
     box3.innerHTML = `
-      <span style="font-size: 15px;">esc</span>
+      <span >esc</span>
       <span>退出</span>
     `
     tipNode.appendChild(box3)
+
+    let box4 = this.createElement("div")
+    box4.setAttribute("class", "box 4")
+    box4.innerHTML = `
+      <span >delete</span>
+      <span>删除</span>
+    `
+    tipNode.appendChild(box4)
 
     // for entering text or accepting keycode
     let inputbox = this.createElement("div")
@@ -354,6 +363,7 @@ class AddonSetting extends AddonModule {
           this.historyNode.appendChild(lineNode)
           if (!(author && year && title)) {
             if (data.unstructured) {
+              data.unstructured = data.unstructured.replace(/<\/?br>/g, "")
               lineNode.innerText = `[${i+1}] ${data.unstructured}`
             } else if (DOI) {
               lineNode.innerText = `[${i+1}] Update from unpaywall...`
