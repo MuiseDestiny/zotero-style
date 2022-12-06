@@ -35,6 +35,7 @@
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
+    "dotenv-cli": "^6.0.0",
     "release-it": "^14.14.0",
     "zotero-types": "^0.0.7"
   }
