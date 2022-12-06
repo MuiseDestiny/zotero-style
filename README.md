@@ -1,164 +1,84 @@
 # Zotero Style
-> 让Zotero更有趣
-
+> 阅读高能进度条，标签左右对齐，五个自定义位置，标签无限制颜色指派，参考文献快捷导入到文库，感兴趣列一键展开收缩，仿Obsidian命令面板，更多玩法等你探索... 
 
 [介绍视频](https://www.bilibili.com/video/BV1PK411o7JN/?share_source=copy_web&vd_source=7b57a26bb78f6cbbfdf8bff111682fa3)
 
 
-![image](https://user-images.githubusercontent.com/51939531/205323712-53d61c4e-44b2-483b-8c39-a2fa3bc63faf.png)
+![image](https://spr1ng.live/file/a7ab76ea6dd691066c9a6.png)
 
-![image](https://user-images.githubusercontent.com/51939531/205323863-e4e892a2-2afa-47ce-be61-9425cb33d8f4.png)
+![image](https://spr1ng.live/file/9ff441b61d43753500f64.png)
 
-<center><font color="deeppink"><b>效果预览</b></font></center>
 
-![](https://spr1ng.live/file/390f08bb91ebff15bb0d1.png)
-
-![](https://spr1ng.live/file/dd11d8b19009575c7f608.png)
-
-## 起因
+## 👋起因
 Zotero标签可以显示在标题左侧，有时候条目有不同数量标签，排版特别不美观不利于阅读（强迫症，痛点）。
 而且在根据标题查找论文的时候，标题在面板中往往被其它属性挤得只能看清前面几个单词或字，于是增加一个仅`显示标题切换按钮`。
 
-如果你也有类似痛点欢迎提出，我们共同解决。
+```如果你也有类似痛点欢迎提出，我们共同解决。```
 
-
-<details>
-<summary>功能预览</summary>
-<center><font color="#27ae60"><b>原始Zotero</b></font></center>
-
-![](https://spr1ng.live/file/d38124d3529d6dd682dd3.png)
-
-<center><font color="#e74c3c"><b>开启插件</b></font></center>
-
-![](https://spr1ng.live/file/28d1ca9d77abb310db2e2.png)
-
-<center><font color="#8e44ad"><b>点击按钮</b></font></center>
-
-> 全局搜索旁边
-
-![](https://spr1ng.live/file/6bacc5490a52029ff35f6.png)
-
-<center><font color="#16a085"><b>新特性</b></font></center>
-
-> 阅读进度记录（逐页阅读时间记录渲染在标题上）
-
-![](https://spr1ng.live/file/ed09ed3b676eef4d09bd2.png)
-![](https://spr1ng.live/file/447b7d8912422770731a5.png)
-> 颜色越深阅读时间越久，同时可显示整体阅读进度，这个部分参考<https://github.com/volatile-static/Chartero>，`Chartero`对于这方面实现的更为彻底，本插件相当于实现了一个初级，简化的版本。
-</details>
+## 🕊️使用方法
+1. 在本页面右侧点击[Release Page](https://github.com/MuiseDestiny/ZoteroStyle/releases/latest) ，下载最新版xpi后缀文件
+2. 打开Zotero，点击顶部`工具`->`插件`，将xpi文件拖入到插件窗口，提示安装窗口，点击安装即可
+3. 点击搜索按钮右侧按钮，像是一个`>`或`<`
 
 <details>
 <summary>按钮详解</summary>
 
-![](https://spr1ng.live/file/87ac5698538744a03d424.png)
+![](https://spr1ng.live/file/56ee3aa178fa09309d65e.png)
 
 </details>
 
-## 设置界面
-> 鼠标中键
-Mac用户可以设置Zotero.ZoteroStyle.progressOpacity=0来隐藏进度条=window用户鼠标右键
-Mac用户同时鼠标中键可能也用不了,可以用`Shift+P`来唤醒设置界面
-
-| 命令 | 默认值 | 描述 | 重启 |
-| ----------- | ----------- | ----------- | ----------- |
-| Zotero.ZoteroStyle.progressColor | '#F06292' | 设置进度条颜色,注意引号,配色网站<https://colorhunt.co/> |  |
-| Zotero.ZoteroStyle.progressOpacity | 0.5 | 设置进度条透明度,0~1 |  |
-| Zotero.ZoteroStyle.tagSize | 8 | 设置标签宽度,单位em |  |
-| Zotero.ZoteroStyle.tagPosition | 4 | 0,1,2,3,4（0就是Zotero不安装插件时候标签在的位置） |  |
-| Zotero.ZoteroStyle.tagAlign | left | left,right |  |
-| Zotero.ZoteroStyle.constantFields | ['title', 'year'] | 要可以被js的eval函数执行(全英文字符) |  |
-| /reference | 无 | 在阅读PDF界面使用，不离开Zotero软件就能导入参考文献 |  | 
-| /Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1) | 在命令中 | 用于指派标签颜色和位置（随心所欲） |  |
-
+4. 进行个性化配置，点击任意一个条目，按`Shift+P`唤醒命令行面板，这个面板命令深度仿照Obsidian面板，使用方法与它类似。
 
 <details>
-<summary>关于同步</summary>
-
-Zotero Style的阅读进度数据自动同步，无需任何配置。
-
-更新后（1.3.3及以后），旧数据（1.3.3以前储存的数据）会自动写入为Zotero的ZoteroStyle条目（插件自动生成）下（在未分类栏可以找到）的一条笔记内（笔记名称就是文献名称一文献一笔记）。
-
-如果第一次安装，插件也将自动生成ZoteroStyle条目，只是没有旧数据迁移这个步骤。
-
-安装插件+新阅读一篇文献后，在未分类条目下，会出现下图条目，它记录了每篇文献的阅读时间。
-
-![image](https://user-images.githubusercontent.com/51939531/205325876-28774410-6e22-4a8c-bc91-2bb5029579f7.png)
-
-当你在多台设备间切换时，前提是他们都安装了Zotero Style，Zotero都登录同一账号。这样上图笔记会自动同步。
-插件初始化时（Zotero刚打开的时候），会检索名为ZoteroStyle的条目（所以不要更改它的名字），然后将条目下的笔记读取并储存为一个变量，当发生阅读行为，变量数据和笔记数据会随之更新，而笔记数据又如上述所说会被Zotero自动同步。
-
+<summary>进度条颜色设置示例</summary>
+比如设置进度条颜色，上下键导航到`进度条`选项，
+![进度条颜色](https://spr1ng.live/file/e887a728fa9a4ecc05862.png)
+回车键进入下一层，因为要调整颜色，所以这里导航到`颜色`，
+![颜色](https://spr1ng.live/file/78a823050fc91081c77e8.png)
+然后回车，这里会显示，你当前使用的颜色，也就是下图的粉色，这时，你可以在<https://colorhunt.co/>挑选一个你喜欢的颜色，
+![设置颜色](https://spr1ng.live/file/e7a7c8dadc0d6fe4d1ba0.png)
+然后输入，
+![输入颜色](https://spr1ng.live/file/a3451160039d3b6ef0bf2.png)
+进一步回车确定，颜色会瞬间被设置为你输入的颜色，`一切`都随之变化~
+![回车](https://spr1ng.live/file/04a2a67ba375d15bedca5.png)
 </details>
 
+5. 打开一篇文献，试着检索它的参考文献。
+
 <details>
-<summary>关于导入参考文献</summary>
-目前已知与scihub插件不兼容
+<summary>参考文献示例</summary>
+首先，打开一篇文献，Shift+P打开命令行面板，
+![](https://spr1ng.live/file/835068aa08605a4d32063.png)
+选择参考文献，回车，
+![](https://spr1ng.live/file/ad39ee7b253810adac0ce.png)
+片刻，你将得到你浏览的这篇文献的参考文献，
+![](https://spr1ng.live/file/e595589d1b5c6a7110171.png)
+通过在这些结果中搜索，你可以快速找到你感兴趣的参考文献，选中它，回车试试，
+![](https://spr1ng.live/file/a39a425b24cea8d9b1962.png)
+不出意外的话，又是片刻，你将在关联文献这里看到它的身影，此时你浏览的文献和你选中的文献就被你一根红线签了起来。
+![](https://spr1ng.live/file/1dbd90aecaec83765451d.png)
 </details>
 
-<details>
-<summary>部分命令参数图解</summary>
-
-> Zotero.Tags.setColor(1, "tagName", '#AAAAAA', 1)对应下图，第一个1固定，第二个"tagName"是你要改变的标签， '#AAAAAA'对应下图颜色，1对应下图位置，如，假设有标签”a、b、c、d，abcd中a的位置为1，b为2...
-![](https://spr1ng.live/file/734085f010b319cb867f4.png)
 
 
-![](https://spr1ng.live/file/39bbe98fe67f8efd508b7.png)
+## 一些说明
 
-![](https://spr1ng.live/file/e351445318a956ac10a7a.png)
 
-> Tips:
-<https://github.com/zotero/zotero/blob/26847c672f62de30bd63d9434a00d6c9f8a5e76c/chrome/locale/zh-CN/zotero/zotero.properties>
-搜索`itemFields`查看所有字段英文名
-或者
-<https://github.com/zotero/zotero/blob/2271913e491035e200e0ec82f8ace2f45f025588/chrome/content/zotero/itemTreeColumns.jsx>
-搜多`dataKey`
+1. Zotero Style的阅读进度数据自动同步，无需任何配置
+2. 参考文献导入功能与scihub插件不兼容
+3. 设置最大化时要保留的字段采用列表形式，列表内记录的是字段的英文名，可在[这里](https://github.com/zotero/zotero/blob/26847c672f62de30bd63d9434a00d6c9f8a5e76c/chrome/locale/zh-CN/zotero/zotero.properties)查看更多字段的英文名
 
-如:
+```如:
 | English | Chinese |
 | ----------- | ----------- |
 | title | 标题 |
 | publisher | 出版社 |
 | libraryCatalog | 馆藏目录 |
 | year | 年 |
-| hasAttachment | `回形针` |
-
-按照源码的中英对照应该能正确过滤掉大多数列,但是如果有的过滤不掉可以提issue,我将补充特殊字段表格
-
-如果你想在展开后保留`标题`和`出版社`,
-输入命令`Zotero.ZoteroStyle.constantFields=['title', 'publisher']`回车即可
-注意`[]`内字段名要用引号引起来,`=`右边应该可以被js的eval函数执行返回一个Array
-相关问题<https://github.com/MuiseDestiny/ZoteroStyle/issues/2>
-
-</details>
-
-## 主要功能
-
-1. 标签右对齐，标签由`圆角正方形`->`圆形`
-2. 增加`只显示标题`按钮🌸
-3. 显示阅读进度，是否划水，一看便知👋
-4. 实现进度条同步
-5. 阅读界面快速检索参考文献，一键导入并关联至当前文献 （目前很好用）
-6. 自定义指派标签颜色位置
-
-🙌建议配合`Zotero Tag`&`Chartero`使用
-<details>
-<summary>部分功能图示</summary>
-
-> 5的图示
-![](https://spr1ng.live/file/6c034034afb3f51309a76.png)
-![](https://spr1ng.live/file/2c468b2d30abb704b8bf0.png)
-![](https://spr1ng.live/file/f64a442981bcb66754feb.png)
-![](http://tva1.sinaimg.cn/large/c5826cc9ly1h8k444nnclj20nk03m0w4.jpg)
-
-> 6的图示
-![](https://spr1ng.live/file/b7eaf4c526d5109558a9b.png)
-
-</details>
+| hasAttachment | `回形针` |```
 
 
-## 安装方法
-如果第一次安装，请直接在release界面下载xpi，拖入Zotero的插件界面内，然后重启即可
-如果已有ZoteroStyle更新最新版本，请卸载旧版本，重启Zotero后安装新版本
-
+## 重大更新
 ## 修复BUG
 1.3.4 - 存在参数为定义获取默认值失败的bug，需要手动设置一下参数，具体步骤为：
 shift+p，然后依次输入以下指定并回车

@@ -65,9 +65,11 @@ class AddonEvents extends AddonModule {
     
     
     // setting 
-    this.setting = this._Addon.setting
-    this.setting.init()
-    this.setting.settingNode.style.display = "none"
+    // this.setting = this._Addon.setting
+    // this.setting.init()
+    // this.setting.settingNode.style.display = "none"
+    this._Addon.prompt.init(this.Zotero)
+    
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(
       this.notifierCallback,
@@ -95,9 +97,6 @@ class AddonEvents extends AddonModule {
       this.window.clearInterval(this.intervalID)
     }, true);
 
-    // console.log("new AddonPrompt()")
-    // let prompt = new AddonPrompt()
-    // prompt.init(this.Zotero)
 
     this.hookZoteroFunction(
       "getMainWindow().ZoteroPane.itemsView._renderPrimaryCell", 
@@ -108,7 +107,7 @@ class AddonEvents extends AddonModule {
       this.modifyRenderCell
     )
     this.addStyle()
-    
+
     console.log("wait for collectionTreeRow")
     while (!this.window.ZoteroPane.itemsView.collectionTreeRow) {
       await this.Zotero.Promise.delay(10)
@@ -163,12 +162,12 @@ class AddonEvents extends AddonModule {
       } else if (event.button == 1) {
         // setting ui
         console.log("init Setting")
-        let settingNode = _Zotero.getMainWindow().document.querySelector("#Zotero-Style-Setting")
-        if (settingNode.style.display = "none") {
-          settingNode.style.display = ""
-          settingNode.querySelector("input").focus()
+        let promptNode = _Zotero.getMainWindow().document.querySelector(".prompt")
+        if (promptNode.style.display = "none") {
+          promptNode.style.display = ""
+          promptNode.querySelector("input").focus()
         } else {
-          settingNode.style.display = "none"
+          promptNode.style.display = "none"
         }
       } else if (event.button == 2) {
         _Zotero.ZoteroStyle.events.progress  = !_Zotero.ZoteroStyle.events.progress
@@ -411,7 +410,6 @@ class AddonEvents extends AddonModule {
     }
     await this._Addon.item.init(this.Zotero)
     if (localRecord && !isUpdate) {
-      this._Addon.setting.inputMessage("The data migration begins", 0, 3)
       await this._Addon.item.updateNoteItems(localRecord)
       this.setValue("Zotero.ZoteroStyle.firstUpdate", true)
       this.record = localRecord
@@ -529,7 +527,7 @@ class AddonEvents extends AddonModule {
     // remove ZoteroStyle UI
     this.removeStyle()
     this.removeSwitchButton()
-    this.setting.removeKeys()
+    this._Addon.prompt.removeKeys()
     for (let path of Object.keys(this._hookFunction)) {
       let obj = this._hookFunction[path]
       let func = function(...args: any[]) {return obj.zoteroFunc.apply(obj.zoteroFuncThis, args)}

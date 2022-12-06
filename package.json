@@ -4,7 +4,7 @@
   "addonID": "zoterostyle@polygon.org",
   "addonRef": "zoterostyle",
   "version": "1.3.4",
-  "description": "标签靠右显示，标题最大化按钮，参考文献检索快速导入关联",
+  "description": "标签左右对齐，五个自定义位置，标签无限制颜色指派，参考文献快捷导入到文库，仿Obsidian命令面板，更多玩法等你探索... ",
   "main": "src/index.js",
   "scripts": {
     "build": "node build.js",
@@ -31,6 +31,7 @@
     "compressing": "^1.5.1",
     "esbuild": "^0.14.34",
     "replace-in-file": "^6.3.2",
+    "simple-scrollbar": "^0.4.0",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
