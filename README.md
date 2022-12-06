@@ -59,7 +59,8 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 
 <details>
 <summary>参考文献示例</summary>
-首先，打开一篇文献，Shift+P打开命令行面板，
+
+首先，打开一篇文献，`Shift+P`打开命令行面板，
 
 ![](https://spr1ng.live/file/835068aa08605a4d32063.png)
 
