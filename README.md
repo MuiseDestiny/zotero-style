@@ -48,14 +48,23 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 <details>
 <summary>参考文献示例</summary>
 首先，打开一篇文献，Shift+P打开命令行面板，
+
 ![](https://spr1ng.live/file/835068aa08605a4d32063.png)
+
 选择参考文献，回车，
+
 ![](https://spr1ng.live/file/ad39ee7b253810adac0ce.png)
+
 片刻，你将得到你浏览的这篇文献的参考文献，
+
 ![](https://spr1ng.live/file/e595589d1b5c6a7110171.png)
+
 通过在这些结果中搜索，你可以快速找到你感兴趣的参考文献，选中它，回车试试，
+
 ![](https://spr1ng.live/file/a39a425b24cea8d9b1962.png)
+
 不出意外的话，又是片刻，你将在关联文献这里看到它的身影，此时你浏览的文献和你选中的文献就被你一根红线签了起来。
+
 ![](https://spr1ng.live/file/1dbd90aecaec83765451d.png)
 </details>
 
