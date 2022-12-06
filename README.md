@@ -32,14 +32,23 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 <details>
 <summary>进度条颜色设置示例</summary>
 比如设置进度条颜色，上下键导航到`进度条`选项，
+
 ![进度条颜色](https://spr1ng.live/file/e887a728fa9a4ecc05862.png)
+
 回车键进入下一层，因为要调整颜色，所以这里导航到`颜色`，
+
 ![颜色](https://spr1ng.live/file/78a823050fc91081c77e8.png)
+
 然后回车，这里会显示，你当前使用的颜色，也就是下图的粉色，这时，你可以在<https://colorhunt.co/>挑选一个你喜欢的颜色，
+
 ![设置颜色](https://spr1ng.live/file/e7a7c8dadc0d6fe4d1ba0.png)
+
 然后输入，
+
 ![输入颜色](https://spr1ng.live/file/a3451160039d3b6ef0bf2.png)
+
 进一步回车确定，颜色会瞬间被设置为你输入的颜色，`一切`都随之变化~
+
 ![回车](https://spr1ng.live/file/04a2a67ba375d15bedca5.png)
 </details>
 
