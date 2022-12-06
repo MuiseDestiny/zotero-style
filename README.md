@@ -17,7 +17,9 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 
 ## 🕊️使用方法
 1. 在本页面右侧点击[Release Page](https://github.com/MuiseDestiny/ZoteroStyle/releases/latest) ，下载最新版xpi后缀文件
+
 2. 打开Zotero，点击顶部`工具`->`插件`，将xpi文件拖入到插件窗口，提示安装窗口，点击安装即可
+
 3. 点击搜索按钮右侧按钮，像是一个`>`或`<`
 
 <details>
@@ -31,6 +33,7 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 
 <details>
 <summary>进度条颜色设置示例</summary>
+
 比如设置进度条颜色，上下键导航到`进度条`选项，
 
 ![进度条颜色](https://spr1ng.live/file/e887a728fa9a4ecc05862.png)
