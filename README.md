@@ -8,8 +8,6 @@
 
 ![image](https://spr1ng.live/file/9ff441b61d43753500f64.png)
 
-`即将发布功能`
-
 ![image](https://spr1ng.live/file/780ef0c3ce1ff7044a82e.png)
 
 ## 👋起因

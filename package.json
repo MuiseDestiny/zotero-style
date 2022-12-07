@@ -3,7 +3,7 @@
   "addonName": "Zotero Style",
   "addonID": "zoterostyle@polygon.org",
   "addonRef": "zoterostyle",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "阅读高能进度条，标签左右对齐，五个自定义位置，标签无限制颜色指派，参考文献快捷导入到文库，仿Obsidian命令面板，更多玩法等你探索... ",
   "main": "src/index.js",
   "scripts": {
