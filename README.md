@@ -8,7 +8,7 @@
 
 ![image](https://spr1ng.live/file/9ff441b61d43753500f64.png)
 
-![image](https://spr1ng.live/file/7f23ccdfd86696f2d9696.png)
+![https://spr1ng.live/file/7f23ccdfd86696f2d9696.png](https://spr1ng.live/file/89c565e548e5b119376f2.png)
 
 ## 👋起因
 Zotero标签可以显示在标题左侧，有时候条目有不同数量标签，排版特别不美观不利于阅读（强迫症，痛点）。
