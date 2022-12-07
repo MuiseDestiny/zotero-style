@@ -351,7 +351,7 @@ class AddonPrompt extends AddonModule{
         let matchedArray = text.match(/<table[\s\S]+?<\/table>/g)
         if (matchedArray) {
           this._Addon.prompt.inputNode.setAttribute("placeholder", publicationTitle)
-          const tableString = matchedArray[0]
+          const tableString = matchedArray[0].replace("36%", "20%")
           const parser = new this.window.DOMParser()
           const table = parser.parseFromString(`<div class="suggestion-item">${tableString}</div>`, "text/html")
           this._Addon.prompt.resultsNode.querySelectorAll(".suggestion-item").forEach(e=>e.remove())
