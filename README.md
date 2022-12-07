@@ -140,5 +140,5 @@ Zotero.ZoteroStyle.progressColor=#FF9E9E
 ><https://github.com/windingwind/zotero-addon-template>，
 本插件参考了他的大量代码和教程,使用他的框架
 
-感谢@volatile-static的插件`Chartore`
+感谢@volatile-static的插件`Chartero`
 > <https://github.com/volatile-static/Chartero>
