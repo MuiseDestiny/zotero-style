@@ -350,6 +350,7 @@ class AddonPrompt extends AddonModule{
         let text = res.response
         let matchedArray = text.match(/<table[\s\S]+?<\/table>/g)
         if (matchedArray) {
+          this._Addon.prompt.inputNode.setAttribute("placeholder", publicationTitle)
           const tableString = matchedArray[0]
           const parser = new this.window.DOMParser()
           const table = parser.parseFromString(`<div class="suggestion-item">${tableString}</div>`, "text/html")
@@ -618,7 +619,25 @@ class AddonPrompt extends AddonModule{
     itemNode.onmousemove = () => {
       this.selectItem(itemNode)
     }
+    itemNode.onclick = async () => {
+      await this.enter()
+    }
     return itemNode
+  }
+
+  public async enter() {
+    const selectedKey = this.resultsNode.querySelector(".is-selected .suggestion-title span:first-child").innerText
+    this.path.push(selectedKey)
+    console.log(`this.path.push(${selectedKey})`, this.path)
+    if (await this.executeTask()) { 
+      let task = this.getTask() as any
+      if (task.main && !task.next) {
+        let v = this.path.pop()
+        console.log(`this.path.pop(${v})`, this.path)
+      }
+      return 
+    }
+    this.render()
   }
 
   public initInputEvents() {
@@ -656,18 +675,8 @@ class AddonPrompt extends AddonModule{
 
     this.promptNode.addEventListener("keyup", async (event) => {
       if (event.key == "Enter") {
-        const selectedKey = this.resultsNode.querySelector(".is-selected .suggestion-title span:first-child").innerText
-        this.path.push(selectedKey)
-        console.log(`this.path.push(${selectedKey})`, this.path)
-        if (await this.executeTask()) { 
-          let task = this.getTask() as any
-          if (task.main && !task.next) {
-            let v = this.path.pop()
-            console.log(`this.path.pop(${v})`, this.path)
-          }
-          return 
-        }
-        return this.render()
+        await this.enter()
+        return 
       } else if (event.key == "Escape") {
         console.log(this.path)
         // clear inputNode
