@@ -29,6 +29,7 @@
   "updaterdf": "https://raw.githubusercontent.com/MuiseDestiny/ZoteroStyle/bootstrap/update.rdf",
   "dependencies": {
     "compressing": "^1.5.1",
+    "dom-parser": "^0.1.6",
     "esbuild": "^0.14.34",
     "replace-in-file": "^6.3.2",
     "simple-scrollbar": "^0.4.0",

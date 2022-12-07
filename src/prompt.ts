@@ -333,6 +333,31 @@ class AddonPrompt extends AddonModule{
         this._Addon.prompt.render()
       }
     },
+    "影响因子": {
+      hotKey: "Style",
+      next: true,
+      main: async () => {
+        const publicationTitle = this.window.ZoteroPane.getSelectedItems()[0].getField("publicationTitle")
+        console.log(publicationTitle)
+        let res = await this.Zotero.HTTP.request(
+          "GET",
+          `https://www.ablesci.com/journal/index?keywords=${publicationTitle.replace(/ /g, "+")}`,
+          {
+            responseType: "text",
+            credentials: "include"
+          }
+        )
+        let text = res.response
+        let matchedArray = text.match(/<table[\s\S]+?<\/table>/g)
+        if (matchedArray) {
+          const tableString = matchedArray[0]
+          const parser = new this.window.DOMParser()
+          const table = parser.parseFromString(`<div class="suggestion-item">${tableString}</div>`, "text/html")
+          this._Addon.prompt.resultsNode.querySelectorAll(".suggestion-item").forEach(e=>e.remove())
+          this._Addon.prompt.resultsNode.appendChild(table.body.firstChild)
+        }
+      }
+    },
     "指派任意颜色位置标签": {
       type: "set value",
       args: [
@@ -484,9 +509,8 @@ class AddonPrompt extends AddonModule{
   public render() {
     this.resultsNode.querySelectorAll(".suggestion-item").forEach(e=>e.remove())
     let task = this.getTask()
-    const skipKeys = ["Zotero", "document", "window", "hotKey", "_Addon"]
+    const skipKeys = ["Zotero", "document", "window", "hotKey", "_Addon", "enter"]
     const keys = Object.keys(task).filter(e=>skipKeys.indexOf(e)==-1) as string[]
-    console.log(keys)
     if (keys.length == 0) {
       // here
       this.insertEmpty()
@@ -632,20 +656,20 @@ class AddonPrompt extends AddonModule{
 
     this.promptNode.addEventListener("keyup", async (event) => {
       if (event.key == "Enter") {
-        if (await this.executeTask()) { 
-          return 
-        }
         const selectedKey = this.resultsNode.querySelector(".is-selected .suggestion-title span:first-child").innerText
         this.path.push(selectedKey)
-        console.log("this.path.push(selectedKey)", this.path)
+        console.log(`this.path.push(${selectedKey})`, this.path)
         if (await this.executeTask()) { 
-          if ((this.getTask() as any).main) {
-            this.path.pop()
+          let task = this.getTask() as any
+          if (task.main && !task.next) {
+            let v = this.path.pop()
+            console.log(`this.path.pop(${v})`, this.path)
           }
           return 
         }
         return this.render()
       } else if (event.key == "Escape") {
+        console.log(this.path)
         // clear inputNode
         if (this.inputNode.value) {
           this.inputNode.value = ""
@@ -676,9 +700,13 @@ class AddonPrompt extends AddonModule{
       }
       if (
         this.inputNode.value == this.lastInputText || 
-        !this.resultsNode.querySelector(".suggestion-item") ||
         this.args != null
       ) { return }
+      let emptyNode = this.resultsNode.querySelector(".suggestion-empty")
+      if (emptyNode) { 
+        emptyNode.remove()
+        return this.render()
+      }
       this.resultsNode.querySelectorAll(".suggestion-item .suggestion-title span").forEach(spanNode=>{
         spanNode.innerText = spanNode.innerText
       })
@@ -768,6 +796,13 @@ class AddonPrompt extends AddonModule{
   }
 
   public addStyle() {
+    let addCSSLink = (url) => {
+      let link = this.createElement("link")
+      link.setAttribute("rel", "stylesheet")
+      link.setAttribute("type", "text/css")
+      link.setAttribute("href", url)
+      this.document.querySelector('#main-window').appendChild(link)
+    }
     let style = this.createElement("style")
     style.setAttribute('id', 'prompt-style')
     style.innerText = `
@@ -908,6 +943,9 @@ class AddonPrompt extends AddonModule{
       }
     `
     this.document.querySelector('#main-window').appendChild(style)
+
+    addCSSLink("https://www.ablesci.com/assets/css/global_local.css?v=20221123v1")
+    addCSSLink("https://www.ablesci.com/assets/layui/css/layui.css")    
   }
 
   public createElement(nodeName: string): HTMLElement {
