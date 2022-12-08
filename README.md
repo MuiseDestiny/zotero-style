@@ -90,7 +90,7 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 1. Zotero Style的阅读进度数据自动同步，无需任何配置
 2. 参考文献导入功能与scihub插件不兼容
 3. 设置最大化时要保留的字段采用列表形式，列表内记录的是字段的英文名，可在[这里](https://github.com/zotero/zotero/blob/26847c672f62de30bd63d9434a00d6c9f8a5e76c/chrome/locale/zh-CN/zotero/zotero.properties)查看更多字段的英文名
-
+4. 随着阅读文献数量增多，对应储存阅读数据的笔记也会增多，侧边栏的笔记可能会被ZoteroStyle的记录笔记填满，此时可以在未分类目录下找到ZoteroStyle将其删除即可（1.4.4以上）
 如:
 | English | Chinese |
 | ----------- | ----------- |
