@@ -626,6 +626,9 @@ class AddonPrompt extends AddonModule{
   }
 
   public async enter() {
+    if (await this.executeTask()) { 
+      return
+    }
     const selectedKey = this.resultsNode.querySelector(".is-selected .suggestion-title span:first-child").innerText
     this.path.push(selectedKey)
     console.log(`this.path.push(${selectedKey})`, this.path)
