@@ -23,7 +23,6 @@ class AddonEvents extends AddonModule {
   public updateInterval = 60;  // s
   public maxHangTime = 60;  // s
   public mode = "normal";  // default
-  public progress = true;
   public state = {
     activate: true,
     pageIndex: null,
@@ -170,9 +169,10 @@ class AddonEvents extends AddonModule {
           promptNode.style.display = "none"
         }
       } else if (event.button == 2) {
-        _Zotero.ZoteroStyle.events.progress  = !_Zotero.ZoteroStyle.events.progress
         _Zotero.getMainWindow().document.querySelectorAll(".zotero-style-progress").forEach(node=>{
-          node.setAttribute("visible", String(node.getAttribute("visible") == "false"))
+          let flag = String(node.getAttribute("visible") == "false")
+          node.setAttribute("visible", flag)
+          _Zotero.Prefs.set("Zotero.ZoteroStyle.progressVisible", flag)
         })
       } 
     }
@@ -345,7 +345,7 @@ class AddonEvents extends AddonModule {
     // render the read progress
     let progressNode = createElement("span")
     progressNode.setAttribute("class", "zotero-style-progress")
-    progressNode.setAttribute("visible", String(Zotero.ZoteroStyle.events.progress))
+    progressNode.setAttribute("visible", this.getValue("Zotero.ZoteroStyle.progressVisible", "true"))
     primaryCell.appendChild(progressNode)
     primaryCell.querySelector(".cell-text").style.zIndex = "999"
     // create sub span in this progress node

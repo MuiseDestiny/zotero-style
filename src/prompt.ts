@@ -87,7 +87,9 @@ class AddonPrompt extends AddonModule{
       "显示/隐藏": {
         main: () => {
           this.document.querySelectorAll(".zotero-style-progress").forEach(node=>{
-            node.setAttribute("visible", String(node.getAttribute("visible") == "false"))
+            let flag = String(node.getAttribute("visible") == "false")
+            node.setAttribute("visible", flag)
+            this.Zotero.Prefs.set("Zotero.ZoteroStyle.progressVisible", flag)
           })
         }
       }
@@ -666,9 +668,11 @@ class AddonPrompt extends AddonModule{
         }
         allItems[selectedIndex].classList.add("is-selected")
         let exceedNum = selectedIndex - this.maxLineNum + 2
-        const h = this.resultsNode.scrollHeight / allItems.length
         if (exceedNum > 0) {
-          this.resultsNode.scrollTop = exceedNum * h
+          this.resultsNode.scrollTo(
+            0, 
+            this.resultsNode.querySelector(".is-selected").offsetTop -  this.resultsNode.offsetHeight - 15
+          )
         } else {
           this.resultsNode.scrollTop = 0
         }
