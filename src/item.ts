@@ -17,33 +17,37 @@ class AddonItem extends AddonModule {
 
   public async initAddonItem() {
     let addonItem: _ZoteroItem
-    let addonItemKey = this.Zotero.Prefs.get("Zotero.ZoteroStyle.addonItemKey")
-    if (!addonItemKey) {
-      // check exist
-      let s = new this.Zotero.Search;
-      s.addCondition("title", "contains", "ZoteroStyle");
-      var ids = await s.search();
-      let items = await this.Zotero.Items.getAsync(ids);
-      if (ids.length) {
-        // have
-        console.log("have addon item")
-        addonItem = items[0]
-      } else {
-        // not have, create
-        console.log("create addon item")
-        addonItem = new this.Zotero.Item('computerProgram');
-        addonItem.setField('title', 'ZoteroStyle');
-        addonItem.setField('programmingLanguage', 'JSON');
-        addonItem.setField('abstractNote', '不要动我，除非你想重置ZoteroStlye的阅读记录');
-        addonItem.setField('url', 'https://github.com/MuiseDestiny/ZoteroStyle');
-        await addonItem.saveTx()
-      }
-      // save
-      console.log("save", addonItem.key)
-      this.Zotero.Prefs.set("Zotero.ZoteroStyle.addonItemKey", addonItem.key)
-    } else {
+    const prefsKey = "Zotero.ZoteroStyle.addonItemKey"
+    let addonItemKey = this.Zotero.Prefs.get(prefsKey)
+    if (addonItemKey) {
       addonItem = this.Zotero.Items.getByLibraryAndKey(1, addonItemKey)
+      if (addonItem) {
+        this.addonItem = addonItem
+        return
+      }
     }
+    // check exist
+    let s = new this.Zotero.Search;
+    s.addCondition("title", "contains", "ZoteroStyle");
+    var ids = await s.search();
+    let items = await this.Zotero.Items.getAsync(ids);
+    if (ids.length) {
+      // have
+      console.log("have addon item")
+      addonItem = items[0]
+    } else {
+      // not have, create
+      console.log("create addon item")
+      addonItem = new this.Zotero.Item('computerProgram');
+      addonItem.setField('title', 'ZoteroStyle');
+      addonItem.setField('programmingLanguage', 'JSON');
+      addonItem.setField('abstractNote', '这是Zotero Style插件生成的条目，用于记录阅读数据');
+      addonItem.setField('url', 'https://github.com/MuiseDestiny/ZoteroStyle');
+      await addonItem.saveTx()
+    }
+    // save
+    console.log("save", addonItem.key)
+    this.Zotero.Prefs.set(prefsKey, addonItem.key)
     this.addonItem = addonItem
   }
 
