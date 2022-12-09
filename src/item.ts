@@ -71,15 +71,15 @@ class AddonItem extends AddonModule {
   
 
   public async writeDataToNote(data, noteItem) {
-    noteItem.setNote(`${data.title || data.noteKey}\n${JSON.stringify(data, null, 2)}`)
+    noteItem.setNote(`${(data.title || data.noteKey).replace(/[\{\}]/g, "")}\n${JSON.stringify(data, null, 2)}`)
     await noteItem.saveTx()
   }
 
   public readNoteAsData(noteItem) {
     try {
-      return JSON.parse(noteItem.note.replace(/<.+?>/g, "").replace(/^.+\n/, ""))
+      return JSON.parse(noteItem.note.replace(/<.+?>/g, "").replace(/[^\n\{]+/, ""))
     } catch {
-      console.log(noteItem.note, noteItem.note.replace(/<.+?>/g, "").replace(/^.+\n/, ""))
+      console.log(noteItem.note, "cannot parse")
       return {noteKey: undefined}
     }
   }

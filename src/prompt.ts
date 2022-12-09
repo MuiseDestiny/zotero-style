@@ -339,7 +339,11 @@ class AddonPrompt extends AddonModule{
       hotKey: "Style",
       next: true,
       main: async () => {
-        const publicationTitle = this.window.ZoteroPane.getSelectedItems()[0].getField("publicationTitle")
+        let readingItem = this._Addon.events.getReadingItem()
+        let selectedItems = this.window.ZoteroPane.getSelectedItems()
+        if (!(readingItem || selectedItems)) { return }
+        let item = readingItem || selectedItems[0]
+        const publicationTitle = item.getField("publicationTitle")
         console.log(publicationTitle)
         let res = await this.Zotero.HTTP.request(
           "GET",

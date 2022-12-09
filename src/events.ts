@@ -426,8 +426,12 @@ class AddonEvents extends AddonModule {
 
   private getReadingItem() {
     let reader = this.getReader()
-    let item = this.Zotero.Items.get(reader.itemID).parentItem as any
-    return item
+    if (reader) {
+      let item = this.Zotero.Items.get(reader.itemID).parentItem as any
+      return item
+    } else {
+      return false
+    }
   }
 
   public recordReadTime() {
@@ -462,11 +466,11 @@ class AddonEvents extends AddonModule {
     const itemKey = item.key
 
     // get local record
-    // console.log("saving");
     if (!this.record[itemKey]) {
       if (this.record[title]) {
         this.record[itemKey] = this.record[title]
-        this.record[itemKey].itemKey = itemKey
+        this.record[itemKey].noteKey = itemKey
+        this.record[itemKey].title = title
       } else {
         this.record[itemKey] = {
           pageTime: {},
