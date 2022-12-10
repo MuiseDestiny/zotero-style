@@ -102,7 +102,13 @@ Zotero标签可以显示在标题左侧，有时候条目有不同数量标签�
 | hasAttachment | `回形针` |
 
 关于`ZoteroStyle`条目的一切
+
 ![流程图-导出 (2)](https://user-images.githubusercontent.com/51939531/206625573-50ede350-c350-4d6e-a15f-ac0a7cb4a83c.png)
+
+关于`条目保护`
+自1.4.7之后
+
+![image](https://user-images.githubusercontent.com/51939531/206835795-5d4c1ca8-669b-48b9-b473-5f37b23ceeb9.png)
 
 ## 重要更新
 
