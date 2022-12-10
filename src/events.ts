@@ -105,6 +105,7 @@ class AddonEvents extends AddonModule {
       "getMainWindow().ZoteroPane.itemsView._renderCell", 
       this.modifyRenderCell
     )
+
     this.addStyle()
 
     console.log("wait for collectionTreeRow")
@@ -112,7 +113,12 @@ class AddonEvents extends AddonModule {
       await this.Zotero.Promise.delay(10)
     }
     console.log("collectionTreeRow is ready")
+    
     await this.initAddonItem()
+
+    console.log("hookErase")
+    this.hookErase()
+
   }
 
   private addSwitchButton(): void {
@@ -249,6 +255,21 @@ class AddonEvents extends AddonModule {
 
   private removeStyle(): void {
     if (this.style) this.style.remove()
+  }
+
+  public hookErase() {
+    let oriErase = this.Zotero.Items.erase
+    this.Zotero.Items.erase = function (ids) { 
+      ids.forEach(async (id)=>{
+        let item = await this.getAsync(id)
+        const regex = /(zoterostyle|protected)/i
+        if (regex.test(item.getField("archive")) || regex.test(item.getField("title"))) {
+          console.log(`zoterostyle item [protected]- title: ${item.getField("title")}; archive: ${item.getField("archive")}`)
+        } else {
+          oriErase.apply(this, [[id]])
+        }
+      })
+    }
   }
 
   private hookZoteroFunction(path: string, func: Function) {

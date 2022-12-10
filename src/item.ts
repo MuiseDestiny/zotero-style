@@ -3,6 +3,7 @@ import AddonModule from "./module";
 
 class AddonItem extends AddonModule {
   public addonItem: _ZoteroItem
+  public prefsKey = "Zotero.ZoteroStyle.prefsKey"
 
   constructor(parent) {
     super(parent)
@@ -17,8 +18,7 @@ class AddonItem extends AddonModule {
 
   public async initAddonItem() {
     let addonItem: _ZoteroItem
-    const prefsKey = "Zotero.ZoteroStyle.addonItemKey"
-    let addonItemKey = this.Zotero.Prefs.get(prefsKey)
+    let addonItemKey = this.Zotero.Prefs.get(this.prefsKey)
     if (addonItemKey) {
       addonItem = this.Zotero.Items.getByLibraryAndKey(1, addonItemKey)
       if (addonItem) {
@@ -40,6 +40,7 @@ class AddonItem extends AddonModule {
       console.log("create addon item")
       addonItem = new this.Zotero.Item('computerProgram');
       addonItem.setField('title', 'ZoteroStyle');
+      addonItem.setField('archive', 'ZoteroStyle');
       addonItem.setField('programmingLanguage', 'JSON');
       addonItem.setField('abstractNote', '这是Zotero Style插件生成的条目，用于记录阅读数据');
       addonItem.setField('url', 'https://github.com/MuiseDestiny/ZoteroStyle');
@@ -47,7 +48,7 @@ class AddonItem extends AddonModule {
     }
     // save
     console.log("save", addonItem.key)
-    this.Zotero.Prefs.set(prefsKey, addonItem.key)
+    this.Zotero.Prefs.set(this.prefsKey, addonItem.key)
     this.addonItem = addonItem
   }
 
