@@ -1,5 +1,5 @@
 # Zotero Style
-[![LGTM Grade](https://img.shields.io/lgtm/grade/javascript/github/MuiseDestiny/ZoteroStyle)](https://github.com/MuiseDestiny/ZoteroStyle/blob/master/LICENSE)
+
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/ZoteroStyle)](https://github.com/MuiseDestiny/ZoteroStyle/releases)
 ![Release Date](https://img.shields.io/github/release-date/MuiseDestiny/ZoteroStyle?color=9cf)
 [![License](https://img.shields.io/github/license/MuiseDestiny/ZoteroStyle)](https://github.com/MuiseDestiny/ZoteroStyle/blob/master/LICENSE)
