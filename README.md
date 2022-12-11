@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/github/license/MuiseDestiny/ZoteroStyle)](https://github.com/MuiseDestiny/ZoteroStyle/blob/master/LICENSE)
 ![Downloads latest release](https://img.shields.io/github/downloads/MuiseDestiny/ZoteroStyle/latest/total?color=yellow)
 
-> 阅读高能进度条，标签左右对齐，五个自定义位置，标签无限制颜色指派，参考文献快捷导入到文库，感兴趣列一键展开收缩，仿Obsidian命令面板，更多玩法等你探索... 
+> 阅读高能进度条，标签左右对齐，五个自定义位置，标签无限制颜色指派，参考文献快捷导入到文库，感兴趣列一键展开收缩，仿Obsidian命令面板，更多功能正在开发... 
 
 [介绍视频](https://www.bilibili.com/video/BV1PK411o7JN/?share_source=copy_web&vd_source=7b57a26bb78f6cbbfdf8bff111682fa3)
 
