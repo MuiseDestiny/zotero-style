@@ -50,6 +50,7 @@ class AddonItem extends AddonModule {
     console.log("save", addonItem.key)
     this.Zotero.Prefs.set(this.prefsKey, addonItem.key)
     this.addonItem = addonItem
+    this.addonItem.setField('abstractNote', '这是Zotero Style插件生成的条目，用于记录阅读数据，可以把我移动删除。');
   }
 
   public async createNoteItem() {
@@ -70,7 +71,6 @@ class AddonItem extends AddonModule {
     return true
   }
   
-
   public async writeDataToNote(data, noteItem) {
     noteItem.setNote(`${(data.title || data.noteKey).replace(/[\{\}]/g, "")}\n${JSON.stringify(data, null, 2)}`)
     await noteItem.saveTx()
