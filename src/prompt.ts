@@ -259,7 +259,7 @@ class AddonPrompt extends AddonModule{
         // clear historyNode
         let refData = await getRefData(DOI)
         console.log(refData)
-        inputMessage(`共得到${refData.length}篇参考文献`)
+        inputMessage(`共得到${refData.length || 0}篇参考文献`)
         // add line
         let reference = {}
         refData.forEach(async (data: any, i: number) => {
