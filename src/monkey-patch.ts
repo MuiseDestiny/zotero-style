@@ -17,6 +17,7 @@ const Functions = {
   _renderPrimaryCell(primaryCell: any, args: any[], Zotero: any): any {
     // https://github.com/zotero/zotero/blob/1c8554d527390ab0cda0352e885d461a13af767c/chrome/content/zotero/itemTree.jsx
     // 2693     _renderPrimaryCell(index, data, column)
+    let events = Zotero.ZoteroStyle.events 
     const itemKey = Zotero.getMainWindow().ZoteroPane.getSortedItems()[args[0]].key
     let document = Zotero.getMainWindow().document
     let createElement = (name) => document.createElementNS("http://www.w3.org/1999/xhtml", name)
@@ -34,12 +35,12 @@ const Functions = {
     }
     // render the tag
     // let obj = Zotero.ZoteroStyle.events
-    let tagPosition = this.getValue("Zotero.ZoteroStyle.tagPosition", this.tagPosition)
+    let tagPosition = events.getValue("Zotero.ZoteroStyle.tagPosition", events.tagPosition)
     if (tagPosition > 0) {
       let tagBoxNode = createElement("span")
       tagBoxNode.setAttribute("class", "tag-box")
       // special algin between font and span
-      let tagAlign = this.getValue("Zotero.ZoteroStyle.tagAlign", this.tagAlign)
+      let tagAlign = events.getValue("Zotero.ZoteroStyle.tagAlign", events.tagAlign)
       let preTagNum = 0
       primaryCell.querySelectorAll(".tag-swatch").forEach((tagNode: any) => {
         let delta = 0
@@ -82,13 +83,13 @@ const Functions = {
     // render the read progress
     let progressNode = createElement("span")
     progressNode.setAttribute("class", "zotero-style-progress")
-    progressNode.setAttribute("visible", this.getValue("Zotero.ZoteroStyle.progressVisible", "true"))
+    progressNode.setAttribute("visible", Zotero.ZoteroStyle.events.getValue("Zotero.ZoteroStyle.progressVisible", "true"))
     primaryCell.appendChild(progressNode)
     primaryCell.querySelector(".cell-text").style.zIndex = "999"
     // create sub span in this progress node
     const title = args[1]
-    let recordTimeObj = this.record[itemKey] || this.record[title]
-    if (this.record && recordTimeObj) {
+    let recordTimeObj = Zotero.ZoteroStyle.events.record[itemKey] || Zotero.ZoteroStyle.events.record[title]
+    if (Zotero.ZoteroStyle.events.record && recordTimeObj) {
       const pageNum = recordTimeObj.pageNum
       let maxSec = 0
       let s = 0
@@ -105,8 +106,8 @@ const Functions = {
       maxSec = meanSec + (maxSec - meanSec) * .5
       const minSec = 60
       const pct = 1 / pageNum * 100
-      let progressColor = this.getValue("Zotero.ZoteroStyle.progressColor", this.progressColor)
-      let [r, g, b] = this.toRGB(progressColor)
+      let progressColor = events.getValue("Zotero.ZoteroStyle.progressColor", events.progressColor)
+      let [r, g, b] = events.toRGB(progressColor)
       for (let i=0; i<pageNum; i++) {
         // pageSpan represent a page, color represent the length of read time
         let pageSpan = createElement("span")
@@ -123,14 +124,15 @@ const Functions = {
     return primaryCell
   },
   _renderCell(cell: any, args: any[], Zotero: any): any {
+    let events = Zotero.ZoteroStyle.events 
     const prefsKey = "Zotero.ZoteroStyle.constantFields"
-    let constantFields = this.getValue(prefsKey, this.constantFields)
+    let constantFields = events.getValue(prefsKey, events.constantFields)
     if (
       constantFields.filter(
         fieldName => cell.classList.contains(fieldName)
       ).length == 0
     ) {
-      if (Zotero.ZoteroStyle.events.mode === "max") {
+      if (events.mode === "max") {
         cell.style.display = "none"
       }
     }

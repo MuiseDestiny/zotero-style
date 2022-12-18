@@ -2,6 +2,7 @@ import { Addon, addonName } from "./addon";
 import AddonModule from "./module";
 import { stylePatch as $patch$ } from './monkey-patch'
 
+
 class AddonEvents extends AddonModule {
   public notifierCallback : any;
   public setting: any;
@@ -89,10 +90,10 @@ class AddonEvents extends AddonModule {
       this.window.clearInterval(this.intervalID)
     }, true);
 
-    this.patchFunctions()
+    await this.patchFunctions()
 
     this.addStyle()
-
+ 
     console.log("wait for collectionTreeRow")
     while (!this.window.ZoteroPane.itemsView.collectionTreeRow) {
       await this.Zotero.Promise.delay(10)
@@ -249,7 +250,10 @@ class AddonEvents extends AddonModule {
       ids.forEach(async (id)=>{
         let item = await this.getAsync(id)
         const regex = /(zoterostyle|protected)/i
-        if (this.Zotero.ZoteroStyle && (regex.test(item.getField("archive")) || regex.test(item.getField("title")))) {
+        var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+          Components.interfaces.nsISupports
+        ).wrappedJSObject;
+        if (Zotero.ZoteroStyle && (regex.test(item.getField("archive")) || regex.test(item.getField("title")))) {
           console.log(`zoterostyle item [protected]- title: ${item.getField("title")}; archive: ${item.getField("archive")}`)
         } else {
           oriErase.apply(this, [[id]])
@@ -260,10 +264,7 @@ class AddonEvents extends AddonModule {
 
   public async patchFunctions() {
     while (true) {
-      if (
-        !this.window.ZoteroPane.itemsView._renderPrimaryCell || 
-        !this.window.ZoteroPane.itemsView._renderCell
-      ) { await this.Zotero.Promise.delay(100); continue }
+      if (!this.window.ZoteroPane.itemsView._renderPrimaryCell || !this.window.ZoteroPane.itemsView._renderCell) { await this.Zotero.Promise.delay(100); continue }
       $patch$(this.window.ZoteroPane.itemsView, "_renderPrimaryCell")
       $patch$(this.window.ZoteroPane.itemsView, "_renderCell")
       break

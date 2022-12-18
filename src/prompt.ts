@@ -852,14 +852,15 @@ class AddonPrompt extends AddonModule{
       /* 输入区域 */
       .prompt .prompt-input-container  {
         width: 100%;
-        margin-top: 2%
       }
       
       .prompt .prompt-input-container .prompt-input {
-        width: 94%;
+        width: 100%;
+        height: 40px;
+        padding: 24px;
+        border-radius: 50%;
         border: none;
         outline: none;
-        margin-left: 3%;
         font-size: 18px;
       }
       
