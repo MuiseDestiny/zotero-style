@@ -141,6 +141,7 @@ Zotero.ZoteroStyle.progressColor=#FF9E9E
 - [x] pdf标注颜色替换或自定义（等官方做）
 - [x] 阅读进度数据同步至Notion，与Notion联动，我特别喜欢它的Timeline（过于复杂且网络不稳定，目前已实现基于gitee的同步）
 - [x] 设置界面更容易理解，分类显示，而不是现在这样有点让人费解（模仿Obsidian）
+- [ ] https://github.com/MuiseDestiny/ZoteroStyle/issues/42
 - [ ] 期待你提出的建议🌸
 
 ## 致谢
