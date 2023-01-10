@@ -120,7 +120,7 @@ const Functions = {
         `
         progressNode.appendChild(pageSpan)
       }   
-    } 
+    }
     return primaryCell
   },
   _renderCell(cell: any, args: any[], Zotero: any): any {

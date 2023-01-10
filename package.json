@@ -33,7 +33,8 @@
     "esbuild": "^0.14.34",
     "replace-in-file": "^6.3.2",
     "simple-scrollbar": "^0.4.0",
-    "yamljs": "^0.3.0"
+    "yamljs": "^0.3.0",
+    "zotero-plugin-toolkit": "^0.0.10"
   },
   "devDependencies": {
     "dotenv-cli": "^6.0.0",

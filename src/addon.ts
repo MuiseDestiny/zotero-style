@@ -1,20 +1,21 @@
 import AddonEvents from "./events";
 import AddonModule from "./module";
 import AddonItem from "./item";
-import AddonPrompt from "./prompt";
+// import ZoteroToolkit from "zotero-plugin-toolkit";
+import ZoteroToolkit from "E:/Github/zotero-plugin-toolkit"
 
 
 const { addonName } = require("../package.json");
 
 class Addon {
   public events: AddonEvents;
-  public prompt: AddonModule;
   public item: AddonModule;
+  public toolkit: ZoteroToolkit;
   public DOIData = {}
   public DOIRefData = {}
 
   constructor() {
-    this.prompt = new AddonPrompt(this)
+    this.toolkit = new ZoteroToolkit();
     this.item = new AddonItem(this);
     this.events = new AddonEvents(this);
   }

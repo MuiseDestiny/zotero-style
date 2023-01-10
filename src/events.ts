@@ -1,7 +1,7 @@
 import { Addon, addonName } from "./addon";
 import AddonModule from "./module";
 import { stylePatch as $patch$ } from './monkey-patch'
-
+// import { register, unregister, TaskType } from "./prompt";
 
 class AddonEvents extends AddonModule {
   public notifierCallback : any;
@@ -61,7 +61,284 @@ class AddonEvents extends AddonModule {
       }
     }, 1e3)
 
-    this._Addon.prompt.init(this.Zotero)
+    enum TaskType {
+      Default = "Default",
+      CreateView = "CreateView",
+      SetValue = "SetValue",
+      SelectValue = "SelectValue"
+    }
+    console.log(TaskType)
+    await this._Addon.toolkit.Prompt.register([
+      {
+        name: "进度条",
+        label: "Style",
+        task: {
+          Commands: [
+            {
+              name: "颜色",
+              label: "进度条",
+              task: {
+                SetValue: {
+                  values: [
+                    { intro: "请输入颜色", check: (text) => /#\w+/.test(text) }
+                  ],
+                  get: () => {
+                    return this.Zotero.Prefs.get("Zotero.ZoteroStyle.progressColor")
+                  },
+                  set: (values) => {
+                    this.Zotero.Prefs.set("Zotero.ZoteroStyle.progressColor", values[0])
+                    this.refresh()
+                  }
+                }
+              }
+            },
+            {
+              name: "透明度",
+              label: "进度条",
+              task: {
+                SetValue: {
+                  values: [
+                    { intro: "请输入透明度0~1", check: (text) => String(Number(text)) != "NaN" }
+                  ],
+                  get: () => {
+                    return this.Zotero.Prefs.get("Zotero.ZoteroStyle.progressOpacity")
+                  },
+                  set: (values) => {
+                    this.Zotero.Prefs.set("Zotero.ZoteroStyle.progressOpacity", values[0])
+                    this.refresh()
+                  }
+                }
+              }
+            },
+            {
+              name: "阅读时间",
+              label: "进度条",
+              task: {
+                CreateView: () => {
+                  const prompt = this.Zotero._Prompt
+                  // get selected
+                  let item = this.getReadingItem() || this.window.ZoteroPane.getSelectedItems()[0] as _ZoteroItem
+                  const itemTitle = item.getField("title")
+                  const itemKey = item.key
+                  // get time
+                  let itemRecord = this.record[itemKey] || this.record[itemTitle]
+                  if (!itemRecord) {
+                    return prompt.showEmpty("阅读后才有时间哦~")
+                  }
+                  const pageTime = itemRecord.pageTime
+                  prompt.clear()
+                  Object.keys(pageTime).forEach(page => {
+                    let sec = pageTime[page]
+                    let t
+                    if (sec < 60) {
+                      t = `${sec}秒`
+                    } else if (sec / 60) {
+                      t = `${(sec / 60).toFixed(1)}分`
+                    } else {
+                      t = `${(sec / 60 / 60).toFixed(1)}时`
+                    }
+                    prompt.commandsNode.appendChild(
+                      prompt.createItem(`第${Number(page) + 1}页`, t)
+                    )
+                  })
+                }
+              }
+            },
+            {
+              name: "显示/隐藏",
+              label: "进度条",
+              task: {
+                Default: () => {
+                  this.document.querySelectorAll(".zotero-style-progress").forEach(node => {
+                    let flag = String(node.getAttribute("visible") == "false")
+                    node.setAttribute("visible", flag)
+                    this.Zotero.Prefs.set("Zotero.ZoteroStyle.progressVisible", flag)
+                  })
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        name: "标签",
+        label: "Style",
+        task: {
+          Commands: [
+            {
+              name: "对齐",
+              label: "标签",
+              task: {
+                SelectValue: {
+                  values: ["left", "right"],
+                  get: () => {
+                    return this.Zotero.Prefs.get("Zotero.ZoteroStyle.tagAlign")
+                  },
+                  set: (value) => {
+                    this.Zotero.Prefs.set("Zotero.ZoteroStyle.tagAlign", value)
+                    this.Zotero.ZoteroStyle.events.refresh()
+                  }
+                }
+              }
+            },
+            {
+              name: "宽度",
+              label: "标签",
+              task: {
+                SetValue: {
+                  values: [
+                    { intro: "请输入宽度/em", check: (text) => String(Number(text)) != "NaN" }
+                  ],
+                  get: () => {
+                    return this.Zotero.Prefs.get("Zotero.ZoteroStyle.tagSize")
+                  },
+                  set: (values) => {
+                    this.Zotero.Prefs.set("Zotero.ZoteroStyle.tagSize", values[0])
+                    this.Zotero.ZoteroStyle.events.refresh()
+                  }
+                }
+
+              }
+            },
+            {
+              name: "位置",
+              label: "标签",
+              task: {
+                SelectValue: {
+                  values: ["0", "1", "2", "3", "4"],
+                  get: () => {
+                    return this.Zotero.Prefs.get("Zotero.ZoteroStyle.tagPosition")
+                  },
+                  set: (value) => {
+                    this.Zotero.Prefs.set("Zotero.ZoteroStyle.tagPosition", value)
+                    this.Zotero.ZoteroStyle.events.refresh()
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        name: "字段",
+        label: "Style",
+        task: {
+          Commands: [
+            {
+              name: "最大/小化",
+              label: "字段",
+              task: {
+                Default: () => {
+                  let btn = this.document.querySelector("#zotero-tb-switch-itemtree") as HTMLButtonElement
+                  btn.click()
+                }
+              }
+            },
+            {
+              name: "保留字段",
+              label: "字段",
+              task: {
+                SetValue: {
+                  values: [
+                    {
+                      intro: "请输入要保留的字段，如['title', 'year']", check: (text) => {
+                        try {
+                          let arr = eval(text)
+                          if (arr.length) {
+                            return true
+                          } else {
+                            return false
+                          }
+                        } catch {
+                          return false
+                        }
+                      }
+                    }
+                  ],
+                  get: () => {
+                    return this.Zotero.Prefs.get("Zotero.ZoteroStyle.constantFields")
+                  },
+                  set: (values) => {
+                    this.Zotero.Prefs.set("Zotero.ZoteroStyle.constantFields", values[0])
+                    this.Zotero.ZoteroStyle.events.refresh()
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        name: "影响因子",
+        label: "Ablesci",
+        when: () => {
+          let readingItem = this.getReadingItem()
+          let selectedItems = this.window.ZoteroPane.getSelectedItems()
+          return (readingItem || selectedItems[0]) as boolean
+        },
+        task: {
+          CreateView: async () => {
+            let addCSSLink = (url) => {
+              let link = this.createElement("link")
+              link.setAttribute("rel", "stylesheet")
+              link.setAttribute("type", "text/css")
+              link.setAttribute("href", url)
+              this.document.querySelector('#main-window').appendChild(link)
+            }
+            const urls = [
+              "https://www.ablesci.com/assets/css/global_local.css?v=20221123v1",
+              "https://www.ablesci.com/assets/layui/css/layui.css"
+            ]
+            urls.forEach(url => {
+              if (!this.document.querySelector(`link[href='${url}']`)) {
+                addCSSLink(url)
+              }
+            })
+
+            let readingItem = this.getReadingItem()
+            let selectedItems = this.window.ZoteroPane.getSelectedItems()
+            let item = readingItem || selectedItems[0]
+            const publicationTitle = item.getField("publicationTitle")
+            console.log(publicationTitle)
+            let res = await this.Zotero.HTTP.request(
+              "GET",
+              `https://www.ablesci.com/journal/index?keywords=${publicationTitle.replace(/ /g, "+")}`,
+              {
+                responseType: "text",
+                credentials: "include"
+              }
+            )
+            let text = res.response
+            let matchedArray = text.match(/<table[\s\S]+?<\/table>/g)
+            let prompt = this.Zotero._Prompt
+            if (matchedArray) {
+              prompt.inputNode.setAttribute("placeholder", publicationTitle)
+              const tableString = matchedArray[0].replace("36%", "20%")
+              const parser = new this.window.DOMParser()
+              const table = parser.parseFromString(`<div class="command">${tableString}</div>`, "text/html")
+              prompt.commandsNode.querySelectorAll(".command").forEach(e => e.remove())
+              prompt.commandsNode.appendChild(table.body.firstChild)
+            }
+          }
+        }
+      },
+      {
+        name: "指派标签颜色位置",
+        label: "Zotero",
+        task: {
+          SetValue: {
+            values: [
+              { intro: "请输入要指派的标签", check: (text) => /.+/.test(text) },
+              { intro: "请输入要指派的颜色", check: (text) => /#\w+/.test(text) },
+              { intro: "请输入要指派的位置", check: (text) => /\d+/.test(text) }
+            ],
+            set: (values) => {
+              this.Zotero.Tags.setColor(1, ...values)
+            }
+          }
+        }
+      },
+    ])
     
     // event
     let notifierID = this.Zotero.Notifier.registerObserver(
@@ -246,9 +523,13 @@ class AddonEvents extends AddonModule {
   public modifyErase() {
     let oriErase = this.Zotero.Items.erase
     this.oriErase = oriErase
-    this.Zotero.Items.erase = function (ids) { 
+    var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
+      Components.interfaces.nsISupports
+    ).wrappedJSObject;
+    Zotero.Items.erase = async function (ids) {
       ids.forEach(async (id)=>{
         let item = await this.getAsync(id)
+        console.log("this.Zotero.Items.erase", item)
         const regex = /(zoterostyle|protected)/i
         var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(
           Components.interfaces.nsISupports
@@ -256,7 +537,7 @@ class AddonEvents extends AddonModule {
         if (Zotero.ZoteroStyle && (regex.test(item.getField("archive")) || regex.test(item.getField("title")))) {
           console.log(`zoterostyle item [protected]- title: ${item.getField("title")}; archive: ${item.getField("archive")}`)
         } else {
-          oriErase.apply(this, [[id]])
+          await oriErase.apply(this, [[id]])
         }
       })
     }

@@ -50,10 +50,10 @@ class AddonPrompt extends AddonModule{
       "阅读时间": {
         main: () => {
           // get selected
-          let item = this.window.ZoteroPane.getSelectedItems()[0] as _ZoteroItem
+          let item = this._Addon.events.getReadingItem() || this.window.ZoteroPane.getSelectedItems()[0] as _ZoteroItem
           const itemTitle = item.getField("title")
           const itemKey = item.key
-          const configKey = `${itemTitle} - ${itemKey}`
+          const configKey = `${itemTitle} - ${itemKey} - 阅读时间`
           if (this._Addon.prompt.config[configKey]) {
             this._Addon.prompt.path = [configKey]
             this._Addon.prompt.render()
@@ -242,7 +242,7 @@ class AddonPrompt extends AddonModule{
         let itemTitle = item.getField("title")
         let itemKey = item.key
 
-        const configKey = `${itemTitle} - ${itemKey}`
+        const configKey = `${itemTitle} - ${itemKey} - 参考文献`
         // check local
         if (this._Addon.prompt.config[configKey]) {
           this._Addon.prompt.path = [configKey]
@@ -516,7 +516,7 @@ class AddonPrompt extends AddonModule{
   public render() {
     this.resultsNode.querySelectorAll(".suggestion-item").forEach(e=>e.remove())
     let task = this.getTask()
-    const skipKeys = ["Zotero", "document", "window", "hotKey", "_Addon", "enter"]
+    const skipKeys = ["Zotero", "document", "window", "hotKey", "_Addon", "next"]
     const keys = Object.keys(task).filter(e=>skipKeys.indexOf(e)==-1) as string[]
     if (keys.length == 0) {
       // here
