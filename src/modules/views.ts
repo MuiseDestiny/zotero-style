@@ -83,6 +83,7 @@ export default class Views {
    * 把标签从标题分离为单独的列
    */
   public async createTagColumn() {
+    const runes = require('runes')
     // 新增加的标签列，在调用Zotero.Tags。setColor时不会刷新
     ztoolkit.Tool.patch(Zotero.Tags, "setColor", "CalledRefresh", (original) => {
       return (id: number, name: string, color: string, pos: number) => {
@@ -107,17 +108,31 @@ export default class Views {
       },
       {
         renderCellHook(index, data, column) {
-          let getEmojArray = (emoj: string) => {
-            try {
-              let arr = []
-              for (let e of emoj) {
-                arr.push(e)
-              }
-              return arr
-            } catch {
-              return [emoj]
-            }
-          }
+          // let getEmojArray = (emoj: string) => {
+          //   try {
+          //     let arr = []
+          //     for (let e of emoj) {
+          //       arr.push(e)
+          //     }
+          //     return arr
+          //   } catch {
+          //     return [emoj]
+          //   }
+          // }
+
+          // let getEmojArray = (emoj: string) => {
+          //   let encodeEmoj = encodeURIComponent(emoj)
+          //   let emojLength = emoj.length
+          //   let encodeEmojSet = new Set()
+          //   const step = encodeEmoj.length / emojLength
+          //   for (let i = 0; i < emojLength; i++) {
+          //     encodeEmojSet.add(encodeEmoj.slice(i * step, i * step + step))
+          //   }
+          //   if ([...encodeEmojSet].length == 1) { return [emoj] }
+          //   emojLength = encodeEmoj.match(new RegExp([...encodeEmojSet].join(""), "g")).length
+          //   return emojLength
+          // }
+
           let getTagSpan = (tag: string, color: string) => {
             let tagSpan = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
             tagSpan.className = "tag-swatch"
@@ -145,7 +160,7 @@ export default class Views {
           tags.forEach(tagObj => {
             let tag = tagObj.tag, color = tagObj.color
             if (Zotero.Utilities.Internal.isOnlyEmoji(tag)) {
-              getEmojArray(tag).forEach(tag => {
+              runes(tag).forEach((tag: string) => {
                 let tagSpan = getTagSpan(tag, color)
                 tagSpan.style[align] = `${offset}em`
                 tagSpans.appendChild(tagSpan)
@@ -382,10 +397,8 @@ export default class Views {
     let isCurrent = (columnView: ColumnsView) => {
       return JSON.stringify(getCurrentDataKeys().sort()) == JSON.stringify(columnView.dataKeys.sort())
     }
-    // toolbar UI
-    const toolbar = document.querySelector("#zotero-items-toolbar") as XUL.Element
-    toolbar.onmouseenter = () => {
-      switchContainer.querySelectorAll("span").forEach(e=>e.remove())
+    let updateOptionNode = (timeout: number) => {
+      switchContainer.querySelectorAll("span").forEach(e => e.remove())
       const columnsViews = JSON.parse(Zotero.Prefs.get(prefKey) as string) as ColumnsView[]
       for (let i = 0; i < columnsViews.length; i++) {
         let columnsView = columnsViews[i]
@@ -438,6 +451,16 @@ export default class Views {
         )
       }
       switchContainer.style.opacity = "1"
+      if (timeout > 0) {        
+        window.setTimeout(() => {
+          switchContainer.style.opacity = "0"
+        }, timeout)
+      }
+    }
+    // toolbar UI
+    const toolbar = document.querySelector("#zotero-items-toolbar") as XUL.Element
+    toolbar.onmouseenter = () => {
+      updateOptionNode(-1)
     }
     toolbar.onmouseleave = () => {
       switchContainer.style.opacity = "0"
@@ -507,6 +530,7 @@ export default class Views {
                 dataKeys: getCurrentDataKeys()
               })
               Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
+              updateOptionNode(1000)
             })
             colViewPopup.appendChild(saveMenuItem)
           }

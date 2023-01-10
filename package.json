@@ -32,6 +32,7 @@
   "homepage": "https://github.com/muisedestiny/zotero-style#readme",
   "dependencies": {
     "raphael": "^2.3.0",
+    "runes": "^0.4.3",
     "zotero-plugin-toolkit": "^0.1.6"
   },
   "devDependencies": {
