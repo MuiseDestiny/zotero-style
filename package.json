@@ -1,44 +1,46 @@
 {
   "name": "zotero-style",
-  "addonName": "Zotero Style",
-  "addonID": "zoterostyle@polygon.org",
-  "addonRef": "zoterostyle",
-  "version": "1.4.7",
-  "description": "阅读高能进度条，标签左右对齐，五个自定义位置，标签无限制颜色指派，参考文献快捷导入到文库，仿Obsidian命令面板，更多玩法等你探索... ",
-  "main": "src/index.js",
+  "version": "0.0.1",
+  "description": "Zotero Style",
+  "config": {
+    "addonName": "Zotero Style",
+    "addonID": "zoterostyle@polygon.org",
+    "addonRef": "zoterostyle",
+    "releasepage": "https://github.com/muisedestiny/zotero-style/releases/latest/download/zotero-style.xpi",
+    "updaterdf": "https://raw.githubusercontent.com/muisedestiny/zotero-style/bootstrap/update.json"
+  },
+  "main": "src/index.ts",
   "scripts": {
-    "build": "node build.js",
-    "start": "node start.js",
-    "stop": "node stop.js",
-    "prerestart": "npm run build",
-    "restart": "node restart.js",
+    "build-dev": "cross-env NODE_ENV=development node scripts/build.js",
+    "build": "cross-env NODE_ENV=production node scripts/build.js",
+    "start": "node scripts/start.js",
+    "stop": "node scripts/stop.js",
+    "prerestart": "npm run build-dev",
+    "restart": "node scripts/restart.js",
     "release": "release-it",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MuiseDestiny/ZoteroStyle.git"
+    "url": "git+https://github.com/muisedestiny/zotero-style.git"
   },
   "author": "Polygon",
   "license": "AGPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/MuiseDestiny/ZoteroStyle/issues"
+    "url": "https://github.com/muisedestiny/zotero-style/issues"
   },
-  "homepage": "https://github.com/MuiseDestiny",
-  "releasepage": "https://github.com/MuiseDestiny/ZoteroStyle/releases/latest/download/zotero-style.xpi",
-  "updaterdf": "https://raw.githubusercontent.com/MuiseDestiny/ZoteroStyle/bootstrap/update.rdf",
+  "homepage": "https://github.com/muisedestiny/zotero-style#readme",
   "dependencies": {
-    "compressing": "^1.5.1",
-    "dom-parser": "^0.1.6",
-    "esbuild": "^0.14.34",
-    "replace-in-file": "^6.3.2",
-    "simple-scrollbar": "^0.4.0",
-    "yamljs": "^0.3.0",
-    "zotero-plugin-toolkit": "^0.0.10"
+    "raphael": "^2.3.0",
+    "zotero-plugin-toolkit": "^0.1.6"
   },
   "devDependencies": {
-    "dotenv-cli": "^6.0.0",
-    "release-it": "^14.14.0",
-    "zotero-types": "^0.0.7"
+    "@types/node": "^18.11.17",
+    "compressing": "^1.6.3",
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.16.10",
+    "release-it": "^15.6.0",
+    "replace-in-file": "^6.3.5",
+    "zotero-types": "^0.1.5"
   }
 }

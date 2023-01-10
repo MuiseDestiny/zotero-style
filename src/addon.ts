@@ -1,24 +1,30 @@
-import AddonEvents from "./events";
-import AddonModule from "./module";
-import AddonItem from "./item";
-// import ZoteroToolkit from "zotero-plugin-toolkit";
-import ZoteroToolkit from "E:/Github/zotero-plugin-toolkit"
-
-
-const { addonName } = require("../package.json");
+import ZoteroToolkit from "zotero-plugin-toolkit";
+import hooks from "./hooks";
 
 class Addon {
-  public events: AddonEvents;
-  public item: AddonModule;
-  public toolkit: ZoteroToolkit;
-  public DOIData = {}
-  public DOIRefData = {}
+  public data: {
+    alive: boolean;
+    // Env type, see build.js
+    env: "development" | "production";
+    ztoolkit: ZoteroToolkit;
+    locale?: {
+      stringBundle: any;
+    };
+    prefs?: {
+      window: Window;
+    };
+  };
+  // Lifecycle hooks
+  public hooks: typeof hooks;
 
   constructor() {
-    this.toolkit = new ZoteroToolkit();
-    this.item = new AddonItem(this);
-    this.events = new AddonEvents(this);
+    this.data = {
+      alive: true,
+      env: __env__,
+      ztoolkit: new ZoteroToolkit(),
+    };
+    this.hooks = hooks;
   }
 }
 
-export { addonName, Addon };
+export default Addon;
