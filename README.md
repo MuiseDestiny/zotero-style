@@ -51,9 +51,13 @@ zoterostyle.progressColumn.circle = true
 设置面板还没做出，在考虑放在首选项还是和之前一样`Shift+P`设置。
 但让然可以设置，现在跟着我进行一些设置吧，
 点击编辑器
+
 ![image](https://user-images.githubusercontent.com/51939531/211497544-ef54814b-5d7b-4388-85e7-8527d252a8cb.png)
+
 搜索关键词`zoterostyle`，点击下图红框
+
 ![image](https://user-images.githubusercontent.com/51939531/211497700-2c19e778-ed92-4a8a-8d44-4d89cbe787e6.png)
+
 小圆点就消失啦！神奇。其它设置同理。
 
 ![image](https://user-images.githubusercontent.com/51939531/211497794-83eda60c-4cbc-4fe6-8478-a8269728cc68.png)
@@ -64,20 +68,30 @@ zoterostyle.progressColumn.circle = true
 
 下面跟着我来新建一个视图吧：
 第一步，右键任意列，勾选或取消勾选你需要显示或不需要显示的列，
+
 ![image](https://user-images.githubusercontent.com/51939531/211495084-34cf2702-72b1-41e8-a606-569177194b5e.png)
+
 第二步，仍然是右键任意列，鼠标移动到最后一个选项`视图组`，点击最后一个按钮`保存当前视图`，
+
 ![image](https://user-images.githubusercontent.com/51939531/211495314-eda3da8c-8fb7-4ecc-96f3-b02021df841b.png)
+
 不出意外的话，会有一个弹窗出现，
+
 ![image](https://user-images.githubusercontent.com/51939531/211495486-f11b308e-250b-4701-9240-c7199dee865b.png)
+
 在这里你可以为当前视图起一个名字，也可以做一些备注，比如下面这样，
+
 ![image](https://user-images.githubusercontent.com/51939531/211495613-83782172-46cf-4db8-9cbe-add86a5cce4f.png)
+
 点击添加后，这里会显示出当前所有视图按钮，并一会自动消失。
+
 ![image](https://user-images.githubusercontent.com/51939531/211495716-98b6f4d5-0fb6-43f4-ae58-92b74b897701.png)
+
 到此，你已经成功添加了一个视图到视图组中。
 
 你可以通过那些一闪而过的小圆点里切换它们，鼠标悬停会为你提示你刚写的名称和备注。你不找小圆点，小圆点不会出现（避免突兀）。
 ![image](https://user-images.githubusercontent.com/51939531/211496616-8d796f09-de8a-4713-bf4e-92f992d94684.png)
-
+不怕麻烦的话，也可以右键任意字段，在视图组里点击，也会切换。除此之外，右键一个已添加的视图，会**删除**它。这也是视图组存在的意义。小圆点单纯为了好看。
 
 
 
