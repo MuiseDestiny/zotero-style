@@ -340,10 +340,6 @@ export default class Views {
             }
             ZoteroPane.itemsView.tree._columns._storePrefs(prefs);
           })
-
-          // ZoteroPane.itemsView.tree._columns.toggleHidden(index)
-          // window.setTimeout(() => {
-          // })
         }
       })
       ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()

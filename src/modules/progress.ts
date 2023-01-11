@@ -181,9 +181,9 @@ export default class Progress {
               left: "0",
               height: `${heightPct * 100}%`,
               top: `calc(50% - ${heightPct * 100}%/2)`,
-              // width: "0%",
-              width: `${percent > 100 ? 100 : percent}%`,
-              // transition: "width 1s linear",
+              width: "0%",
+              // width: `${percent > 100 ? 100 : percent}%`,
+              transition: "width 1s linear",
               display: "inline-block",
               backgroundColor: `rgba(${red}, ${green}, ${blue}, 1)`,
               borderRadius: "1em"
@@ -192,9 +192,9 @@ export default class Progress {
         ]
       }
     ) as HTMLSpanElement;
-    // window.setTimeout(() => {
-    //   (span.querySelector("#progress") as HTMLSpanElement).style.width = `${percent > 100 ? 100 : percent}%`
-    // }, 0)
+    window.setTimeout(() => {
+      (span.querySelector("#progress") as HTMLSpanElement).style.width = `${percent > 100 ? 100 : percent}%`
+    }, 0)
     return span
   }
 
