@@ -21,6 +21,9 @@
 		<label value="Name"/>
 		<textbox id="view-name" flex="1"></textbox>
 		<separator/>
+		<label value="Position"/>
+		<textbox id="view-position" flex="1"></textbox>
+		<separator/>
 		<label value="Content"/>
 		<textbox id="view-content" multiline="true" rows="4" flex="1"></textbox>
 	</vbox>

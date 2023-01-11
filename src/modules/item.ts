@@ -2,6 +2,7 @@ const log = console.log
 export default class AddonItem {
 	public item!: _ZoteroItem;
 	public prefKey = "Zotero.AddonItem.key";
+	public cache: {[key: string]: any} = {};
 	constructor() {
 	}
 
@@ -51,7 +52,6 @@ export default class AddonItem {
 	 * @param data 数据
 	 */
 	public async set(item: _ZoteroItem, key: string, data: object | string) {
-		log("set", key, data)
 		let noteItem = this.getNoteItem(item) || await this.createoteItem()
 		let noteData = this.getNoteData(noteItem)
 		noteData[key] = data
@@ -106,14 +106,18 @@ export default class AddonItem {
 	 * @returns 
 	 */
 	public getNoteItem(item: _ZoteroItem) {
-		const ids = this.item.getNotes()
+
 		const key = item.key
+		const cacheKey = `getNoteItem-${key}`
+		if (this.cache[cacheKey]) { this.cache[cacheKey] }
+		const ids = this.item.getNotes()
 		let noteItem
 		for (let id of ids) {
 			let idInfo = Zotero.Items.getLibraryAndKeyFromID(id)
 			let _noteItem = Zotero.Items.getByLibraryAndKey(idInfo.libraryID, idInfo.key)
 			if (_noteItem._displayTitle == key) {
 				noteItem = _noteItem
+				this.cache[cacheKey] = noteItem
 				break
 			}
 		}

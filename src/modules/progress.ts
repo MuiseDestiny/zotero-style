@@ -145,6 +145,7 @@ export default class Progress {
   public linePercent(value: number, maxValue: number, color: string = "#62B6B7", opacity: string = "1"): HTMLSpanElement {
     const [red, green, blue] = this.getRGB(color)
     const percent = value / maxValue * 100
+    const heightPct = 0.28
     const span = ztoolkit.UI.creatElementsFromJSON(
       document,
       {
@@ -164,8 +165,8 @@ export default class Progress {
             styles: {
               position: "absolute",
               left: "0",
-              height: "30%",
-              top: "calc(50% - 30%/2)",
+              height: `${heightPct * 100}%`,
+              top: `calc(50% - ${heightPct * 100}%/2)`,
               width: "100%",
               display: "inline-block",
               backgroundColor: `rgba(${red}, ${green}, ${blue}, .23)`,
@@ -178,11 +179,11 @@ export default class Progress {
             styles: {
               position: "absolute",
               left: "0",
-              height: "30%",
-              top: "calc(50% - 30%/2)",
-              // width: `${percent > 100 ? 100 : percent}%`,
-              width: "0%",
-              transition: "width 1s linear",
+              height: `${heightPct * 100}%`,
+              top: `calc(50% - ${heightPct * 100}%/2)`,
+              // width: "0%",
+              width: `${percent > 100 ? 100 : percent}%`,
+              // transition: "width 1s linear",
               display: "inline-block",
               backgroundColor: `rgba(${red}, ${green}, ${blue}, 1)`,
               borderRadius: "1em"
@@ -191,9 +192,9 @@ export default class Progress {
         ]
       }
     ) as HTMLSpanElement;
-    window.setTimeout(() => {
-      (span.querySelector("#progress") as HTMLSpanElement).style.width = `${percent > 100 ? 100 : percent}%`
-    }, 0)
+    // window.setTimeout(() => {
+    //   (span.querySelector("#progress") as HTMLSpanElement).style.width = `${percent > 100 ? 100 : percent}%`
+    // }, 0)
     return span
   }
 

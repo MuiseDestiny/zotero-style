@@ -21,6 +21,7 @@ async function onStartup() {
     `chrome://${config.addonRef}/content/icons/favicon.png`
   );
   ztoolkit.UI.enableElementRecordGlobal = false
+
   // const popupWin = ztoolkit.Tool.createProgressWindow(config.addonName, {
   //   closeOnClick: true,
   //   closeTime: -1,
@@ -69,7 +70,6 @@ async function onStartup() {
   // popupWin.startCloseTimer(5000);
   
   // return
-  await Zotero.uiReadyPromise;
   if (!addonItem.item) { await addonItem.init() }
   const views = new Views(addonItem)
   await views.renderTitleProgress()
@@ -99,10 +99,10 @@ async function onStartup() {
 }
 
 function onShutdown(): void {
-  BasicExampleFactory.unregisterPrefs();
-  UIExampleFactory.unregisterUIExamples();
-  // Remove addon object
+  ztoolkit.ItemTree.unregisterAll()
   addon.data.alive = false;
+  ztoolkit.UI.unregisterAll()
+
   delete Zotero.AddonTemplate;
 }
 

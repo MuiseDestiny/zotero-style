@@ -3,6 +3,8 @@ import { config } from "../../package.json";
 import AddonItem from "./item";
 import Progress from "./progress";
 import Requests from "./requests";
+import { getString, initLocale } from "./locale";
+
 
 export default class Views {
   private progress: Progress;
@@ -86,7 +88,7 @@ export default class Views {
    */
   public async createTagColumn() {
     // 用于分离多emoj，很魔鬼的bug
-    const runes = require('runes')
+    const runes = require("runes")
     // 新增加的标签列，在调用Zotero.Tags，setColor时不会刷新
     ztoolkit.Tool.patch(Zotero.Tags, "setColor", "CalledRefresh", (original) => {
       return (id: number, name: string, color: string, pos: number) => {
@@ -99,7 +101,7 @@ export default class Views {
     })
     await ztoolkit.ItemTree.register(
       "Tags",
-      "标签",
+      getString("column.Tags"),
       (
         field: string,
         unformatted: boolean,
@@ -165,7 +167,7 @@ export default class Views {
   public async createProgressColumn() {
     await ztoolkit.ItemTree.register(
       "Progress",
-      "进度",
+      getString("column.Progress"),
       (
         field: string,
         unformatted: boolean,
@@ -233,7 +235,7 @@ export default class Views {
     const key = "IF"
     await ztoolkit.ItemTree.register(
       key,
-      "影响因子",
+      getString("column.IF"),
       (
         field: string,
         unformatted: boolean,
@@ -243,62 +245,60 @@ export default class Views {
         const publicationTitle = item.getField("publicationTitle")
         if (!(publicationTitle && publicationTitle != "")) { return "-1:publicationTitle" }
         let sciif = ztoolkit.Tool.getExtraField(item, "sciif")
-        log("sciif", sciif)
         if (sciif) {
           return sciif
         }
-        try {
-          // 开启一个异步更新影响因子
-          window.setTimeout(async () => {
-            const response = await this.requests.post(
-              "https://easyscholar.cc/homeController/getQueryTable.ajax",
-              {
-                page: "1",
-                limit: "1",
-                sourceName: publicationTitle
-              }
-            )
-            if (response) {
-              let data = response.data[0]
-              if (data && data.sciif && data.sci) {
-                ztoolkit.Tool.setExtraField(item, "sciif", data.sciif)
-                ztoolkit.Tool.setExtraField(item, "sci", data.sci)
-              }
+        // 开启一个异步更新影响因子
+        window.setTimeout(async () => {
+          const response = await this.requests.post(
+            "https://easyscholar.cc/homeController/getQueryTable.ajax",
+            {
+              page: "1",
+              limit: "1",
+              sourceName: publicationTitle
             }
-          }, 0)
-        } catch { }
+          )
+          if (response) {
+            let data = response.data[0]
+            if (data && data.sciif && data.sci) {
+              ztoolkit.Tool.setExtraField(item, "sciif", data.sciif)
+              ztoolkit.Tool.setExtraField(item, "sci", data.sci)
+            }
+          }
+        }, 0)
         return "0"
       },
       {
         renderCellHook: (index: any, data: any, column: any) => {
           const span = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
           let value = data ? Number(data) : 0
-          let sortedValues = ZoteroPane.getSortedItems().map(item => {
-            try {
-              // return Number(JSON.parse(ztoolkit.Tool.getExtraField(item, key) as string).if)
-              return Number(ztoolkit.Tool.getExtraField(item, "sciif") || "0")
-            } catch {
-              return 0
-            }
-          })
-            .filter(e => e > 0)
-            .concat([value])
-            .sort((a, b) => b - a)
-          let maxValue
-          if (sortedValues.length > 1) {
-            let meanValue = sortedValues.reduce((a, b) => a + b) / sortedValues.length
-            let s = 0
-            for (let i = 0; i < sortedValues.length; i++) {
-              s += (sortedValues[i] - meanValue) ** 2
-            }
-            s = (s / sortedValues.length) ** .5
-            maxValue = meanValue + 3 * s
-            maxValue = maxValue > sortedValues[0] ? sortedValues[0] * 1.1 : maxValue
-          } else {
-            maxValue = sortedValues[0]
-          }
+          // 计算视图最大影响因子，导致卡顿，废除，更改为让用户手动设置
+          // let sortedValues = ZoteroPane.getSortedItems().map(item => {
+          //   try {
+          //     // return Number(JSON.parse(ztoolkit.Tool.getExtraField(item, key) as string).if)
+          //     return Number(ztoolkit.Tool.getExtraField(item, "sciif") || "0")
+          //   } catch {
+          //     return 0
+          //   }
+          // })
+          //   .filter(e => e > 0)
+          //   .concat([value])
+          //   .sort((a, b) => b - a)
+          // let maxValue
+          // if (sortedValues.length > 1) {
+          //   let meanValue = sortedValues.reduce((a, b) => a + b) / sortedValues.length
+          //   let s = 0
+          //   for (let i = 0; i < sortedValues.length; i++) {
+          //     s += (sortedValues[i] - meanValue) ** 2
+          //   }
+          //   s = (s / sortedValues.length) ** .5
+          //   maxValue = meanValue + 3 * s
+          //   maxValue = maxValue > sortedValues[0] ? sortedValues[0] * 1.1 : maxValue
+          // } else {
+          //   maxValue = sortedValues[0]
+          // }
           let progressNode = (new Progress()).linePercent(
-            value, maxValue > 10 ? maxValue : 10,
+            value, 15,
             Zotero.Prefs.get(
               `${config.addonRef}.IFColumn.color`
             ) as string,
@@ -319,17 +319,31 @@ export default class Views {
   public registerSwitchColumnsViewUI() {
     type ColumnsView = {
       name: string;
+      position: string;
       content: string;
       dataKeys: string[];
     }
     const prefKey = `${config.addonRef}.columnsViews`
     // function
     let switchColumnsView = (columnView: ColumnsView) => {
-      log("switchColumnsView", columnView.dataKeys)
-      ZoteroPane.itemsView._getColumns().forEach((column: any, i: number) => {
+      const allColumns = ZoteroPane.itemsView._getColumns()
+
+      allColumns.forEach((column: any, index: number) => {
         const needHidden = columnView.dataKeys.indexOf(column.dataKey) == -1
         if (needHidden != !!column.hidden) {
-          ZoteroPane.itemsView.tree._columns.toggleHidden(i)
+          const column = ZoteroPane.itemsView.tree._columns._columns[index];
+          column.hidden = !column.hidden;
+          window.setTimeout(() => {
+            let prefs = ZoteroPane.itemsView.tree._columns._getPrefs();
+            if (prefs[column.dataKey]) {
+              prefs[column.dataKey].hidden = column.hidden;
+            }
+            ZoteroPane.itemsView.tree._columns._storePrefs(prefs);
+          })
+
+          // ZoteroPane.itemsView.tree._columns.toggleHidden(index)
+          // window.setTimeout(() => {
+          // })
         }
       })
       ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
@@ -343,7 +357,10 @@ export default class Views {
       return dataKeys
     }
     let isCurrent = (columnView: ColumnsView) => {
-      return JSON.stringify(getCurrentDataKeys().sort()) == JSON.stringify(columnView.dataKeys.sort())
+      return isSame(getCurrentDataKeys(), columnView.dataKeys)
+    }
+    let isSame = (a: string[], b: string[]) => {
+      return JSON.stringify(a.sort()) == JSON.stringify(b.sort())
     }
     let updateOptionNode = (timeout: number) => {
       switchContainer.querySelectorAll("span").forEach(e => e.remove())
@@ -352,8 +369,8 @@ export default class Views {
         let columnsView = columnsViews[i]
         const r: number = 0.7
         const color = {
-          active: "#EB455F",
-          default: "#BAD7E9"
+          active: "#0D4C92",
+          default: "#A0E4CB"
         }
         let optionNode = switchContainer.appendChild(
           ztoolkit.UI.creatElementsFromJSON(
@@ -450,85 +467,107 @@ export default class Views {
       "zoterostyle",
       (original) =>
         function () {
-          let addSaveButton = () => {
+          let sort = (columnsViews: ColumnsView[]) => {
+            return columnsViews.sort((a: ColumnsView, b: ColumnsView) => Number(a.position) - Number(b.position))
+          }
+          let addView = (io: ColumnsView) => {
+            // @ts-ignore
+            window.openDialog(
+              `chrome://${config.addonRef}/content/addView.xul`,
+              "add-view",
+              "chrome,modal,centerscreen",
+              io
+            );
+            if (!io.name) { return }
+            // 获取到用户输入后
+            columnsViews.push({
+              name: io.name,
+              position: io.position,
+              content: io.content || io.name,
+              dataKeys: io.dataKeys.length > 0 ? io.dataKeys : getCurrentDataKeys()
+            })
+            columnsViews = sort(columnsViews)
+            Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
+            updateOptionNode(1000)
+          }
+          let addButton = () => {
             if (document.querySelector("#add-save-item")) { return }
-            let saveMenuItem = document.createElementNS(ns, 'menuitem') as XUL.MenuItem
-            saveMenuItem.setAttribute('label', "保存当前视图");
+            let saveMenuItem = document.createElementNS(ns, "menuitem") as XUL.MenuItem
+            saveMenuItem.setAttribute("label", getString("column.view.add"));
             saveMenuItem.setAttribute("id", "add-save-item")
-            saveMenuItem.addEventListener('command', async () => {
-              // 打开窗口
-              // 弹窗获取名字和内容
-              var io = {
+            saveMenuItem.addEventListener("command", async () => {
+              addView({
                 name: "",
-                content: ""
-              };
-              // @ts-ignore
-              window.openDialog(
-                `chrome://${config.addonRef}/content/addView.xul`,
-                'add-view',
-                'chrome,modal,centerscreen',
-                io
-              );
-              log(io)
-              if (!io.name) { return }
-              // 获取到用户输入后
-              columnsViews.push({
-                name: io.name,
-                content: io.content || "好懒啊，备注都没有",
-                dataKeys: getCurrentDataKeys()
+                position: "",
+                content: "",
+                dataKeys: []
               })
-              Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
-              updateOptionNode(1000)
             })
             colViewPopup.appendChild(saveMenuItem)
           }
-          const ns = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
+          const ns = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
           // @ts-ignore
           original.apply(ZoteroPane.itemsView, arguments);
           const menupopup = document.querySelector("#zotero-column-picker")
           // 分割线
-          let sep = document.createElementNS(ns, 'menuseparator');
+          let sep = document.createElementNS(ns, "menuseparator");
           menupopup.appendChild(sep);
           // 保存列视图菜单
-          let colViewPrimaryMenu = document.createElementNS(ns, 'menu') as XUL.Menu
-          colViewPrimaryMenu.setAttribute("label", "视图组")
-          let colViewPopup = document.createElementNS(ns, 'menupopup') as XUL.MenuItem
+          let colViewPrimaryMenu = document.createElementNS(ns, "menu") as XUL.Menu
+          colViewPrimaryMenu.setAttribute("label", getString("column.view.group"))
+          let colViewPopup = document.createElementNS(ns, "menupopup") as XUL.MenuItem
           colViewPrimaryMenu.appendChild(colViewPopup)
 
           // 获取已保存列视图
-          const columnsViews = JSON.parse(Zotero.Prefs.get(prefKey) as string) as ColumnsView[]
-
-          let isSaved = false
+          let columnsViews = JSON.parse(Zotero.Prefs.get(prefKey) as string) as ColumnsView[]
+          columnsViews = sort(columnsViews)
+          let isAdded = false
           for (let columnsView of columnsViews) {
-            let colViewItem = document.createElementNS(ns, 'menuitem') as XUL.MenuItem
-            colViewItem.setAttribute('colViewName', columnsView.name);
-            colViewItem.setAttribute('label', columnsView.name);
-            colViewItem.setAttribute('type', 'checkbox');
+            let colViewItem = document.createElementNS(ns, "menuitem") as XUL.MenuItem
+            colViewItem.setAttribute("colViewName", columnsView.name);
+            colViewItem.setAttribute("label", columnsView.name);
+            colViewItem.setAttribute("type", "checkbox");
 
             if (isCurrent(columnsView)) {
               colViewItem.setAttribute("checked", "true")
-              isSaved = true
+              isAdded = true
             }
-
-            colViewItem.addEventListener('click', (event) => {
+            colViewItem.addEventListener("click", (event) => {
               if (event.button == 2) {
                 // 鼠标右键删除
-                Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews.filter(e => e != columnsView)))
+                columnsViews = columnsViews.filter(e => {
+                  return !isSame(e.dataKeys, columnsView.dataKeys)
+                })
+                Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
                 colViewItem.remove()
                 if (!colViewPopup.querySelector("menuitem[checked=true]")) {
-                  addSaveButton()
+                  addButton()
                 }
               } else if (event.button == 0) {
-                // 鼠标左键选中
-                if (colViewItem.getAttribute("checked") != "true") {
-                  switchColumnsView(columnsView)
-                }
+                // 等待mouseup事件结束
+                switchColumnsView(columnsView)
               }
+            })
+            let pressTimer: number | undefined
+            colViewItem.addEventListener("mousedown", (event) => {
+              pressTimer = window.setTimeout(() => {
+                // 重新编辑columnsView
+                columnsViews = columnsViews.filter(e => {
+                  return !isSame(e.dataKeys, columnsView.dataKeys)
+                })
+                addView(columnsView)
+              }, 1000)
+            })
+            colViewItem.addEventListener("mouseup", (event) => {
+              log("mouseup", pressTimer)
+              window.clearTimeout(pressTimer)
+              pressTimer = undefined
+              log("mouseup", pressTimer)
             })
             colViewPopup.appendChild(colViewItem);
           }
-          if (!isSaved) {
-            addSaveButton()
+          if (!isAdded) {
+            addButton()
           }
           menupopup.appendChild(colViewPrimaryMenu)
         }

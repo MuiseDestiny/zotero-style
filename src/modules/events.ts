@@ -2,7 +2,7 @@ import { log } from "zotero-plugin-toolkit/dist/utils";
 import AddonItem from "./item";
 
 export default class Events {
-	public recordInterval = 5;  // s
+	public recordInterval = 8;  // s
 	public updateInterval = 60;  // s
 	public maxHangTime = 60;  // s
 	public state = {
@@ -14,6 +14,7 @@ export default class Events {
 	}
 	public intervalID: number | undefined;
 	private addonItem: AddonItem;
+	private cache: {[key: string]: any} = {};
 	constructor(addonItem: AddonItem) {
 		this.addonItem = addonItem;
 	}
@@ -60,22 +61,21 @@ export default class Events {
 		// reading, record this recordInterval
 		const page = (reader._iframeWindow as any).wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
 
-		// get local record
-		let record = this.addonItem.get(item, "readingTime")
-		if (!record) {
-			record = {
+		// 数据挂载
+		const cacheKey = `readingTime-${item.key}`
+		this.cache[cacheKey] = this.cache[cacheKey] || this.addonItem.get(item, "readingTime")
+		if (!this.cache[cacheKey]) {
+			this.cache[cacheKey] = {
 				page: page,
 				data: {}
 			}
 		}
-		log("record before", record)
-		if (record.data[pageIndex]) {
-			record.data[pageIndex] += this.recordInterval
+		if (this.cache[cacheKey].data[pageIndex]) {
+			this.cache[cacheKey].data[pageIndex] += this.recordInterval
 		} else {
-			record.data[pageIndex] = this.recordInterval
+			this.cache[cacheKey].data[pageIndex] = this.recordInterval
 		}
-		log("record after", record)
-		await this.addonItem.set(item, "readingTime", record)
+		await this.addonItem.set(item, "readingTime", this.cache[cacheKey])
 	}
 
 	public getReader() {
