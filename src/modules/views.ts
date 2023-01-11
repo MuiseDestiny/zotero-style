@@ -1,5 +1,6 @@
 import { log } from "../../node_modules/zotero-plugin-toolkit/dist/utils"
 import { config } from "../../package.json";
+import AddonItem from "./item";
 import Progress from "./progress";
 import Requests from "./requests";
 
@@ -8,12 +9,15 @@ export default class Views {
   private requests: Requests
   private progressWindow: any;
   private progressWindowIcon: any;
-  constructor() {
+  private addonItem: AddonItem;
+  private cache: {[key: string]: any} = {};
+  constructor(addonItem: AddonItem) {
     this.progressWindowIcon = {
       success: "chrome://zotero/skin/tick.png",
       fail: "chrome://zotero/skin/cross.png",
       default: `chrome://${config.addonRef}/content/icons/favicon.png`,
     };
+    this.addonItem = addonItem;
     this.progress = new Progress()
     this.requests = new Requests()
     this.addStyle()
@@ -41,10 +45,8 @@ export default class Views {
         const cellSpan = original(index, data, column) as HTMLSpanElement;
         cellSpan.querySelectorAll(".tag-swatch").forEach(e => e.remove())
         const item = ZoteroPane.getSortedItems()[index]
-        let record: Record
-        try {
-          record = JSON.parse(ztoolkit.Tool.getExtraField(item, "readingTime") as string) as Record
-        } catch { return cellSpan }
+        let record: Record = this.addonItem.get(item, "readingTime") as Record
+        if(!record) { return cellSpan }
         let values = []
         for (let i = 0; i < record.page; i++) {
           values.push(parseFloat(record.data[i] as string) || 0)
@@ -83,8 +85,9 @@ export default class Views {
    * 把标签从标题分离为单独的列
    */
   public async createTagColumn() {
+    // 用于分离多emoj，很魔鬼的bug
     const runes = require('runes')
-    // 新增加的标签列，在调用Zotero.Tags。setColor时不会刷新
+    // 新增加的标签列，在调用Zotero.Tags，setColor时不会刷新
     ztoolkit.Tool.patch(Zotero.Tags, "setColor", "CalledRefresh", (original) => {
       return (id: number, name: string, color: string, pos: number) => {
         original.call(Zotero.Tags, id, name, color, pos)
@@ -108,31 +111,6 @@ export default class Views {
       },
       {
         renderCellHook(index, data, column) {
-          // let getEmojArray = (emoj: string) => {
-          //   try {
-          //     let arr = []
-          //     for (let e of emoj) {
-          //       arr.push(e)
-          //     }
-          //     return arr
-          //   } catch {
-          //     return [emoj]
-          //   }
-          // }
-
-          // let getEmojArray = (emoj: string) => {
-          //   let encodeEmoj = encodeURIComponent(emoj)
-          //   let emojLength = emoj.length
-          //   let encodeEmojSet = new Set()
-          //   const step = encodeEmoj.length / emojLength
-          //   for (let i = 0; i < emojLength; i++) {
-          //     encodeEmojSet.add(encodeEmoj.slice(i * step, i * step + step))
-          //   }
-          //   if ([...encodeEmojSet].length == 1) { return [emoj] }
-          //   emojLength = encodeEmoj.match(new RegExp([...encodeEmojSet].join(""), "g")).length
-          //   return emojLength
-          // }
-
           let getTagSpan = (tag: string, color: string) => {
             let tagSpan = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
             tagSpan.className = "tag-swatch"
@@ -194,22 +172,25 @@ export default class Views {
         includeBaseMapped: boolean,
         item: Zotero.Item
       ) => {
-        // 从readingTime获取总页数
-        let page: number
-        try {
-          page = Number(JSON.parse(ztoolkit.Tool.getExtraField(item, "readingTime") as string).page)
-          let record = JSON.parse(ztoolkit.Tool.getExtraField(item, "annotationNumber") as string) as Record
-          log(page, record)
-          if (record) {
-            record.page = page
-            return JSON.stringify(record)
-          }
-        } catch {}
-        // 异步更新数据
         window.setTimeout(async () => {
+          const cacheKey = `${item.key}-getBestAttachment`
+          this.cache[cacheKey] = await item.getBestAttachment()
+        })
+        return this.addonItem.get(item, "readingTime")?.page
+      },
+      {
+        renderCellHook: (index: any, data: any, column: any) => {
+          const span = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
+          let item = ZoteroPane.getSortedItems()[index]
+          let page: number
+          try {
+            page = Number(this.addonItem.get(item, "readingTime").page)
+          } catch { return span }
           let record: Record = { page, data: {} }
-          let pdfItem = await item.getBestAttachment()
-          if (!pdfItem) { return }
+          let pdfItem
+          const cacheKey = `${item.key}-getBestAttachment`
+          pdfItem = this.cache[cacheKey]
+          if (!pdfItem) { return span }
           const annoArray = pdfItem.getAnnotations()
           annoArray.forEach((anno: any) => {
             try {
@@ -220,21 +201,8 @@ export default class Views {
                 // @ts-ignore
                 record.data[pageIndex] += 1
               }
-            } catch {}
+            } catch { }
           })
-          if (Object.keys(record.data).length > 0) {
-            ztoolkit.Tool.setExtraField(item, "annotationNumber", JSON.stringify(record))
-          }
-        }, 0)
-        return ""
-      },
-      {
-        renderCellHook(index: any, data: any, column: any) {
-          const span = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
-          let record: Record
-          try {
-            record = JSON.parse(data) as Record
-          } catch { return span }
           let values = []
           for (let i = 0; i < record.page; i++) {
             values.push(parseFloat(record.data[i] as string) || 0)
@@ -274,14 +242,10 @@ export default class Views {
       ) => {
         const publicationTitle = item.getField("publicationTitle")
         if (!(publicationTitle && publicationTitle != "")) { return "-1:publicationTitle" }
-        let data = ztoolkit.Tool.getExtraField(item, key) as string
-        if (data) {
-          try {
-            let fieldIndex = JSON.parse(data).if
-            if (fieldIndex) {
-              return String(fieldIndex) + ":" + data
-            }
-          } catch {}
+        let sciif = ztoolkit.Tool.getExtraField(item, "sciif")
+        log("sciif", sciif)
+        if (sciif) {
+          return sciif
         }
         try {
           // 开启一个异步更新影响因子
@@ -297,37 +261,22 @@ export default class Views {
             if (response) {
               let data = response.data[0]
               if (data && data.sciif && data.sci) {
-                ztoolkit.Tool.setExtraField(item, key, JSON.stringify({ if: data.sciif, level: data.sci }))
+                ztoolkit.Tool.setExtraField(item, "sciif", data.sciif)
+                ztoolkit.Tool.setExtraField(item, "sci", data.sci)
               }
-            } else {
-              ztoolkit.Tool.setExtraField(item, key, "api")
             }
           }, 0)
         } catch { }
-        return "0:extra"
+        return "0"
       },
       {
-        renderCellHook(index: any, data: any, column: any) {
-          data = data.replace(/^[\d\.]+:/, "")
+        renderCellHook: (index: any, data: any, column: any) => {
           const span = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
-          let info: PublicationInfo
-          try {
-            info = JSON.parse(data) as PublicationInfo
-          } catch {
-            let errorType = data
-            if (errorType == "publicationTitle") {
-              
-            } else if (errorType == "extra") {
-
-            } else if (errorType == "api") {
-              
-            }
-            return span
-          }
-          let value = Number(info.if)
+          let value = data ? Number(data) : 0
           let sortedValues = ZoteroPane.getSortedItems().map(item => {
             try {
-              return Number(JSON.parse(ztoolkit.Tool.getExtraField(item, key) as string).if)
+              // return Number(JSON.parse(ztoolkit.Tool.getExtraField(item, key) as string).if)
+              return Number(ztoolkit.Tool.getExtraField(item, "sciif") || "0")
             } catch {
               return 0
             }
@@ -391,7 +340,6 @@ export default class Views {
           .filter(i => !i.hidden)
         .map(i => i.dataKey)
       )
-      log("getCurrentDataKeys", dataKeys)
       return dataKeys
     }
     let isCurrent = (columnView: ColumnsView) => {
@@ -618,9 +566,4 @@ interface Record {
   data: {
     [key: string]: string | number
   }
-}
-
-interface PublicationInfo {
-  if: number,
-  level: number
 }

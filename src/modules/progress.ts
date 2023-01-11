@@ -94,9 +94,9 @@ export default class Progress {
       points.push({ x, y })
     }
     // 线绘制
-    var polygon = `M 0 ${h} L ${points[0].x}, ${points[0].y} R `
+    var polygon = `M ${points[0].x} ${h} L ${points[0].x}, ${points[0].y} R `
       + points.slice(1).map(p => `${p.x}, ${p.y}`).join(" ")
-      + ` V ${h} H ${0}`
+      + ` V ${h} H ${points[0].x}`
     var line = `M ${points[0].x}, ${points[0].y} R `
       + points.slice(1).map(p => `${p.x}, ${p.y}`).join(" ")
     var Raphael = require("./zotero-raphael")
@@ -120,7 +120,9 @@ export default class Progress {
       r = r * .5
       const pct = 0.015
       r = w * pct > r ? r : w * pct
-      for (let point of points) {
+      for (let i = 0; i < points.length; i++) {
+        let point = points[i]
+        if (point.y == h - h * paddingY) { continue}
         let circle = paper.circle(point.x, point.y, r).attr({
           stroke: `rgba(${red}, ${green}, ${blue}, 1)`,
           strokeWidth: r * .08,
@@ -172,12 +174,15 @@ export default class Progress {
           },
           {
             tag: "span",
+            id: "progress",
             styles: {
               position: "absolute",
               left: "0",
               height: "30%",
               top: "calc(50% - 30%/2)",
-              width: `${percent > 100 ? 100 : percent}%`,
+              // width: `${percent > 100 ? 100 : percent}%`,
+              width: "0%",
+              transition: "width 1s linear",
               display: "inline-block",
               backgroundColor: `rgba(${red}, ${green}, ${blue}, 1)`,
               borderRadius: "1em"
@@ -185,7 +190,10 @@ export default class Progress {
           }
         ]
       }
-    ) as HTMLSpanElement
+    ) as HTMLSpanElement;
+    window.setTimeout(() => {
+      (span.querySelector("#progress") as HTMLSpanElement).style.width = `${percent > 100 ? 100 : percent}%`
+    }, 0)
     return span
   }
 

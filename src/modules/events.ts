@@ -1,3 +1,6 @@
+import { log } from "zotero-plugin-toolkit/dist/utils";
+import AddonItem from "./item";
+
 export default class Events {
 	public recordInterval = 5;  // s
 	public updateInterval = 60;  // s
@@ -10,15 +13,17 @@ export default class Events {
 		hangCount: -1
 	}
 	public intervalID: number | undefined;
-	constructor() {
+	private addonItem: AddonItem;
+	constructor(addonItem: AddonItem) {
+		this.addonItem = addonItem;
 	}
 
 	public onInit() {
 		window.addEventListener('activate', async () => {
 			this.state.activate = true
 			// once Zotero is activated again, it will continue to record read time
-			this.intervalID = window.setInterval(() => {
-				this.listeningReader()
+			this.intervalID = window.setInterval(async () => {
+				await this.listeningReader()
 			}, this.recordInterval * 1e3)
 		}, true);
 		window.addEventListener('deactivate', async () => {
@@ -29,16 +34,12 @@ export default class Events {
 		}, true);
 	}
 
-	public listeningReader() {
+	public async listeningReader() {
+		log("listeningReader is running")
 		const reader = this.getReader()
 		const item = this.getItem()
-		if (!reader) { return }
 		// Zotero is bulr
 		if (!(reader && reader.state && this.state.activate && item)) { return }
-		// 让它的annotationNumber为空
-		window.setTimeout(() => {
-			ztoolkit.Tool.setExtraField(item, "annotationNumber", "")
-		})
 
 		const pageIndex = reader.state.pageIndex;
 		if (pageIndex == this.state.pageIndex) {
@@ -60,21 +61,21 @@ export default class Events {
 		const page = (reader._iframeWindow as any).wrappedJSObject.PDFViewerApplication.pdfDocument.numPages;
 
 		// get local record
-		let record
-		try {
-			record = JSON.parse(ztoolkit.Tool.getExtraField(item, "readingTime") as string)
-		} catch {
+		let record = this.addonItem.get(item, "readingTime")
+		if (!record) {
 			record = {
 				page: page,
 				data: {}
 			}
 		}
+		log("record before", record)
 		if (record.data[pageIndex]) {
 			record.data[pageIndex] += this.recordInterval
 		} else {
 			record.data[pageIndex] = this.recordInterval
 		}
-		record = ztoolkit.Tool.setExtraField(item, "readingTime", JSON.stringify(record))
+		log("record after", record)
+		await this.addonItem.set(item, "readingTime", record)
 	}
 
 	public getReader() {
