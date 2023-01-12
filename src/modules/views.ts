@@ -243,7 +243,7 @@ export default class Views {
         item: Zotero.Item
       ) => {
         const publicationTitle = item.getField("publicationTitle")
-        if (!(publicationTitle && publicationTitle != "")) { return "-1:publicationTitle" }
+        if (!(publicationTitle && publicationTitle != "")) { return "-1" }
         let sciif = ztoolkit.Tool.getExtraField(item, "sciif")
         if (sciif) {
           return sciif
@@ -271,7 +271,8 @@ export default class Views {
       {
         renderCellHook: (index: any, data: any, column: any) => {
           const span = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
-          let value = data ? Number(data) : 0
+          let value = Number(data)
+          if (value == -1) { return span }
           // 计算视图最大影响因子，导致卡顿，废除，更改为让用户手动设置
           // let sortedValues = ZoteroPane.getSortedItems().map(item => {
           //   try {

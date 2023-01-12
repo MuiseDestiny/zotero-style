@@ -106,7 +106,6 @@ export default class AddonItem {
 	 * @returns 
 	 */
 	public getNoteItem(item: _ZoteroItem) {
-
 		const key = item.key
 		const cacheKey = `getNoteItem-${key}`
 		if (this.cache[cacheKey]) { this.cache[cacheKey] }
@@ -115,7 +114,7 @@ export default class AddonItem {
 		for (let id of ids) {
 			let idInfo = Zotero.Items.getLibraryAndKeyFromID(id)
 			let _noteItem = Zotero.Items.getByLibraryAndKey(idInfo.libraryID, idInfo.key)
-			if (_noteItem._displayTitle == key) {
+			if (_noteItem._displayTitle.includes(key)) {
 				noteItem = _noteItem
 				this.cache[cacheKey] = noteItem
 				break
