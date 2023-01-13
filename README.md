@@ -1,16 +1,20 @@
 # Zotero Style
 > 做一些简单的可视化，让你的Zotero面板看起来更有趣
 
+
 诚恳地邀请你，在[这里](https://github.com/MuiseDestiny/zotero-style/issues/48)贴上你的配色，这对以后的主题切换很有帮助！
 
-**这是一个重写的版本，与老版本有巨大差异，安装之前还请阅读本文，在决定是否安装**
+**这是一个重写的版本，与以往版本有较大差异，安装之前还请阅读本文，再决定是否安装**
 
-首先，新版本去除了`Shift+P`，取而代之的是更直观的设置弹窗；没有了`>`按钮，取而代之的是`视图组`，视图组的功能包含`>`的全部功能。
+---
+
+新版本去除了`Shift+P`，取而代之的是更直观的设置弹窗；没有了`>`按钮，取而代之的是`视图组`，视图组的功能包含`>`的全部功能。
 
 新版本暂不读取老版本数据。新的一年跟着`Zotero Style`从新出发吧。（如果你需要，我可以做数据迁移功能）
 
+
 ## 字段
-新增了一些可视化字段，style最初只可视化了标题进度条，新版本对它扩展更广阔的含义
+新增了一些可视化字段，style最初只可视化了标题进度条，新版本将赋予style更广泛的含义
 
 在此感谢[@windingwind](https://github.com/MuiseDestiny/zotero-plugin-toolkit)开发的工具箱，有了工具箱style的一些奇思妙想才得以实现
 
@@ -33,7 +37,7 @@ zoterostyle.titleColumn.opacity = "0.7"
 
 ### 标签
 
-安装插件后，默认将`标题`前面的标签分离为新的一列。这里的标签经过优化，使得emoj和圆形对齐。（Window上完全对齐，Mac上没有测试）
+安装插件后，默认将`标题`前面的标签分离为新的一列。这里的标签经过优化，使得emoj（字符）和圆形（html Span）对齐。
 
 支持设置`对齐方式`和`标签间距`，下面是默认值
 ```ts
@@ -47,6 +51,7 @@ zoterostyle.tagsColumn.margin = "0.35"
 
 TODO
 - [ ] 优化中文期刊显示
+- [ ] 显示影响因子数值和分区
 
 支持设置`颜色`和`透明度`，下面是默认值
 ```ts
@@ -58,12 +63,14 @@ zoterostyle.IFColumn.opacity = "0.7"
 
 进度有两种样式/风格（style），一种是平滑曲线（line），一种是柱状图（bar）
 
+line: ![image](https://user-images.githubusercontent.com/51939531/212294042-cec93a51-94fb-444c-b919-90ecdad90818.png) bar: ![image](https://user-images.githubusercontent.com/51939531/212294194-0cb93185-94d6-4252-8fa7-b79829b6c77f.png)
+
 当页数过多，平滑曲线一般也就不平滑了，线看起来不是很美观，所以引入柱状图。
 
 你可以右键单击`进度`，点击`列设置`进行设置
 
 
-支持设置`颜色`、`透明度`和`是否显示曲线转折处`圆圈`，下面是默认值
+支持设置`渲染图样式`、`颜色`、`透明度`和`是否显示曲线转折处`圆圈`，下面是默认值
 ```ts
 zoterostyle.progressColumn.style = "bar"
 zoterostyle.progressColumn.color = "#86C8BC"
@@ -124,4 +131,9 @@ zoterostyle.progressColumn.circle = true
 - 你也可以**右击**一个已有的视图，将它删除。
 
 
-如果你喜欢本插件，可以点击右上角的星星，这是对我的鼓励。
+
+
+如果你喜欢本插件，欢迎点击右上角的星星，这是对我的鼓励。
+
+
+
