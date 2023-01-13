@@ -136,4 +136,8 @@ zoterostyle.progressColumn.circle = true
 如果你喜欢本插件，欢迎点击右上角的星星，这是对我的鼓励。
 
 
-
+## 致谢
+- 本插件基于插件模板开发 - https://github.com/windingwind/zotero-plugin-template
+- 本插件基于Zotero工具箱开发 - https://github.com/windingwind/zotero-plugin-toolkit
+- 本插件部分代码参考`Chartero` - https://github.com/volatile-static/Chartero
+- 本插件参考`Zotero Tag`插件 - https://github.com/windingwind/zotero-tag
