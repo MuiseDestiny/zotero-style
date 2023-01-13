@@ -1,6 +1,9 @@
 # Zotero Style
 > 做一些简单的可视化，让你的Zotero面板看起来更有趣
-
+[![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
+![Release Date](https://img.shields.io/github/release-date/MuiseDestiny/zotero-style?color=9cf)
+[![License](https://img.shields.io/github/license/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/blob/master/LICENSE)
+![Downloads latest release](https://img.shields.io/github/downloads/MuiseDestiny/zotero-style/latest/total?color=yellow)
 
 诚恳地邀请你，在[这里](https://github.com/MuiseDestiny/zotero-style/issues/48)贴上你的配色，这对以后的主题切换很有帮助！
 
