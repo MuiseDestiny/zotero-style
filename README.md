@@ -78,12 +78,6 @@ zoterostyle.progressColumn.opacity = "0.7"
 zoterostyle.progressColumn.circle = true
 ```
 
-## 设置
-
-`Style`插件为你新增的所有列，都可以右键列名（点击不同列对应不同列设置），点击`列设置/column settings`进行更改`颜色/color`、`透明度/opacity`等style，我觉得这样比去首选项快，所以本插件无首选项设置界面。
-
-![image](https://user-images.githubusercontent.com/51939531/212249443-2fec94a5-a36d-40c4-b59d-2f2e6d83982d.png)
-
 
 ## 视图组功能
 ![image](https://user-images.githubusercontent.com/51939531/211489602-5081d55f-cdd2-4df1-9e26-2038a0a91b6f.png)
@@ -131,6 +125,10 @@ zoterostyle.progressColumn.circle = true
 - 你也可以**右击**一个已有的视图，将它删除。
 
 
+## 设置
+`Style`插件为你新增的所有列，都可以右键列名（点击不同列对应不同列设置），点击`列设置/column settings`进行更改`颜色/color`、`透明度/opacity`等style，我觉得这样比去首选项快，所以本插件无首选项设置界面。
+
+![image](https://user-images.githubusercontent.com/51939531/212301913-302ceb00-56ec-4d5c-b17e-0f31a81881ef.png)
 
 
 如果你喜欢本插件，欢迎点击右上角的星星，这是对我的鼓励。
