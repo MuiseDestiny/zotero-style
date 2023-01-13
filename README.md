@@ -65,9 +65,12 @@ zoterostyle.IFColumn.opacity = "0.7"
 
 ### 进度
 
-进度有两种样式/风格（style），一种是平滑曲线（line），一种是柱状图（bar）
+`进度`当前记录的是阅读PDF各页面标注分布，2.0.0体现每一页标注的文字数量，比如黄色高亮。
 
-line: ![image](https://user-images.githubusercontent.com/51939531/212294042-cec93a51-94fb-444c-b919-90ecdad90818.png) bar: ![image](https://user-images.githubusercontent.com/51939531/212294194-0cb93185-94d6-4252-8fa7-b79829b6c77f.png)
+进度有两种样式/风格（style），一种是平滑曲线（line），一种是柱状图（bar）
+| line | bar |
+|  ----  | ----  |
+| ![image](https://user-images.githubusercontent.com/51939531/212294042-cec93a51-94fb-444c-b919-90ecdad90818.png) | ![image](https://user-images.githubusercontent.com/51939531/212294194-0cb93185-94d6-4252-8fa7-b79829b6c77f.png) |
 
 当页数过多，平滑曲线一般也就不平滑了，线看起来不是很美观，所以引入柱状图。
 
@@ -76,7 +79,7 @@ line: ![image](https://user-images.githubusercontent.com/51939531/212294042-cec9
 
 支持设置`渲染图样式`、`颜色`、`透明度`和是否显示曲线转折处`圆圈`，下面是默认值
 ```ts
-zoterostyle.progressColumn.style: "line" |"bar" = "bar"
+zoterostyle.progressColumn.style: "line" | "bar" = "bar"
 zoterostyle.progressColumn.color = "#86C8BC"
 zoterostyle.progressColumn.opacity = "0.7"
 zoterostyle.progressColumn.circle = true
@@ -120,13 +123,12 @@ zoterostyle.progressColumn.circle = true
 
 ![image](https://user-images.githubusercontent.com/51939531/212250960-6771679a-5cc0-430d-96c1-dbf8f24b255b.png)
 
-- 你可以**左击**`视图组`下的已保存的`视图`来切换到它（建议用小圆点切换，更快捷）；
-
-- 你可以**左击**`新增视图`来创建保存当前视图；
-
-- 你可以**长按**一个已有的视图，更新它的的信息。
-
-- 你也可以**右击**一个已有的视图，将它删除。
+| 操作 | 对象 | 执行 |
+| --- | --- | --- |
+| 左击 | 视图组下某一视图 | 切换到该视图 |
+| 长按 | 视图组下某一视图 | 更新该视图信息 |
+| 右击 | 视图组下某一视图 | 删除该视图 | 
+| 左击 | 视图组下`新增视图`按钮 | 保存当前渲染视图 |
 
 
 ## 设置
