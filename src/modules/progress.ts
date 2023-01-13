@@ -21,10 +21,10 @@ export default class Progress {
    * 适用于 - 阅读高能进度条
    */
   public opacity(values: number[], color: string = "#62b6b7", opacity: string = "1"): HTMLSpanElement {
-    const span = ztoolkit.UI.creatElementsFromJSON(
+    const span = ztoolkit.UI.createElement(
       document,
+      "span",
       {
-        tag: "span",
         styles: {
           display: "flex",
           flexDirection: "row",
@@ -42,10 +42,10 @@ export default class Progress {
     let [r, g, b] = this.getRGB(color)
     for (let value of values) {
       span.appendChild(
-        ztoolkit.UI.creatElementsFromJSON(
+        ztoolkit.UI.createElement(
           document,
+          "span",
           {
-            tag: "span",
             styles: {
               height: "100%",
               width: `${100/values.length}%`,
@@ -63,44 +63,41 @@ export default class Progress {
    * 平滑曲线类型的进度条
    */
   public line(values: number[], color: string = "#FD8A8A", opacity: string = "1"): HTMLDivElement {
-    let container = ztoolkit.UI.creatElementsFromJSON(
+    var Raphael = require("./zotero-raphael")
+    let container = ztoolkit.UI.createElement(
       document,
+      "div",
       {
-        tag: "div",
-        // id: "container-for-raphael",
         classList: ["container-for-raphael"],
         styles: {
           width: "100%",
-          height: "100%",
+          height: "20px",
           opacity
         }
       }
     ) as HTMLDivElement
     document.documentElement.appendChild(container);
-    // 根据列标题计算列宽高
-    let s1 = window.getComputedStyle(document.querySelector(".Progress-item-tree-main-default"))
-    let s2 = window.getComputedStyle(document.querySelector(".Progress-item-tree-main-default div"))
-    const w = Number(s1.width.replace("px", "")) - Number(s2.width.replace("px", "")) / 2
-    const h = Number(s1.height.replace("px", ""))
     // 绘制部分
+    const w = 300, h = w * .08
     let paddingY = 0.2
     let paddingX = 0.05
     let points = []
-    const maxValue = [...values].sort((a, b)=>b-a)[0]
+    const maxValue = [...values].sort((a, b) => b - a)[0]
     const minValue = 0
     for (let i = 0; i < values.length; i++) {
-      let x = i * w * (1 - 2 * paddingX) / (values.length - 1) + paddingX * w
-      let y = h - ((values[i] - minValue) / (maxValue - minValue) * h * (1 - 2 * paddingY) + h * paddingY)
-      points.push({ x, y })
+      let x = i * (1 - 2 * paddingX) / (values.length - 1) + paddingX
+      let y = 1 - ((values[i] - minValue) / (maxValue - minValue) * (1 - 2 * paddingY) + paddingY)
+      points.push({ x: x, y: y })
     }
     // 线绘制
-    var polygon = `M ${points[0].x} ${h} L ${points[0].x}, ${points[0].y} R `
-      + points.slice(1).map(p => `${p.x}, ${p.y}`).join(" ")
-      + ` V ${h} H ${points[0].x}`
-    var line = `M ${points[0].x}, ${points[0].y} R `
-      + points.slice(1).map(p => `${p.x}, ${p.y}`).join(" ")
-    var Raphael = require("./zotero-raphael")
-    const paper = Raphael(container, w, h);
+    var polygon = `M ${points[0].x * w} ${h} L ${points[0].x * w}, ${points[0].y * h} R `
+      + points.slice(1).map(p => `${p.x * w}, ${p.y * h}`).join(" ")
+      + ` V ${h} H ${points[0].x * w}`
+    var line = `M ${points[0].x * w}, ${points[0].y * h} R `
+      + points.slice(1).map(p => `${p.x * w}, ${p.y * h}`).join(" ")
+    
+    const paper = Raphael(container, "100%", "100%");
+    paper.setViewBox(0, 0, w, h, true)
     const [red, green, blue] = this.getRGB(color)
     paper.path(polygon).attr({
       stroke: "transparent",
@@ -109,21 +106,23 @@ export default class Progress {
     })
     paper.path(line).attr({
       stroke: `rgba(${red}, ${green}, ${blue}, 1)`,
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
     })
     // 点绘制
+    // 点太多不美观，精简一下
     if (Zotero.Prefs.get(
       `${config.addonRef}.progressColumn.circle`
     ) as boolean) {
-      let rx = w * paddingX
-      let ry = h * paddingY
+      let rx = paddingX
+      let ry = paddingY
       let r = rx > ry ? ry : rx
-      r = r * .5
-      const pct = 0.015
-      r = w * pct > r ? r : w * pct
+      r = r * .25
+
       for (let i = 0; i < points.length; i++) {
         let point = points[i]
-        if (point.y == h - h * paddingY) { continue}
-        let circle = paper.circle(point.x, point.y, r).attr({
+        if (values.length > 6 && points[i].y == 1 - paddingY) { continue }
+        let circle = paper.circle(`${point.x * 100}%`, `${point.y * 100}%`, `${r * 100}%`).attr({
           stroke: `rgba(${red}, ${green}, ${blue}, 1)`,
           strokeWidth: r * .08,
           fill: "white",
@@ -138,6 +137,49 @@ export default class Progress {
     return container
   }
 
+
+  public bar(values: number[], color: string = "#FD8A8A", opacity: string = "1"): HTMLElement {
+    let maxValue = [...values].sort((a, b) => b - a)[0]
+    let span = ztoolkit.UI.createElement(document, "span", {
+      styles: {
+        display: "inline-block",
+        width: "100%",
+        height: "20px",
+        opacity
+      }
+    })
+    const [red, green, blue] = this.getRGB(color)
+    for (let value of values) {
+      const styles = {
+        position: "absolute",
+        display: "inline-block",
+        bottom: "0",
+        left: "0",
+        width: "100%",
+      }
+      span.appendChild(
+        ztoolkit.UI.createElement(document, "span", {
+          classList: ["bar-box"],
+          styles: {
+            display: "inline-block",
+            height: "100%",
+            width: `${100 / values.length}%`,
+            position: "relative"
+          },
+          children: [
+            {
+              tag: "span",
+              styles: Object.assign({}, styles, {
+                height: `${100 * value / maxValue}%`,
+                backgroundColor: `rgba(${red}, ${green}, ${blue}, 1)`
+              })
+            }
+          ]
+        })
+      )
+    }
+    return span
+  }
   /**
    * 线形进度
    * 显示百分比
@@ -146,10 +188,10 @@ export default class Progress {
     const [red, green, blue] = this.getRGB(color)
     const percent = value / maxValue * 100
     const heightPct = 0.28
-    const span = ztoolkit.UI.creatElementsFromJSON(
+    const span = ztoolkit.UI.createElement(
       document,
+      "span",
       {
-        tag: "span",
         styles: {
           position: "relative",
           height: "20px",
@@ -158,7 +200,7 @@ export default class Progress {
           display: "inline-block",
           opacity
         },
-        classList: ["if-progress"],
+        classList: ["progress"],
         subElementOptions: [
           {
             tag: "span",

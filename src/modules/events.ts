@@ -1,4 +1,3 @@
-import { log } from "zotero-plugin-toolkit/dist/utils";
 import AddonItem from "./item";
 
 export default class Events {
@@ -36,7 +35,7 @@ export default class Events {
 	}
 
 	public async listeningReader() {
-		log("listeningReader is running")
+		ztoolkit.log("listeningReader is running")
 		const reader = this.getReader()
 		const item = this.getItem()
 		// Zotero is bulr

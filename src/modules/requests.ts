@@ -1,5 +1,3 @@
-import { log } from "zotero-plugin-toolkit/dist/utils"
-
 export default class Requests {
   /**
  * Record api response
@@ -22,7 +20,7 @@ export default class Requests {
       this.cache[k] = res.response
       return res.response
     } else {
-      log(`get ${url} error`, res)
+      console.log(`get ${url} error`, res)
     }
   }
 
@@ -47,7 +45,7 @@ export default class Requests {
       this.cache[k] = res.response
       return res.response
     } else {
-      log(`post ${url} error`, res)
+      console.log(`post ${url} error`, res)
     }
   }
 }

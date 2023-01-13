@@ -1,10 +1,8 @@
-import { log } from "../../node_modules/zotero-plugin-toolkit/dist/utils"
 import { config } from "../../package.json";
 import AddonItem from "./item";
 import Progress from "./progress";
 import Requests from "./requests";
 import { getString, initLocale } from "./locale";
-
 
 export default class Views {
   private progress: Progress;
@@ -26,8 +24,8 @@ export default class Views {
   }
 
   public addStyle() {
-    const style = ztoolkit.UI.creatElementsFromJSON(document, {
-      tag: "link",
+    ztoolkit.log("addStyle")
+    const style = ztoolkit.UI.createElement(document, "link", {
       directAttributes: {
         type: "text/css",
         rel: "stylesheet",
@@ -41,8 +39,9 @@ export default class Views {
    * 渲染标题进度条
    */
   public async renderTitleProgress() {
+    const key = "title"
     await ztoolkit.ItemTree.addRenderCellHook(
-      "title",
+      key,
       (index: number, data: string, column: any, original: Function) => {
         const cellSpan = original(index, data, column) as HTMLSpanElement;
         cellSpan.querySelectorAll(".tag-swatch").forEach(e => e.remove())
@@ -54,7 +53,7 @@ export default class Views {
           values.push(parseFloat(record.data[i] as string) || 0)
         }
         if (values.length == 0) { return cellSpan }
-        log("renderTitleProgress", values)
+        ztoolkit.log("renderTitleProgress", values)
         let titleSpan = cellSpan.querySelector(".cell-text") as HTMLSpanElement;
         titleSpan.style.position = "relative";
         titleSpan.style.width = "100%";
@@ -70,7 +69,6 @@ export default class Views {
         )
         progressNode.style.top = "0"
         progressNode.style.zIndex = "-1"
-        progressNode.style.opacity = ".6"
 
         progressNode.style.position = "absolute"
 
@@ -78,9 +76,22 @@ export default class Views {
         return cellSpan;
       }
     );
-    // @ts-ignore
-    // This is a private method. Make it public in toolkit.
-    await ztoolkit.ItemTree.refresh();
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: "titleColumn.color",
+          name: "Color",
+          type: "input",
+        },
+        {
+          prefKey: "titleColumn.opacity",
+          name: "Opacity",
+          type: "range",
+          range: [0, 1, 0.01],
+        }
+      ]
+    )
   }
 
   /**
@@ -90,18 +101,22 @@ export default class Views {
     // 用于分离多emoj，很魔鬼的bug
     const runes = require("runes")
     // 新增加的标签列，在调用Zotero.Tags，setColor时不会刷新
-    ztoolkit.Tool.patch(Zotero.Tags, "setColor", "CalledRefresh", (original) => {
-      return (id: number, name: string, color: string, pos: number) => {
-        original.call(Zotero.Tags, id, name, color, pos)
-        window.setTimeout(async () => {
-          // @ts-ignore
-          await ztoolkit.ItemTree.refresh();
-        }, 0)
-      }
-    })
+    if (!Zotero.Tags.setColor.CalledRefresh) {
+      ztoolkit.patch(Zotero.Tags, "setColor", "CalledRefresh", (original) => {
+        return (id: number, name: string, color: string, pos: number) => {
+          original.call(Zotero.Tags, id, name, color, pos)
+          window.setTimeout(async () => {
+            // @ts-ignore
+            await ztoolkit.ItemTree.refresh();
+          }, 0)
+        }
+      })
+    }
+
+    const key = "Tags"
     await ztoolkit.ItemTree.register(
-      "Tags",
-      getString("column.Tags"),
+      key,
+      getString(`column.${key}`),
       (
         field: string,
         unformatted: boolean,
@@ -130,7 +145,7 @@ export default class Views {
           let tags: { tag: string, color: string }[] = JSON.parse(data)
           const align = Zotero.Prefs.get(
             `${config.addonRef}.tagsColumn.align`
-          ) as any
+          ) as any || "left"
           let offset = 0
           const margin = parseFloat(
             Zotero.Prefs.get(
@@ -159,15 +174,34 @@ export default class Views {
         },
       }
     );
+
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: "tagsColumn.align",
+          name: "Align",
+          type: "select",
+          values: ["left", "right"],
+        },
+        {
+          prefKey: "tagsColumn.margin",
+          name: "Margin",
+          type: "range",
+          range: [0, 1, 0.01],
+        }
+      ]
+    )
   }
 
   /**
    * 创建进度列，用于展示标注分布
    */
   public async createProgressColumn() {
+    const key = "Progress"
     await ztoolkit.ItemTree.register(
-      "Progress",
-      getString("column.Progress"),
+      key,
+      getString(`column.${key}`),
       (
         field: string,
         unformatted: boolean,
@@ -176,7 +210,7 @@ export default class Views {
       ) => {
         window.setTimeout(async () => {
           const cacheKey = `${item.key}-getBestAttachment`
-          this.cache[cacheKey] = await item.getBestAttachment()
+          this.cache[cacheKey] = item.isRegularItem() && await item.getBestAttachment()
         })
         return this.addonItem.get(item, "readingTime")?.page
       },
@@ -194,14 +228,16 @@ export default class Views {
           pdfItem = this.cache[cacheKey]
           if (!pdfItem) { return span }
           const annoArray = pdfItem.getAnnotations()
+          if (annoArray.length == 0) { return span }
           annoArray.forEach((anno: any) => {
+            const charNum = (anno._annotationText || anno._annotationComment || "").length
             try {
               let pageIndex = Number(JSON.parse(anno._annotationPosition).pageIndex)
               if (pageIndex in record.data == false) {
-                record.data[pageIndex] = 1
+                record.data[pageIndex] = charNum
               } else {
                 // @ts-ignore
-                record.data[pageIndex] += 1
+                record.data[pageIndex] += charNum
               }
             } catch { }
           })
@@ -209,9 +245,13 @@ export default class Views {
           for (let i = 0; i < record.page; i++) {
             values.push(parseFloat(record.data[i] as string) || 0)
           }
-          if (values.length == 0) { return span }
-          log("createProgressColumn", values)
-          let progressNode = (new Progress()).line(
+          if ([...values].sort((a, b) => b -a )[0] == 0) { return span}
+          ztoolkit.log("createProgressColumn", values)
+          const style = Zotero.Prefs.get(
+            `${config.addonRef}.progressColumn.style`
+          ) as string || "bar"
+          // @ts-ignore
+          let progressNode = (new Progress())[style](
             values,
             Zotero.Prefs.get(
               `${config.addonRef}.progressColumn.color`
@@ -225,6 +265,33 @@ export default class Views {
         },
       }
     );
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: "progressColumn.style",
+          name: "Style",
+          type: "select",
+          values: ["bar", "line"]
+        },
+        {
+          prefKey: "progressColumn.color",
+          name: "Color",
+          type: "input",
+        },
+        {
+          prefKey: "progressColumn.opacity",
+          name: "Opacity",
+          type: "range",
+          range: [0, 1, 0.01],
+        },
+        {
+          prefKey: "progressColumn.circle",
+          name: "Circle",
+          type: "boolean"
+        }
+      ]
+    )
   }
 
   /**
@@ -235,7 +302,7 @@ export default class Views {
     const key = "IF"
     await ztoolkit.ItemTree.register(
       key,
-      getString("column.IF"),
+      getString(`column.${key}`),
       (
         field: string,
         unformatted: boolean,
@@ -244,7 +311,7 @@ export default class Views {
       ) => {
         const publicationTitle = item.getField("publicationTitle")
         if (!(publicationTitle && publicationTitle != "")) { return "-1" }
-        let sciif = ztoolkit.Tool.getExtraField(item, "sciif")
+        let sciif = ztoolkit.ExtraField.getExtraField(item, "sciif")
         if (sciif) {
           return sciif
         }
@@ -261,8 +328,8 @@ export default class Views {
           if (response) {
             let data = response.data[0]
             if (data && data.sciif && data.sci) {
-              ztoolkit.Tool.setExtraField(item, "sciif", data.sciif)
-              ztoolkit.Tool.setExtraField(item, "sci", data.sci)
+              ztoolkit.ExtraField.setExtraField(item, "sciif", data.sciif)
+              ztoolkit.ExtraField.setExtraField(item, "sci", data.sci)
             }
           }
         }, 0)
@@ -270,36 +337,19 @@ export default class Views {
       },
       {
         renderCellHook: (index: any, data: any, column: any) => {
+          // const cacheKey = `IF-${data}-${index}`
+          // if (this.cache[cacheKey]) {
+          //   let span = this.cache[cacheKey].cloneNode(true)
+          //   return span
+          // }
           const span = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
           let value = Number(data)
           if (value == -1) { return span }
-          // 计算视图最大影响因子，导致卡顿，废除，更改为让用户手动设置
-          // let sortedValues = ZoteroPane.getSortedItems().map(item => {
-          //   try {
-          //     // return Number(JSON.parse(ztoolkit.Tool.getExtraField(item, key) as string).if)
-          //     return Number(ztoolkit.Tool.getExtraField(item, "sciif") || "0")
-          //   } catch {
-          //     return 0
-          //   }
-          // })
-          //   .filter(e => e > 0)
-          //   .concat([value])
-          //   .sort((a, b) => b - a)
-          // let maxValue
-          // if (sortedValues.length > 1) {
-          //   let meanValue = sortedValues.reduce((a, b) => a + b) / sortedValues.length
-          //   let s = 0
-          //   for (let i = 0; i < sortedValues.length; i++) {
-          //     s += (sortedValues[i] - meanValue) ** 2
-          //   }
-          //   s = (s / sortedValues.length) ** .5
-          //   maxValue = meanValue + 3 * s
-          //   maxValue = maxValue > sortedValues[0] ? sortedValues[0] * 1.1 : maxValue
-          // } else {
-          //   maxValue = sortedValues[0]
-          // }
           let progressNode = (new Progress()).linePercent(
-            value, 15,
+            value, 
+            parseFloat(Zotero.Prefs.get(
+              `${config.addonRef}.IFColumn.max`
+            ) as string),
             Zotero.Prefs.get(
               `${config.addonRef}.IFColumn.color`
             ) as string,
@@ -308,10 +358,32 @@ export default class Views {
             ) as string
           )
           span.appendChild(progressNode)
+          // this.cache[cacheKey] = span.cloneNode(true)
           return span;
         },
       }
     );
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: "IFColumn.color",
+          name: "Color",
+          type: "input",
+        },
+        {
+          prefKey: "IFColumn.opacity",
+          name: "Opacity",
+          type: "range",
+          range: [0, 1, 0.01],
+        },
+        {
+          prefKey: "IFColumn.max",
+          name: "Max",
+          type: "input"
+        }
+      ]
+    )
   }
 
   /**
@@ -325,6 +397,7 @@ export default class Views {
       dataKeys: string[];
     }
     const prefKey = `${config.addonRef}.columnsViews`
+
     // function
     let switchColumnsView = (columnView: ColumnsView) => {
       const allColumns = ZoteroPane.itemsView._getColumns()
@@ -359,35 +432,39 @@ export default class Views {
     let isSame = (a: string[], b: string[]) => {
       return JSON.stringify(a.sort()) == JSON.stringify(b.sort())
     }
+    let optionTimer: number | undefined = undefined
     let updateOptionNode = (timeout: number) => {
       switchContainer.querySelectorAll("span").forEach(e => e.remove())
       const columnsViews = JSON.parse(Zotero.Prefs.get(prefKey) as string) as ColumnsView[]
       for (let i = 0; i < columnsViews.length; i++) {
         let columnsView = columnsViews[i]
-        const r: number = 0.7
+        const r: number = .7
         const color = {
-          active: "#0D4C92",
-          default: "#A0E4CB"
+          active: "#fd91a6",
+          default: "#83c7c7"
         }
         let optionNode = switchContainer.appendChild(
-          ztoolkit.UI.creatElementsFromJSON(
+          ztoolkit.UI.createElement(
             document,
+            "span",
             {
-              tag: "span",
               styles: {
                 display: "inline-block",
                 borderRadius: "1em",
                 width: `${r}em`,
                 height: `${r}em`,
                 backgroundColor: isCurrent(columnsView) ? color.active : color.default,
+                transition: "background-color .3s linear",
+                // border: "1px solid rgba(0, 0, 0, 0.3)",
                 opacity: "0.7",
                 cursor: "pointer",
-                margin: " 0 .25em"
+                margin: " 0 .3em"
               },
               listeners: [
                 {
                   type: "mouseenter",
                   listener: () => {
+                    window.clearTimeout(optionTimer)
                     optionNode.style.opacity = "1"
                     this.showProgressWindow(columnsView.name, columnsView.content, "default", -1)
                   }
@@ -414,11 +491,12 @@ export default class Views {
       }
       switchContainer.style.opacity = "1"
       if (timeout > 0) {        
-        window.setTimeout(() => {
+        optionTimer = window.setTimeout(() => {
           switchContainer.style.opacity = "0"
         }, timeout)
       }
     }
+
     // toolbar UI
     const toolbar = document.querySelector("#zotero-items-toolbar") as XUL.Element
     toolbar.onmouseenter = () => {
@@ -428,10 +506,10 @@ export default class Views {
       switchContainer.style.opacity = "0"
     }
     const switchContainer = toolbar.insertBefore(
-      ztoolkit.UI.creatElementsFromJSON(
+      ztoolkit.UI.createElement(
         document,
+        "div",
         {
-          tag: "div",
           styles: {
             display: "flex",
             flexDirection: "row",
@@ -445,10 +523,10 @@ export default class Views {
       toolbar.querySelector("#zotero-tb-search-spinner")
     )
     toolbar.insertBefore(
-      ztoolkit.UI.creatElementsFromJSON(
+      ztoolkit.UI.createElement(
         document,
+        "spacer",
         {
-          tag: "spacer",
           namespace: "xul",
           attributes: {
             flex: "1"
@@ -457,35 +535,120 @@ export default class Views {
       ) as XUL.Spacer,
       toolbar.querySelector("#zotero-tb-search-spinner")
     )
+    
     // menu UI
-    ztoolkit.Tool.patch(
+    ztoolkit.patch(
       ZoteroPane.itemsView,
       "_displayColumnPickerMenu",
-      "zoterostyle",
+      "zoterostyle-registerSwitchColumnsViewUI",
       (original) =>
-        function () {
+        function() {
           let sort = (columnsViews: ColumnsView[]) => {
             return columnsViews.sort((a: ColumnsView, b: ColumnsView) => Number(a.position) - Number(b.position))
           }
-          let addView = (io: ColumnsView) => {
-            // @ts-ignore
-            window.openDialog(
-              `chrome://${config.addonRef}/content/addView.xul`,
-              "add-view",
-              "chrome,modal,centerscreen",
-              io
-            );
-            if (!io.name) { return }
-            // 获取到用户输入后
-            columnsViews.push({
-              name: io.name,
-              position: io.position,
-              content: io.content || io.name,
-              dataKeys: io.dataKeys.length > 0 ? io.dataKeys : getCurrentDataKeys()
-            })
-            columnsViews = sort(columnsViews)
-            Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
-            updateOptionNode(1000)
+          let addView = (columnsView: ColumnsView) => {
+            dialog({
+              attributes: {buttonlabelaccept: "Add", title: "New View"}, 
+              element: ztoolkit.UI.createElement(
+                document,
+                "vbox",
+                {
+                  id: "container",
+                  namespace: "xul",
+                  // attributes: {
+                  //   flex: "1"
+                  // },
+                  children: [
+                    {
+                      tag: "label",
+                      attributes: {
+                        value: "Name"
+                      }
+                    },
+                    {
+                      tag: "textbox",
+                      id: "view-name",
+                      attributes: {
+                        flex: "1",
+                        value: columnsView.name
+                      }
+                    },
+                    {
+                      tag: "separator"
+                    },
+                    {
+                      tag: "label",
+                      attributes: {
+                        value: "Position"
+                      }
+                    },
+                    {
+                      tag: "textbox",
+                      id: "view-position",
+                      attributes: {
+                        flex: "1",
+                        value: columnsView.position
+                      }
+                    },
+                    {
+                      tag: "separator"
+                    },
+                    {
+                      tag: "label",
+                      attributes: {
+                        value: "Content"
+                      }
+                    },
+                    {
+                      tag: "textbox",
+                      id: "view-content",
+                      attributes: {
+                        flex: "1",
+                        multiline: "true",
+                        rows: "4",
+                        value: columnsView.content
+                      }
+                    }
+                  ]
+                }
+              ),
+              hooks: {
+                accept: (_document: any) => {
+                  let name = _document.querySelector("#view-name").value
+                  let position = _document.querySelector("#view-position").value
+                  let content = _document.querySelector("#view-content").value
+                  if (name) { 
+                    columnsViews.push({
+                      name,
+                      position,
+                      content: content || name,
+                      dataKeys: columnsView.dataKeys.length > 0 ? columnsView.dataKeys : getCurrentDataKeys()
+                    })
+                    columnsViews = sort(columnsViews)
+                    Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
+                    updateOptionNode(1000)
+                   }
+                },
+              }
+            }, 350, 330)
+            // // @ts-ignore
+            // window.openDialog(
+            //   `chrome://${config.addonRef}/content/addView.xul`,
+            //   "add-view",
+            //   "chrome,modal,centerscreen",
+            //   io
+            // );
+            // if (!io.name) { return }
+            // // 获取到用户输入后
+            // columnsViews.push({
+            //   name: io.name,
+            //   position: io.position,
+            //   content: io.content || io.name,
+            //   dataKeys: io.dataKeys.length > 0 ? io.dataKeys : getCurrentDataKeys()
+            // })
+            // columnsViews = sort(columnsViews)
+            // Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
+            // updateOptionNode(1000)
           }
           let addButton = () => {
             if (document.querySelector("#add-save-item")) { return }
@@ -540,6 +703,7 @@ export default class Views {
                 if (!colViewPopup.querySelector("menuitem[checked=true]")) {
                   addButton()
                 }
+                updateOptionNode(1000)
               } else if (event.button == 0) {
                 // 等待mouseup事件结束
                 switchColumnsView(columnsView)
@@ -556,10 +720,10 @@ export default class Views {
               }, 1000)
             })
             colViewItem.addEventListener("mouseup", (event) => {
-              log("mouseup", pressTimer)
+              ztoolkit.log("mouseup", pressTimer)
               window.clearTimeout(pressTimer)
               pressTimer = undefined
-              log("mouseup", pressTimer)
+              ztoolkit.log("mouseup", pressTimer)
             })
             colViewPopup.appendChild(colViewItem);
           }
@@ -571,6 +735,277 @@ export default class Views {
     )
   }
 
+  /**
+   * 右键一列弹出列设置窗口
+   * @param colKey 
+   * @param args 
+   */
+  public patchSetting(
+    colKey: string,
+    args: { prefKey: string, name: string, type: string, range?: number[], values?: string[] }[]
+  ) {
+    ztoolkit.patch(
+      ZoteroPane.itemsView,
+      "_displayColumnPickerMenu",
+      `zoterostyle-setting-${colKey}`,
+      (original) =>
+        function () {
+          // @ts-ignore
+          original.apply(ZoteroPane.itemsView, arguments);
+          const menupopup = document.querySelector("#zotero-column-picker")
+          let left = menupopup.getBoundingClientRect().left
+          let rect
+          try {
+            rect = document.querySelector(`.${colKey}-item-tree-main-default`).getBoundingClientRect()
+          } catch { return }
+          if (!(left > rect.left && left < rect.right)) { return }
+          // 保存列视图菜单
+          const ns = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+          let menuitem = document.createElementNS(ns, "menuitem") as XUL.Menu
+          menuitem.setAttribute("label", getString("column.Setting"))
+          menupopup.appendChild(menuitem)
+          let prefs: { [key: string]: string | boolean } = {}
+          let accept = (document: any) => {
+            for (let key in prefs) {
+              ztoolkit.log(`${config.addonRef}.${key}`, prefs[key])
+              Zotero.Prefs.set(`${config.addonRef}.${key}`, prefs[key])
+            }
+            ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
+            //@ts-ignore
+            ztoolkit.ItemTree.refresh()
+          }
+          // 点击设置弹出对话框
+          const eachHeight = 25
+          menuitem.onclick = () => {
+            // 根据args创建元素
+            let element = ztoolkit.UI.createElement(
+              document,
+              "div",
+              {
+                namespace: "html",
+                styles: {
+                  dislay: "flex",
+                  width: "100%",
+                  height: "100%"
+                },
+                children: [
+                  {
+                    tag: "div",
+                    id: "container",
+                    namespace: "html",
+                    styles: {
+                      display: "flex",
+                      flexDirection: "row",
+                    },
+                    children: [
+                      {
+                        tag: "div",
+                        namespace: "html",
+                        id: "name",
+                        styles: {
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "end",
+                          justifyContent: "space-between",
+                          height: `${eachHeight * args.length}px`,
+                        }
+                      },
+                      {
+                        tag: "div",
+                        namespace: "html",
+                        id: "control",
+                        styles: {
+                          display: "flex",
+                          width: "100%",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          height: `${eachHeight * args.length}px`,
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ) as XUL.Element
+            for (let arg of args) {
+              // 名称
+              element.querySelector("#name")?.appendChild(
+                ztoolkit.UI.createElement(
+                  document,
+                  "label",
+                  {
+                    namespace: "xul",
+                    attributes: {
+                      value: arg.name
+                    }
+                  }
+                )
+              )
+              // 控制
+              let prefValue = Zotero.Prefs.get(`${config.addonRef}.${arg.prefKey}`)
+              let id = arg.prefKey.replace(/\./g, "-")
+              let vbox = element.querySelector("#control") as XUL.Box
+              const width = "10em"
+              let control
+              switch (arg.type) {
+                case "boolean":
+                  // 创建选框
+                  control = ztoolkit.UI.createElement(
+                    document,
+                    "checkbox",
+                    {
+                      namespace: "xul",
+                      id,
+                      attributes: {
+                        checked: prefValue as boolean,
+                      },
+                      listeners: [
+                        {
+                          type: "click",
+                          listener: function () {
+                            // 这个要快一点，所以如果当前是true点击后会变成false
+                            //@ts-ignore
+                            prefs[arg.prefKey] = this.getAttribute("checked") != "true"
+                          }
+                        }
+                      ]
+                    }
+                  )
+                  break
+                case "select":
+                  ztoolkit.log(arg.values!.indexOf(prefValue as string), arg.values, prefValue)
+                  control = ztoolkit.UI.createElement(
+                    document,
+                    "select",
+                    {
+                      namespace: "html",
+                      id,
+                      styles: {
+                        width: width
+                      },
+                      listeners: [
+                        {
+                          type: "change",
+                          listener: function () {
+                            //@ts-ignore
+                            prefs[arg.prefKey] = arg.values[this.selectedIndex]
+                          }
+                        }
+                      ],
+                      children: (() => {
+                        let arr = []
+                        for (let value of arg.values!) {
+                          arr.push(
+                            {
+                              tag: "option",
+                              attributs: {
+                                value: value
+                              },
+                              directAttributes: {
+                                innerText: value
+                              },
+                              listeners: [
+                                {
+                                  type: "click",
+                                  listener: function () {
+                                    //@ts-ignore
+                                    this.parentNode.setAttribute("value", value)
+                                  }
+                                }
+                              ]
+                            }
+                          )
+                        }
+                        return arr
+                      })()
+                    }
+                  )
+                  control.selectedIndex = arg.values!.indexOf(prefValue as string) 
+                  break
+                case "range":
+                  control = ztoolkit.UI.createElement(
+                    document,
+                    "input",
+                    {
+                      namespace: "html",
+                      id,
+                      styles: {
+                        width: width
+                      },
+                      attributes: {
+                        label: arg.name,
+                        type: "range",
+                        min: arg.range![0],
+                        max: arg.range![1],
+                        step: arg.range![2],
+                        value: prefValue as string
+                      },
+                      listeners: [
+                        {
+                          type: "change",
+                          listener: function () {
+                            //@ts-ignore
+                            prefs[arg.prefKey] = this.value
+                          }
+                        }
+                      ],
+                    }
+                  )
+                  break
+                default:
+                  control = ztoolkit.UI.createElement(
+                    document,
+                    "input",
+                    {
+                      tag: "input",
+                      id,
+                      styles: {
+                        width: width
+                      },
+                      namespace: "html",
+                      attributes: {
+                        type: "text",
+                        value: prefValue as string
+                      },
+                      listeners: [
+                        {
+                          type: "change",
+                          listener: function () {
+                            //@ts-ignore
+                            prefs[arg.prefKey] = this.value
+                          }
+                        }
+                      ]
+                    }
+                  )
+              }
+              vbox.appendChild(control)
+            }
+            // 对话框
+            dialog({
+              attributes: {
+                buttonlabelaccept: "Set",
+                title: colKey
+              }, 
+              element: element,
+              hooks: { accept }
+            }, 233, (args.length + 2.5) * eachHeight
+            )
+          }
+        }
+    )
+  }
+
+  /**
+   * 显示右下角消息
+   * @param header 
+   * @param context 
+   * @param type 
+   * @param t 
+   * @param maxLength 
+   * @returns 
+   */
   public showProgressWindow(
     header: string,
     context: string,
@@ -596,6 +1031,19 @@ export default class Views {
   }
 }
 
+function dialog(io: {
+  attributes: {},
+  element: XUL.Element,
+  hooks: { accept?: Function, cancel?: Function }
+}, width: number, height: number) {
+  // @ts-ignore
+  window.openDialog(
+    `chrome://${config.addonRef}/content/dialog.xul`,
+    "zotero-style",
+    `chrome,centerscreen,width=${width},height=${height},alwaysRaised=yes`,
+    io
+  );
+}
 
 interface Record {
   page: number,

@@ -3,7 +3,6 @@ import { config } from "../package.json";
 import { getString, initLocale } from "./modules/locale";
 import { registerPrefsScripts } from "./modules/preferenceScript";
 import Views from "./modules/views"; 
-import { log } from "zotero-plugin-toolkit/dist/utils";
 import Events from "./modules/events";
 import AddonItem from "./modules/item";
 Zotero._AddonItemGlobal = Zotero._AddonItemGlobal || new AddonItem()
@@ -16,12 +15,6 @@ async function onStartup() {
     Zotero.uiReadyPromise,
   ]);
   initLocale();
-  ztoolkit.Tool.setIconURI(
-    "default",
-    `chrome://${config.addonRef}/content/icons/favicon.png`
-  );
-  ztoolkit.UI.enableElementRecordGlobal = false
-
   // const popupWin = ztoolkit.Tool.createProgressWindow(config.addonName, {
   //   closeOnClick: true,
   //   closeTime: -1,
@@ -77,6 +70,11 @@ async function onStartup() {
   await views.createProgressColumn()
   await views.createIFColumn()
   views.registerSwitchColumnsViewUI()
+  try {
+    ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
+    //@ts-ignore
+    ztoolkit.ItemTree.refresh()
+  } catch {}
 
   const events = new Events(addonItem)
   events.onInit()
@@ -99,11 +97,14 @@ async function onStartup() {
 }
 
 function onShutdown(): void {
-  ztoolkit.ItemTree.unregisterAll()
-  addon.data.alive = false;
+  ztoolkit.log("zotero style onShutdown")
+  ztoolkit.unregisterAll()
   ztoolkit.UI.unregisterAll()
+  ztoolkit.ItemTree.unregisterAll()
 
-  delete Zotero.AddonTemplate;
+  // Remove addon object
+  addon.data.alive = false;
+  delete Zotero.ZoteroStyle;
 }
 
 async function onNotify(
@@ -113,7 +114,7 @@ async function onNotify(
   extraData: { [key: string]: any }
 ) {
   // You can add your code to the corresponding notify type
-  ztoolkit.Tool.log("notify", event, type, ids, extraData);
+  ztoolkit.log("notify", event, type, ids, extraData);
   if (
     event == "select" &&
     type == "tab" &&

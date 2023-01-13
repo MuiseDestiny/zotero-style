@@ -128,10 +128,18 @@ export default class AddonItem {
 		const search = Zotero.Search.prototype.search;
 		Zotero.Search.prototype.search = async function () {
 			let ids = await search.apply(this, arguments);
-			log("hook ids", ids)
-			return ids.filter((id: number) => {
-				return Zotero.Items.get(id).parentKey != excludeKey
-			})
+			// 只有在搜索结果是笔记时才过滤
+			if (
+				Zotero.Items.get(ids[0]).itemTypeID == 26
+				&& Zotero.Items.get(ids.slice(-1)[0]).itemTypeID == 26
+			) {
+				log("hook ids", ids)
+				return ids.filter((id: number) => {
+					return Zotero.Items.get(id).parentKey != excludeKey
+				})
+			} else {
+				return ids
+			}
 		}
 	}
 }

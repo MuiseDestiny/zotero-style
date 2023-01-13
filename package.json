@@ -1,6 +1,6 @@
 {
   "name": "zotero-style",
-  "version": "1.5.2",
+  "version": "2.0.0",
   "description": "Zotero Style",
   "config": {
     "addonName": "Zotero Style",
@@ -33,13 +33,13 @@
   "dependencies": {
     "raphael": "^2.3.0",
     "runes": "^0.4.3",
-    "zotero-plugin-toolkit": "^0.1.6"
+    "zotero-plugin-toolkit": "^1.0.4"
   },
   "devDependencies": {
-    "@types/node": "^18.11.17",
-    "compressing": "^1.6.3",
+    "@types/node": "^18.11.18",
+    "compressing": "^1.7.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.16.10",
+    "esbuild": "^0.16.17",
     "release-it": "^15.6.0",
     "replace-in-file": "^6.3.5",
     "zotero-types": "^0.1.5"
