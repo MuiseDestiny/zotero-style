@@ -41,7 +41,7 @@ zoterostyle.titleColumn.opacity = "0.7"
 
 ### 标签
 
-安装插件后，默认将`标题`前面的标签分离为新的一列。这里的标签经过优化，使得emoj（字符）和圆形（html Span）对齐。
+安装插件后，默认将`标题`前面的标签分离为新的一列。这里的标签经过优化，使得emoj（字符）和圆形（html span）对齐。
 
 支持设置`对齐方式`和`标签间距`，下面是默认值
 ```ts
@@ -76,7 +76,7 @@ line: ![image](https://user-images.githubusercontent.com/51939531/212294042-cec9
 
 支持设置`渲染图样式`、`颜色`、`透明度`和是否显示曲线转折处`圆圈`，下面是默认值
 ```ts
-zoterostyle.progressColumn.style = "bar"
+zoterostyle.progressColumn.style: "line" |"bar" = "bar"
 zoterostyle.progressColumn.color = "#86C8BC"
 zoterostyle.progressColumn.opacity = "0.7"
 zoterostyle.progressColumn.circle = true
