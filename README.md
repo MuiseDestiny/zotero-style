@@ -74,6 +74,8 @@ zoterostyle.IFColumn.opacity = "0.7"
 |  ----  | ----  |
 | ![image](https://user-images.githubusercontent.com/51939531/212294042-cec93a51-94fb-444c-b919-90ecdad90818.png) | ![image](https://user-images.githubusercontent.com/51939531/212294194-0cb93185-94d6-4252-8fa7-b79829b6c77f.png) |
 
+line有一种柔和的美感，bar有一种凌乱的美感
+
 当页数过多，平滑曲线一般也就不平滑了，线看起来不是很美观，所以引入柱状图。
 
 你可以右键单击`进度`，点击`列设置`进行设置
