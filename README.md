@@ -70,7 +70,7 @@ line: ![image](https://user-images.githubusercontent.com/51939531/212294042-cec9
 你可以右键单击`进度`，点击`列设置`进行设置
 
 
-支持设置`渲染图样式`、`颜色`、`透明度`和`是否显示曲线转折处`圆圈`，下面是默认值
+支持设置`渲染图样式`、`颜色`、`透明度`和是否显示曲线转折处`圆圈`，下面是默认值
 ```ts
 zoterostyle.progressColumn.style = "bar"
 zoterostyle.progressColumn.color = "#86C8BC"
