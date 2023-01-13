@@ -130,8 +130,8 @@ zoterostyle.progressColumn.circle = true
 
 ![image](https://user-images.githubusercontent.com/51939531/212301913-302ceb00-56ec-4d5c-b17e-0f31a81881ef.png)
 
+![image](https://user-images.githubusercontent.com/51939531/212302668-1d8cdb5d-b2b3-4100-873e-18724cbd6041.png)
 
-如果你喜欢本插件，欢迎点击右上角的星星，这是对我的鼓励。
 
 
 ## 致谢
