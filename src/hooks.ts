@@ -253,7 +253,7 @@ async function onStartup() {
         Commands: [
           {
             name: "重置",
-            label: "阅读进度",
+            label: "阅读时间",
             task: {
               Default: () => {
                 let record = addonItem.get(ZoteroPane.getSelectedItems()[0], "readingTime")
@@ -264,7 +264,7 @@ async function onStartup() {
           },
           {
             name: "查看",
-            label: "阅读进度",
+            label: "阅读时间",
             task: {
               CreateView: () => {
                 const record = addonItem.get(ZoteroPane.getSelectedItems()[0], "readingTime")
