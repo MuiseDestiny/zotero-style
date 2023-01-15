@@ -17,7 +17,7 @@
 新的一年跟着`Zotero Style`从新出发吧。
 
 TODO
-- [ ] 数据迁移，老版本数据通过shift+p调出命令面板执行迁移
+- [x] 数据迁移，老版本数据通过shift+p调出命令面板执行迁移
 
 ## 字段
 新增了一些可视化字段，style最初只可视化了标题进度条，新版本将赋予style更广泛的含义
@@ -28,7 +28,10 @@ TODO
 
 ![image](https://user-images.githubusercontent.com/51939531/212248506-5d89dabb-1f48-4bd7-8c95-32b0d25aab46.png)
 
+![image](https://user-images.githubusercontent.com/51939531/212546513-161c554f-64da-4aa7-a66a-0e84cde26dd5.png)
+
 ![f51e6220a859e8fd6a42d0b1878c4ae](https://user-images.githubusercontent.com/51939531/212248788-643e086a-a5b3-427d-abd2-7dd7fdfd4646.png)
+
 
 
 ### 标题-阅读进度条
@@ -50,6 +53,11 @@ zoterostyle.titleColumn.opacity = "0.7"
 zoterostyle.tagsColumn.align: "left" | "right" = "left"
 zoterostyle.tagsColumn.margin = "0.35"
 ```
+
+## #标签
+标签里以`#`开头的标签，会以文字标签形式展现到这一列。
+Notion里有这种标签，目前没想到它的应用场景，但是先做出来了。
+不支持设置
 
 ### 影响因子
 
