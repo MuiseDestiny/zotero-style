@@ -54,10 +54,11 @@ zoterostyle.tagsColumn.align: "left" | "right" = "left"
 zoterostyle.tagsColumn.margin = "0.35"
 ```
 
-## #标签
+### #标签
 标签里以`#`开头的标签，会以文字标签形式展现到这一列。
 Notion里有这种标签，目前没想到它的应用场景，但是先做出来了。
-不支持设置
+
+开发中...
 
 ### 影响因子
 
