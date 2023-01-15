@@ -97,7 +97,7 @@ export default class Views {
   /**
    * 把标签从标题分离为单独的列
    */
-  public async createTagColumn() {
+  public async createTagsColumn() {
     // 用于分离多emoj，很魔鬼的bug
     const runes = require("runes")
     // 新增加的标签列，在调用Zotero.Tags，setColor时不会刷新
@@ -167,7 +167,6 @@ export default class Views {
               tagSpan.style[align] = `${offset + 0.25 * Number(align == "left" ? 1 : -1)}em`
               tagSpans.appendChild(tagSpan)
               offset += margin + 1
-
             }
           })
           return tagSpans;
@@ -192,6 +191,73 @@ export default class Views {
         }
       ]
     )
+  }
+
+  /**
+   * #标签，只显#标注的示文字标签
+   */
+  public async createTextTagsColumn() {
+    const key = "Tags"
+    await ztoolkit.ItemTree.register(
+      "Text" + key,
+      "#" + getString(`column.${key}`),
+      (
+        field: string,
+        unformatted: boolean,
+        includeBaseMapped: boolean,
+        item: Zotero.Item
+      ) => {
+        let coloredTags = item.getColoredTags()
+        let tags = item.getTags().filter(tag => coloredTags.map(tag=>tag.tag).indexOf(tag.tag) == -1)
+        return coloredTags.length > 0 ? JSON.stringify(coloredTags.concat(tags)) : "";
+      },
+      {
+        renderCellHook(index, data, column) {
+          let getTagSpan = (tag: string, color: string) => {
+            let tagSpan = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
+            // @ts-ignore
+            tagSpan.style = `
+              background-color: ${color || "#FF8787"};
+              height: 1.5em;
+              line-height: 1.5em;
+              padding: 0 .5em;
+              color: white;
+              display: inline-block;
+              border-radius: 3px;
+              margin: 0 .2em;
+            `
+            tagSpan.innerText = tag;
+            return tagSpan
+          }
+          const tagSpans = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
+          // @ts-ignore
+          tagSpans.style = `
+            display: felx;
+            flex-direction: row;
+            justify-content: start;
+            align-items: center;
+          `
+          if (!data) { return tagSpans }
+          let tags: { tag: string, color: string }[] = JSON.parse(data)
+          // const align = Zotero.Prefs.get(
+          //   `${config.addonRef}.tagsColumn.align`
+          // ) as any || "left"
+          // let offset = 0
+          // const margin = parseFloat(
+          //   Zotero.Prefs.get(
+          //     `${config.addonRef}.tagsColumn.margin`
+          //   ) as string
+          // )
+          tags.forEach(tagObj => {
+            let tag = tagObj.tag, color = tagObj.color
+            if (!tag.startsWith("#")) { return }
+            let tagSpan = getTagSpan(tag.slice(1), color)
+            tagSpans.appendChild(tagSpan)
+          })
+          return tagSpans;
+        },
+      }
+    );
   }
 
   /**

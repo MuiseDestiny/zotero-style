@@ -69,7 +69,8 @@ async function onStartup() {
   if (!addonItem.item) { await addonItem.init() }
   const views = new Views(addonItem)
   await views.renderTitleProgress()
-  await views.createTagColumn()
+  await views.createTagsColumn()
+  await views.createTextTagsColumn()
   await views.createProgressColumn()
   await views.createIFColumn()
   views.registerSwitchColumnsViewUI()
