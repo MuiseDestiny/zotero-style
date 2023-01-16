@@ -10,7 +10,8 @@
 
 **这是一个重写的版本，与以往版本有较大差异，安装之前还请阅读本文，再决定是否安装**
 
-如您需要数据迁移（使得新版本能够加载以前的进度），[见此](https://github.com/MuiseDestiny/zotero-style/issues/55)。
+如您需要数据迁移（使得新版本能够加载以前的进度），[见此](https://github.com/MuiseDestiny/zotero-style/issues/55)，新版本将不再监督您的清空回收站行为。
+会产生一个`Addon Item`条目用于数据储存，不要将其删除，如您有更好的数据储存策略（可同步），可反馈[至此](https://github.com/MuiseDestiny/zotero-reference/issues/43)
 
 ---
 
