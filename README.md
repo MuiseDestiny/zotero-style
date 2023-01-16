@@ -151,7 +151,9 @@ zoterostyle.progressColumn.circle = true
 
 ![image](https://user-images.githubusercontent.com/51939531/212302668-1d8cdb5d-b2b3-4100-873e-18724cbd6041.png)
 
-
+## 数据存储
+![image](https://user-images.githubusercontent.com/51939531/212578908-59d5c850-f321-401e-b97b-2e252e87a609.png)
+这个条目下的一个笔记对应Zotero一篇文献的阅读进度数据。
 
 ## 致谢
 - 本插件基于插件模板开发 - https://github.com/windingwind/zotero-plugin-template
