@@ -67,6 +67,7 @@ async function onStartup() {
   
   // return
   if (!addonItem.item) { await addonItem.init() }
+
   const views = new Views(addonItem)
   await views.renderTitleProgress()
   await views.createTagsColumn()
@@ -101,6 +102,20 @@ async function onStartup() {
   // Prompt
   const tool = new ZoteroToolkit()
   // 旧版数据迁移
+  let getItem = () => {
+    let readingItem = Zotero.Items.get(
+      Zotero.Reader.getByTabID(Zotero_Tabs.selectedID)?.itemID
+    ).parentItem
+    let selectedItems = ZoteroPane.getSelectedItems()
+    if (!(readingItem || (selectedItems.length == 1))) { return }
+    let item = readingItem || selectedItems[0]
+    return item
+  }
+  let getAllTags = (item: _ZoteroItem) => {
+    let coloredTags = item.getColoredTags()
+    let tags = item.getTags().filter((tag: any) => coloredTags.map((tag: any) => tag.tag).indexOf(tag.tag) == -1)
+    return [...coloredTags, ...tags]
+  }
   tool.Prompt.register([
     {
       name: "迁移旧版数据",
@@ -109,190 +124,358 @@ async function onStartup() {
         let items = ZoteroPane.getSelectedItems()
         return items.length == 1 && items[0].getField("title") == "ZoteroStyle"
       },
-      task: {
-        Default: async () => {
-          // 迁移数据逻辑
-          Zotero._Prompt.showTip("感谢您长时间对Style的支持，数据正在迁移中，请耐心等待！")
-          let node = document.querySelector(".prompt-commands .command-Tip")
-          node.style.position = "relative"
-          let progress = ztoolkit.UI.createElement(
-            document,
-            "span",
-            {
-              styles: {
-                position: "absolute",
-                height: "100%",
-                left: "0",
-                top: "0",
-                backgroundColor: "#FF8E9E",
-                zIndex: "-1",
-                opacity: "0.5",
-                transition: "width .1 linear"
-              }
+      callback: async () => {
+        // 迁移数据逻辑
+        const tipNode = Zotero._Prompt.showTip("感谢您长时间对Style的支持，数据正在迁移中，请耐心等待！")
+        tipNode.style.position = "relative"
+        let progress = ztoolkit.UI.createElement(
+          document,
+          "span",
+          {
+            styles: {
+              position: "absolute",
+              height: "100%",
+              left: "0",
+              top: "0",
+              backgroundColor: "#FF8E9E",
+              zIndex: "-1",
+              opacity: "0.5",
+              transition: "width .1 linear"
             }
-          )
-          node.appendChild(progress)
-
-          progress.style.width = "0%"
-          // 迁移逻辑
-          let ids = ZoteroPane.getSelectedItems()[0].getNotes()
-          let totalTime = 0
-          for (let i = 0; i < ids.length; i++) {
-            let noteItem = Zotero.Items.get(ids[i])
-            try {
-              let data = JSON.parse((noteItem.note.replace(/<.+?>/g, "").replace(/[^\n\{]+/, "")))
-              // 没有itemKey，搜索本地
-              if (!data.itemKey) {
-                let s = new Zotero.Search();
-                s.addCondition("title", "contains", data.title);
-                data.itemKey = Zotero.Items.get((await s.search())[0]).key
-                ztoolkit.log(data.itemKey)
-              }
-              totalTime += (Object.values(data.pageTime) as Array<number>).reduce((a, b)=>a+b)
-              let record = {
-                page: data.pageNum,
-                data: data.pageTime,
-              }
-              // 写入笔记逻辑
-              if (data.itemKey) {
-                addonItem.set(
-                  Zotero.Items.getByLibraryAndKey(1, data.itemKey),
-                  "readingTime",
-                  record
-                )
-              }
-            } catch {}
-            progress.style.width = `${i/ids.length*100}%`
-            Zotero._Prompt.inputNode.value = `[Pending] ${i}/${ids.length}`
-            await Zotero.Promise.delay(10)
           }
-          Zotero._Prompt.inputNode.value = ""
-          Zotero._Prompt.showTip(
-            `数据迁移完成，新的一年和Style一起出发吧！\n\n` +
-            `从安装Style开始，它与您共同阅读了${ids.length}篇文献，总用时${(totalTime / 60 / 60).toFixed(2)}小时。\n\n` +
-            `你走过的路，每一步都算数。`
-          )
+        )
+        tipNode.appendChild(progress)
+
+        progress.style.width = "0%"
+        // 迁移逻辑
+        let ids = ZoteroPane.getSelectedItems()[0].getNotes()
+        let totalTime = 0
+        for (let i = 0; i < ids.length; i++) {
+          let noteItem = Zotero.Items.get(ids[i])
+          try {
+            let data = JSON.parse((noteItem.note.replace(/<.+?>/g, "").replace(/[^\n\{]+/, "")))
+            // 没有itemKey，搜索本地
+            if (!data.itemKey) {
+              let s = new Zotero.Search();
+              s.addCondition("title", "contains", data.title);
+              data.itemKey = Zotero.Items.get((await s.search())[0]).key
+              ztoolkit.log(data.itemKey)
+            }
+            totalTime += (Object.values(data.pageTime) as Array<number>).reduce((a, b)=>a+b)
+            let record = {
+              page: data.pageNum,
+              data: data.pageTime,
+            }
+            // 写入笔记逻辑
+            if (data.itemKey) {
+              addonItem.set(
+                Zotero.Items.getByLibraryAndKey(1, data.itemKey),
+                "readingTime",
+                record
+              )
+            }
+          } catch {}
+          progress.style.width = `${i/ids.length*100}%`
+          Zotero._Prompt.inputNode.value = `[Pending] ${i}/${ids.length}`
+          await Zotero.Promise.delay(10)
         }
+        Zotero._Prompt.inputNode.value = ""
+        Zotero._Prompt.exit()
+        Zotero._Prompt.showTip(
+          `数据迁移完成，新的一年和Style一起出发吧！\n\n` +
+          `从安装Style开始，它与您共同阅读了${ids.length}篇文献，总用时${(totalTime / 60 / 60).toFixed(2)}小时。\n\n` +
+          `你走过的路，每一步都算数。`
+        )
       }
     },
     {
       name: "影响因子",
       label: "Style",
-      task: {
-        CreateView: async () => {
-          let hrefs = [
-            "https://www.ablesci.com/assets/css/global_local.css?v=20221123v1",
-            "https://www.ablesci.com/assets/layui/css/layui.css"
-          ]
-          hrefs.forEach(href => {        
-            if (document.querySelector(`[href="${href}"]`)) { return }
-            const styles = ztoolkit.UI.createElement(
-              document, "link",
-              {
-                properties: {
-                  type: "text/css",
-                  rel: "stylesheet",
-                  href: href,
-                },
-              }
-            );
-            document.documentElement.appendChild(styles);
-          })
-
-          let readingItem = Zotero.Items.get(
-            Zotero.Reader.getByTabID(Zotero_Tabs.selectedID)?.itemID
-          ).parentItem
-          ztoolkit.log(readingItem)
-          let selectedItems = ZoteroPane.getSelectedItems()
-          if (!(readingItem || selectedItems)) { return }
-          let item = readingItem || selectedItems[0]
-          const publicationTitle = item.getField("publicationTitle")
-          console.log(publicationTitle)
-          let res = await Zotero.HTTP.request(
-            "GET",
-            `https://www.ablesci.com/journal/index?keywords=${publicationTitle.replace(/\s+/g, "+")}`,
+      when: () => {
+        let item = getItem()
+        return (item && item.getField("publicationTitle")) as boolean
+      },
+      callback: async (prompt: Prompt) => {
+        let hrefs = [
+          "https://www.ablesci.com/assets/css/global_local.css?v=20221123v1",
+          "https://www.ablesci.com/assets/layui/css/layui.css"
+        ]
+        let styles: HTMLElement[] = []
+        hrefs.forEach(href => {        
+          if (document.querySelector(`[href="${href}"]`)) { return }
+          const style = ztoolkit.UI.createElement(
+            document, "link",
             {
-              responseType: "text",
-              credentials: "include"
+              properties: {
+                type: "text/css",
+                rel: "stylesheet",
+                href: href,
+              },
+            }
+          );
+          styles.push(style)
+          document.documentElement.appendChild(style);
+        })
+
+        let item = getItem() as _ZoteroItem
+        const publicationTitle = item.getField("publicationTitle")
+        console.log(publicationTitle)
+        let res = await Zotero.HTTP.request(
+          "GET",
+          `https://www.ablesci.com/journal/index?keywords=${publicationTitle.replace(/\s+/g, "+")}`,
+          {
+            responseType: "text",
+            credentials: "include"
+          }
+        )
+        let text = res.response
+        let matchedArray = text.match(/<table[\s\S]+?<\/table>/g)
+        if (matchedArray) {
+          prompt.inputNode.setAttribute("placeholder", publicationTitle)
+          const tableString = matchedArray[0].replace("36%", "20%")
+          const parser = new window.DOMParser()
+          const table = parser.parseFromString(`<div class="command">${tableString}</div>`, "text/html")
+          const container = prompt.createCommandsContainer()
+          container.appendChild(table.body.firstChild)
+        }
+        prompt.promptNode.addEventListener("keyup", (event) => {
+          if (event.key == "Escape") {
+            styles.forEach(e=>e.remove())
+          }
+        })
+      }
+    },
+    {
+      name: "标签",
+      label: "Style",
+      when: () => {
+        let item = getItem() as _ZoteroItem
+        if (item) {
+          if (getAllTags(item).length > 0) {
+            return true
+          }
+        }
+        return false
+      },
+      callback: (prompt: Prompt) => {
+        const libraryID = 1
+        // 重命名标签
+        // Zotero.Tags.rename(libraryID, oldName, newName);
+        // 指派颜色位置
+        // Zotero.Tags.setColor()
+
+        const container = prompt.createCommandsContainer()
+        const tags = getAllTags(getItem() as _ZoteroItem)
+        const inputStyles = {
+          height: "2em",
+          border: "1px solid #eee",
+          borderRadius: ".1em",
+          paddingLeft: "0.5em"
+        }
+        tags.forEach((tag: { tag: string, color?: string }) => {
+          let position = Zotero.Tags.getColor(libraryID, tag.tag)?.position
+          position = position == undefined ? undefined : position + 1
+          let set = (line: HTMLElement) => {
+            const name = (line.querySelector("#name") as HTMLInputElement).value
+            const color = (line.querySelector("#color") as HTMLInputElement).value
+            const position = (line.querySelector("#position") as HTMLInputElement).value
+            if (/^#(\w{3}|\w{6})$/i.test(color) && /^\d+$/.test(position) && name.length)
+            Zotero.Tags.setColor(libraryID, name, color, position)
+          }
+          const line = ztoolkit.UI.createElement(
+            document,
+            "div",
+            {
+              classList: ["command"],
+              styles: {
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-around",
+                alignItems: "center",
+                width: "100%",
+              },
+              children: [
+                {
+                  tag: "span",
+                  id: "circle",
+                  styles: {
+                    display: "inline-block",
+                    height: ".7em",
+                    width: ".7em",
+                    borderRadius: tag.tag.startsWith("#") ? ".1em" : ".7em",
+                    backgroundColor: tag.color as string,
+                  }
+                },
+                {
+                  tag: "div",
+                  children: [
+                    {
+                      tag: "input",
+                      id: "name",
+                      styles: inputStyles,
+                      properties: {
+                        value: tag.tag,
+                        placeholder: "名称"
+                      },
+                      listeners: [
+                        {
+                          type: "change",
+                          listener: () => {
+                            Zotero.Tags.rename(libraryID, tag.tag,
+                              (line.querySelector("#name") as HTMLInputElement).value as string
+                            );
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  tag: "div",
+                  styles: {
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center"
+                  },
+                  children: [
+                    {
+                      tag: "input",
+                      id: "color",
+                      styles: inputStyles,
+                      properties: {
+                        value: tag.color || "",
+                        placeholder: "颜色"
+                      },
+                      listeners: [
+                        {
+                          type: "change",
+                          listener: () => {
+                            ztoolkit.log((line.querySelector("#circle")! as HTMLElement)
+                              .style.backgroundColor);
+                            (line.querySelector("#circle")! as HTMLElement)
+                              .style.backgroundColor = (line.querySelector("#color")! as HTMLInputElement).value
+                            ztoolkit.log((line.querySelector("#circle")! as HTMLElement)
+                              .style.backgroundColor);
+                            if (!/^\d+$/.test((line.querySelector("#position") as HTMLInputElement).value)) {
+                              (line.querySelector("#position") as HTMLInputElement).value = "1"
+                            }
+                            set(line)
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  tag: "div",
+                  children: [
+                    {
+                      tag: "input",
+                      id: "position",
+                      styles: inputStyles,
+                      properties: {
+                        value: position,
+                        placeholder: "位置"
+                      },
+                      listeners: [
+                        {
+                          type: "change",
+                          listener: () => {
+                            set(line)
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             }
           )
-          let text = res.response
-          let matchedArray = text.match(/<table[\s\S]+?<\/table>/g)
-          const prompt = Zotero._Prompt
-          if (matchedArray) {
-            prompt.inputNode.setAttribute("placeholder", publicationTitle)
-            const tableString = matchedArray[0].replace("36%", "20%")
-            const parser = new window.DOMParser()
-            const table = parser.parseFromString(`<div class="command">${tableString}</div>`, "text/html")
-            prompt.commandsNode.querySelectorAll(".command").forEach((e: HTMLElement) => e.remove())
-            prompt.commandsNode.appendChild(table.body.firstChild)
-          }
-        }
+          container.appendChild(line)
+        })
       }
     },
     {
-      name: "指派任意颜色位置标签",
+      name: "查看阅读进度",
       label: "Style",
-      task: {
-        SetValue: {
-          values: [
-            { intro: "请输入要指派的标签", check: (arg) => { return /.+/.test(arg) } },
-            { intro: "请输入要指派的颜色", check: (arg) => { return /#\w+/.test(arg) } },
-            { intro: "请输入要指派的位置", check: (arg) => { return /\d+/.test(arg) } }
-          ],
-          set: (args) => {
-            Zotero.Tags.setColor(1, args[0], args[1], args[2])
-          },
+      when: () => {
+        // 有条目，且条目有阅读时间
+        let item = getItem()
+        if (!item) { return false}
+        let record = addonItem.get(item, "readingTime")
+        ztoolkit.log(record)
+        return record?.data && Object.keys(record.data).length > 0
+      },
+      callback: (prompt: Prompt) => {
+        let item = getItem() as _ZoteroItem
+        
+        prompt.inputNode.placeholder = item.getField("title")
+        const record = addonItem.get(item, "readingTime")
+        if (!record || !record.data || Object.keys(record.data).length == 0) {
+          prompt.showTip("这里一片荒芜~")
+          return
         }
+        const container = prompt.createCommandsContainer()
+        Object.keys(record.data).forEach(page => {
+          let sec = record.data[page]
+          let t
+          if (sec < 60) {
+            t = `${sec} 秒`
+          } else if (sec / 60) {
+            t = `${(sec / 60).toFixed(1)} 分`
+          } else {
+            t = `${(sec / 60 / 60).toFixed(1)} 时`
+          }
+          let openToPage = async (page: number) => {
+            let pdfItem = await item.getBestAttachment();
+            if (!pdfItem) { return }
+            await Zotero.OpenPDF.openToPage(pdfItem, page)
+          }
+          let commandNode = prompt.createCommandNode({
+            name: `第${Number(page) + 1}页`,
+            label: t,
+            callback: async () => { await openToPage(Number(page) + 1) }
+          }) as HTMLElement
+          container.appendChild(commandNode)
+        })
       }
     },
     {
-      name: "阅读时间",
+      name: "重置阅读进度",
       label: "Style",
-      when: () => ZoteroPane.getSelectedItems().length == 1,
-      task: {
-        Commands: [
-          {
-            name: "重置",
-            label: "阅读时间",
-            task: {
-              Default: () => {
-                let record = addonItem.get(ZoteroPane.getSelectedItems()[0], "readingTime")
-                record.data = {}
-                addonItem.set(ZoteroPane.getSelectedItems()[0], "readingTime", record)
-              }
-            }
-          },
-          {
-            name: "查看",
-            label: "阅读时间",
-            task: {
-              CreateView: () => {
-                const record = addonItem.get(ZoteroPane.getSelectedItems()[0], "readingTime")
-                const prompt = Zotero._Prompt as Prompt
-                prompt.commandsNode.querySelectorAll(".command").forEach((e: any) => e.remove())
-                
-                Object.keys(record.data).forEach(page => {
-                  let sec = record.data[page]
-                  let t
-                  if (sec < 60) {
-                    t = `${sec}秒`
-                  } else if (sec / 60) {
-                    t = `${(sec / 60).toFixed(1)}分`
-                  } else {
-                    t = `${(sec / 60 / 60).toFixed(1)}时`
-                  }
-                  prompt.commandsNode.appendChild(
-                    prompt.createCommandNode(`第${Number(page) + 1}页`, t)
-                  )
-                })
-              }
-            }
-          }
-        ]
+      when: () => {
+        // 有条目，且条目有阅读时间
+        let item = getItem()
+        if (!item) { return false }
+        let record = addonItem.get(item, "readingTime")
+        return record?.data && Object.keys(record.data).length > 0
+      },
+      callback: () => {
+        let item = getItem() as _ZoteroItem
+        Zotero._Prompt.inputNode.placeholder = item.getField("title")
+        try {          
+          let record = addonItem.get(item, "readingTime")
+          record.data = {}
+          addonItem.set(item, "readingTime", record)
+        } catch {}
+        Zotero._Prompt.showTip("重置成功")
+      }
+    },
+    {
+      name: "设置为插件储存条目",
+      when: () => {
+        let item = getItem()
+        return item?.getField("title").includes("Addon") as boolean
+      },
+      callback: (prompt: Prompt) => {
+        let item = getItem() as _ZoteroItem
+        Zotero.Prefs.set(addonItem.prefKey, item.key)
+        addonItem.item = item
+        prompt.showTip(`设置成功，该条目下有${item.getNotes().length}条记录。`)
       }
     }
   ])
+  tool.Prompt.registerExample()
   // 所有快捷键
   let commands: Command[] = []
   let getLable = (keyOptions: any) => {
@@ -313,7 +496,7 @@ async function onStartup() {
       }
     })
   }
-  tool.Prompt.register(commands)
+  // tool.Prompt.register(commands)
 }
 
 function onShutdown(): void {

@@ -26,9 +26,10 @@ export default class AddonItem {
 			}
 		}
 		let s = new Zotero.Search();
-		s.addCondition("title", "contains", "AddonItem");
+		s.addCondition("title", "contains", "Addon Item");
 		var ids = await s.search();
 		let items = await Zotero.Items.getAsync(ids);
+		console.log(items)
 		if (ids.length) {
 			// exist
 			item = items[0]

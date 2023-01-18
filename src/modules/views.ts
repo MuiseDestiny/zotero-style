@@ -154,6 +154,7 @@ export default class Views {
           )
           tags.forEach(tagObj => {
             let tag = tagObj.tag, color = tagObj.color
+            if (tag.startsWith("#")) { return }
             if (Zotero.Utilities.Internal.isOnlyEmoji(tag)) {
               runes(tag).forEach((tag: string) => {
                 let tagSpan = getTagSpan(tag, color)
@@ -208,13 +209,14 @@ export default class Views {
         item: Zotero.Item
       ) => {
         let coloredTags = item.getColoredTags()
-        let tags = item.getTags().filter(tag => coloredTags.map(tag=>tag.tag).indexOf(tag.tag) == -1)
-        return coloredTags.length > 0 ? JSON.stringify(coloredTags.concat(tags)) : "";
+        let tags = item.getTags().filter(tag => coloredTags.map((tag: any)=>tag.tag).indexOf(tag.tag) == -1)
+        return coloredTags.length > 0 ? JSON.stringify([...coloredTags, ...tags]) : "";
       },
       {
         renderCellHook(index, data, column) {
           let getTagSpan = (tag: string, color: string) => {
             let tagSpan = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
+            color = color || "#FF8787"
             // @ts-ignore
             tagSpan.style = `
               background-color: ${color || "#FF8787"};
