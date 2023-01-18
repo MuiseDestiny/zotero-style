@@ -10,9 +10,13 @@
 
 **这是一个重写的版本，与以往版本有较大差异，安装之前还请阅读本文，再决定是否安装**
 
+如您需要数据迁移（使得新版本能够加载以前的进度），[见此](https://github.com/MuiseDestiny/zotero-style/issues/55)，新版本将不再监督您的清空回收站行为。
+
+安装插件后会产生一个`Addon Item`条目用于数据储存，不要将其删除，如您有更好的数据储存策略（可同步），可反馈[至此](https://github.com/MuiseDestiny/zotero-reference/issues/43)
+
 ---
 
-新版本去除了`Shift+P`，取而代之的是更直观的设置弹窗；没有了`>`按钮，取而代之的是`视图组`，视图组的功能包含`>`的全部功能。
+新版本去除了`Shift+P`的设置，取而代之的是更直观的设置弹窗；没有了`>`按钮，取而代之的是`视图组`，视图组的功能包含`>`的全部功能。
 
 新的一年跟着`Zotero Style`从新出发吧。
 
@@ -31,6 +35,8 @@ TODO
 ![image](https://user-images.githubusercontent.com/51939531/212546513-161c554f-64da-4aa7-a66a-0e84cde26dd5.png)
 
 ![f51e6220a859e8fd6a42d0b1878c4ae](https://user-images.githubusercontent.com/51939531/212248788-643e086a-a5b3-427d-abd2-7dd7fdfd4646.png)
+
+![image](https://user-images.githubusercontent.com/51939531/213071592-5657c470-f663-42ed-be31-235302ac1709.png)
 
 
 
@@ -54,10 +60,11 @@ zoterostyle.tagsColumn.align: "left" | "right" = "left"
 zoterostyle.tagsColumn.margin = "0.35"
 ```
 
-## #标签
+### #标签
 标签里以`#`开头的标签，会以文字标签形式展现到这一列。
 Notion里有这种标签，目前没想到它的应用场景，但是先做出来了。
-不支持设置
+
+开发中...
 
 ### 影响因子
 
@@ -150,7 +157,9 @@ zoterostyle.progressColumn.circle = true
 
 ![image](https://user-images.githubusercontent.com/51939531/212302668-1d8cdb5d-b2b3-4100-873e-18724cbd6041.png)
 
-
+## 数据存储
+![image](https://user-images.githubusercontent.com/51939531/212578908-59d5c850-f321-401e-b97b-2e252e87a609.png)
+这个条目下的一个笔记对应Zotero一篇文献的阅读进度数据。
 
 ## 致谢
 - 本插件基于插件模板开发 - https://github.com/windingwind/zotero-plugin-template
