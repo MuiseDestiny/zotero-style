@@ -4,6 +4,7 @@ pref("extensions.zotero.__addonRef__.tagsColumn.align", "left");
 pref("extensions.zotero.__addonRef__.tagsColumn.margin", "0.35");
 
 
+pref("extensions.zotero.__addonRef__.titleColumn.tags", false);
 pref("extensions.zotero.__addonRef__.titleColumn.color", "#FFC6D3");
 pref("extensions.zotero.__addonRef__.titleColumn.opacity", "0.7");
 

@@ -53,7 +53,7 @@ export default class AddonItem {
 	 * @param data 数据
 	 */
 	public async set(item: _ZoteroItem, key: string, data: object | string) {
-		let noteItem = this.getNoteItem(item) || await this.createoteItem()
+		let noteItem = this.getNoteItem(item) || await this.createNoteItem()
 		let noteData = this.getNoteData(noteItem)
 		noteData[key] = data
 		noteItem.setNote(`${item.key}\n${JSON.stringify(noteData)}`)
@@ -93,7 +93,7 @@ export default class AddonItem {
 	 * 创建一个空白笔记
 	 * @returns 
 	 */
-	public async createoteItem() {
+	public async createNoteItem() {
 		//@ts-ignore
 		let noteItem = new Zotero.Item('note')
 		noteItem.parentID = this.item.id;
@@ -107,6 +107,7 @@ export default class AddonItem {
 	 * @returns 
 	 */
 	public getNoteItem(item: _ZoteroItem) {
+		if (!item) { return }
 		const key = item.key
 		const cacheKey = `getNoteItem-${key}`
 		if (this.cache[cacheKey]) { this.cache[cacheKey] }
@@ -129,6 +130,10 @@ export default class AddonItem {
 		const search = Zotero.Search.prototype.search;
 		Zotero.Search.prototype.search = async function () {
 			let ids = await search.apply(this, arguments);
+			// log("hook ids", ids)
+			// return ids.filter((id: number) => {
+			// 	return Zotero.Items.get(id).parentKey != excludeKey
+			// })
 			// 只有在搜索结果是笔记时才过滤
 			if (
 				Zotero.Items.get(ids[0]).itemTypeID == 26

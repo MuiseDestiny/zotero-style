@@ -44,7 +44,31 @@ export default class Views {
       key,
       (index: number, data: string, column: any, original: Function) => {
         const cellSpan = original(index, data, column) as HTMLSpanElement;
-        cellSpan.querySelectorAll(".tag-swatch").forEach(e => e.remove())
+        let titleSpan = cellSpan.querySelector(".cell-text") as HTMLSpanElement;
+        const title = titleSpan.innerText
+        titleSpan.innerText = ""
+        const span = ztoolkit.UI.createElement(
+          document,
+          "span",
+          {
+            id: "title",
+            properties: {
+              innerText: title
+            }
+          })
+        titleSpan.appendChild(span)
+        if (!Zotero.Prefs.get(
+          `${config.addonRef}.titleColumn.tags`
+        )) {
+          cellSpan.querySelectorAll(".tag-swatch").forEach(e => {
+            e.remove()
+          })
+        } else {
+          cellSpan.querySelectorAll(".tag-swatch").forEach(e => {
+            titleSpan.insertBefore(e, span)
+            span.style.marginLeft = "0.3em"
+          });
+        }
         const item = ZoteroPane.getSortedItems()[index]
         let record: Record = this.addonItem.get(item, "readingTime") as Record
         if(!record) { return cellSpan }
@@ -53,8 +77,6 @@ export default class Views {
           values.push(parseFloat(record.data[i] as string) || 0)
         }
         if (values.length == 0) { return cellSpan }
-        ztoolkit.log("renderTitleProgress", values)
-        let titleSpan = cellSpan.querySelector(".cell-text") as HTMLSpanElement;
         titleSpan.style.position = "relative";
         titleSpan.style.width = "100%";
         titleSpan.style.zIndex = "1"
@@ -79,6 +101,11 @@ export default class Views {
     this.patchSetting(
       key,
       [
+        {
+          prefKey: "titleColumn.tags",
+          name: "Tags",
+          type: "boolean"
+        },
         {
           prefKey: "titleColumn.color",
           name: "Color",

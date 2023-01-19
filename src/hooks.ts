@@ -415,7 +415,7 @@ async function onStartup() {
           prompt.showTip("这里一片荒芜~")
           return
         }
-        const container = prompt.createCommandsContainer()
+        let commands: Command[] = []
         Object.keys(record.data).forEach(page => {
           let sec = record.data[page]
           let t
@@ -431,13 +431,13 @@ async function onStartup() {
             if (!pdfItem) { return }
             await Zotero.OpenPDF.openToPage(pdfItem, page)
           }
-          let commandNode = prompt.createCommandNode({
+          commands.push({
             name: `第${Number(page) + 1}页`,
             label: t,
             callback: async () => { await openToPage(Number(page) + 1) }
-          }) as HTMLElement
-          container.appendChild(commandNode)
+          })
         })
+        prompt.showCommands(commands)
       }
     },
     {
@@ -475,7 +475,6 @@ async function onStartup() {
       }
     }
   ])
-  tool.Prompt.registerExample()
   // 所有快捷键
   let commands: Command[] = []
   let getLable = (keyOptions: any) => {
@@ -484,19 +483,45 @@ async function onStartup() {
       .filter(e => e)
       .map(s => s[0].toUpperCase() + s.slice(1)).join(" + ")
   }
+  const en2zh = {
+    key_close: "关闭Zotero",
+    key_import: "导入",
+    key_importFromClipboard: "从剪贴板导入",
+    key_copyCitation: "复制引文",
+    key_copyBibliography: "复制参考书目",
+    key_advancedSearch: "高级搜索",
+    key_back: "后退",
+    key_forward: "前进",
+    key_new_betternotes: "新建Better Notes",
+    key_open_betternotes: "打开Better Notes",
+    key_export_betternotes: "导出Better Notes",
+    key_sync_betternotes: "同步Better Notes",
+    key_undo: "撤销",
+    key_redo: "重做",
+    key_cut: "剪切",
+    key_copy: "复制",
+    key_paste: "粘贴",
+    key_delete: "删除",
+    key_selectAll: "全选",
+    key_find: "查找",
+    key_findAgain: "查找下一个",
+    key_findPrevious: "查找上一个",
+
+
+
+  }
   for (let keyOptions of ztoolkit.Shortcut.getAll()) {
     if (keyOptions.type != "element") { continue }
     commands.push({
-      name: keyOptions.id,
+      // @ts-ignore
+      name: en2zh[keyOptions.id] || keyOptions.id,
       label: getLable(keyOptions),
-      task: {
-        Default: () => {
-          Zotero._Prompt.showTip("正在开发，敬请期待！")
-        }
+      callback: async () => {
+        await keyOptions.callback(keyOptions)
       }
     })
   }
-  // tool.Prompt.register(commands)
+  tool.Prompt.register(commands)
 }
 
 function onShutdown(): void {
