@@ -1,3 +1,8 @@
+新版本预览
+![image](https://user-images.githubusercontent.com/51939531/213743620-79b89403-37d4-4748-8159-ed9b74d6380a.png)
+
+
+
 # Zotero Style
 > 做一些简单的可视化，让你的Zotero面板看起来更有趣
 
