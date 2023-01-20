@@ -20,7 +20,7 @@ export default class Progress {
    * 用透明度量化各个部分完成情况
    * 适用于 - 阅读高能进度条
    */
-  public opacity(values: number[], color: string = "#62b6b7", opacity: string = "1"): HTMLSpanElement {
+  public opacity(values: number[], color: string = "#62b6b7", opacity: string = "1", limit: number = -1): HTMLSpanElement {
     const span = ztoolkit.UI.createElement(
       document,
       "span",
@@ -39,6 +39,9 @@ export default class Progress {
     let sortedValues = [...values].sort((a, b) => b - a);
     let meanValue = [...values].reduce((a, b) => a + b) / values.length;
     let maxValue = meanValue + (sortedValues[0] - meanValue) * .5
+    if (limit > 0) {
+      maxValue = maxValue > limit ? maxValue : limit
+    }
     let [r, g, b] = this.getRGB(color)
     for (let value of values) {
       span.appendChild(

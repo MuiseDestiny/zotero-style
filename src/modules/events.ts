@@ -1,7 +1,7 @@
 import AddonItem from "./item";
 
 export default class Events {
-	public recordInterval = 8;  // s
+	public recordInterval = 10;  // s
 	public updateInterval = 60;  // s
 	public maxHangTime = 60;  // s
 	public state = {

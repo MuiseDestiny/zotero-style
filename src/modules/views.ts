@@ -69,6 +69,9 @@ export default class Views {
             span.style.marginLeft = "0.3em"
           });
         }
+        // @ts-ignore
+        titleSpan.firstChild.style.marginLeft = ".3em"
+
         const item = ZoteroPane.getSortedItems()[index]
         let record: Record = this.addonItem.get(item, "readingTime") as Record
         if(!record) { return cellSpan }
@@ -88,6 +91,7 @@ export default class Views {
           Zotero.Prefs.get(
             `${config.addonRef}.titleColumn.opacity`
           ) as string,
+          60
         )
         progressNode.style.top = "0"
         progressNode.style.zIndex = "-1"
@@ -268,15 +272,6 @@ export default class Views {
           `
           if (!data) { return tagSpans }
           let tags: { tag: string, color: string }[] = JSON.parse(data)
-          // const align = Zotero.Prefs.get(
-          //   `${config.addonRef}.tagsColumn.align`
-          // ) as any || "left"
-          // let offset = 0
-          // const margin = parseFloat(
-          //   Zotero.Prefs.get(
-          //     `${config.addonRef}.tagsColumn.margin`
-          //   ) as string
-          // )
           tags.forEach(tagObj => {
             let tag = tagObj.tag, color = tagObj.color
             if (!tag.startsWith("#")) { return }
@@ -311,7 +306,14 @@ export default class Views {
       },
       {
         renderCellHook: (index: any, data: any, column: any) => {
-          const span = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
+          const span = ztoolkit.UI.createElement(document, "span", {
+            styles: {
+              display: "inline-block",
+              width: "100%",
+              height: "20px"
+            }
+          }) as HTMLSpanElement
+          
           let item = ZoteroPane.getSortedItems()[index]
           let page: number
           try {
@@ -367,7 +369,7 @@ export default class Views {
           prefKey: "progressColumn.style",
           name: "Style",
           type: "select",
-          values: ["bar", "line"]
+          values: ["bar", "line", "opacity"]
         },
         {
           prefKey: "progressColumn.color",
