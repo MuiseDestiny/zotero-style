@@ -1,13 +1,10 @@
 新版本预览
 
-![image](https://user-images.githubusercontent.com/51939531/213895732-749b151c-c1f3-4503-b889-f14a46f13a47.png)
+![image](https://user-images.githubusercontent.com/51939531/214062905-5df53444-cc7a-4286-90ef-40a1db373dde.png)
 
+![image](https://user-images.githubusercontent.com/51939531/214062976-85465234-135a-4fd1-b66a-f3038af71d26.png)
 
-![image](https://user-images.githubusercontent.com/51939531/213859366-c579ae74-3c27-4f30-8103-30262e3a9f73.png)
-
-
-![image](https://user-images.githubusercontent.com/51939531/213743620-79b89403-37d4-4748-8159-ed9b74d6380a.png)
-
+![image](https://user-images.githubusercontent.com/51939531/214063018-ee5972b6-ceef-4cf6-a25a-635e67bc3fa4.png)
 
 
 # Zotero Style
