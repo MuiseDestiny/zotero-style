@@ -66,6 +66,9 @@ async function onStartup() {
   // popupWin.startCloseTimer(5000);
   
   // return
+  ztoolkit.UI.basicOptions.ui.enableElementRecord = false
+  ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
+
   if (!addonItem.item) { await addonItem.init() }
 
   const views = new Views(addonItem)
@@ -74,7 +77,9 @@ async function onStartup() {
   await views.createTextTagsColumn()
   await views.createProgressColumn()
   await views.createIFColumn()
+  // await views.createForceGraph()
   views.registerSwitchColumnsViewUI()
+
   try {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
     //@ts-ignore
@@ -124,9 +129,9 @@ async function onStartup() {
         let items = ZoteroPane.getSelectedItems()
         return items.length == 1 && items[0].getField("title") == "ZoteroStyle"
       },
-      callback: async () => {
+      callback: async (prompt) => {
         // 迁移数据逻辑
-        const tipNode = Zotero._Prompt.showTip("感谢您长时间对Style的支持，数据正在迁移中，请耐心等待！")
+        const tipNode = prompt.showTip("感谢您长时间对Style的支持，数据正在迁移中，请耐心等待！")
         tipNode.style.position = "relative"
         let progress = ztoolkit.UI.createElement(
           document,
@@ -176,12 +181,12 @@ async function onStartup() {
             }
           } catch {}
           progress.style.width = `${i/ids.length*100}%`
-          Zotero._Prompt.inputNode.value = `[Pending] ${i}/${ids.length}`
+          prompt.inputNode.value = `[Pending] ${i}/${ids.length}`
           await Zotero.Promise.delay(10)
         }
-        Zotero._Prompt.inputNode.value = ""
-        Zotero._Prompt.exit()
-        Zotero._Prompt.showTip(
+        prompt.inputNode.value = ""
+        prompt.exit()
+        prompt.showTip(
           `数据迁移完成，新的一年和Style一起出发吧！\n\n` +
           `从安装Style开始，它与您共同阅读了${ids.length}篇文献，总用时${(totalTime / 60 / 60).toFixed(2)}小时。\n\n` +
           `你走过的路，每一步都算数。`
@@ -236,8 +241,9 @@ async function onStartup() {
           const parser = new window.DOMParser()
           const table = parser.parseFromString(`<div class="command">${tableString}</div>`, "text/html")
           const container = prompt.createCommandsContainer()
-          container.appendChild(table.body.firstChild)
+          container.appendChild(table.body.firstChild!)
         }
+        // @ts-ignore
         prompt.promptNode.addEventListener("keyup", (event) => {
           if (event.key == "Escape") {
             styles.forEach(e=>e.remove())
@@ -450,15 +456,15 @@ async function onStartup() {
         let record = addonItem.get(item, "readingTime")
         return record?.data && Object.keys(record.data).length > 0
       },
-      callback: () => {
+      callback: (prompt) => {
         let item = getItem() as _ZoteroItem
-        Zotero._Prompt.inputNode.placeholder = item.getField("title")
+        prompt.inputNode.placeholder = item.getField("title")
         try {          
           let record = addonItem.get(item, "readingTime")
           record.data = {}
           addonItem.set(item, "readingTime", record)
         } catch {}
-        Zotero._Prompt.showTip("重置成功")
+        prompt.showTip("重置成功")
       }
     },
     {
