@@ -6,6 +6,7 @@
 
 ![image](https://user-images.githubusercontent.com/51939531/214063018-ee5972b6-ceef-4cf6-a25a-635e67bc3fa4.png)
 
+![image](https://user-images.githubusercontent.com/51939531/214242790-6b9d8c79-849a-4ad2-bec1-ad8e3dfdc163.png)
 
 # Zotero Style
 > 做一些简单的可视化，让你的Zotero面板看起来更有趣
