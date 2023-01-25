@@ -104,6 +104,20 @@ zoterostyle.progressColumn.opacity = "0.7"
 zoterostyle.progressColumn.circle = true
 ```
 
+## 关系图谱
+> 完全借助Obsidian源代码进行渲染
+
+在[这里](https://forum.obsidian.md/tag/graph-view)，很多用户对Obsidian的关系图谱功能提了许多意见，这是一个强大的功能。
+现在以及未来一段时间，这个功能不会向着`炫酷`的方面开发，而是实用。以我个人之力，无法1:1完全复原你在Obsidian上的使用体验，他只是一个**辅助**。
+
+Zotero有`关联文献`功能，那么可视化是必然的，它可以帮助我们文献库有一个整体的把握，也在促进你多多对文献进行关联。
+
+我先后试过好几种方案，目前绘制关系图谱的工具分两种，一种渲染在canvas上（pixi库，Obsidian目前方案），一种是svg（d3库，Obsidian早期方案）。在性能上canvas是最好的，svg面对大量数据会很卡。
+
+![image](https://user-images.githubusercontent.com/51939531/214501487-5cbc8a20-46dd-47f1-a430-9491c4752d61.png)
+
+当然，你不喜欢这个功能可以`Shift+P`将其关闭。
+
 
 ## 视图组功能
 ![image](https://user-images.githubusercontent.com/51939531/211489602-5081d55f-cdd2-4df1-9e26-2038a0a91b6f.png)
