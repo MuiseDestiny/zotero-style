@@ -1,4 +1,5 @@
 pref("extensions.zotero.__addonRef__.enable", true);
+pref("extensions.zotero.__addonRef__.graphView.enable", true);
 
 pref("extensions.zotero.__addonRef__.tagsColumn.align", "left");
 pref("extensions.zotero.__addonRef__.tagsColumn.margin", "0.35");

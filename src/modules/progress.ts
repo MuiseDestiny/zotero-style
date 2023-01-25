@@ -104,8 +104,8 @@ export default class Progress {
     const [red, green, blue] = this.getRGB(color)
     paper.path(polygon).attr({
       stroke: "transparent",
-      fill: `90-rgba(255, 255, 255, 0)-rgba(${red}, ${green}, ${blue}, 0.8)`,
-      opacity: 0
+      // fill: `90-rgba(255, 255, 255, 0)-rgba(${red}, ${green}, ${blue}, 0.8)`,
+      fill: `rgba(${red}, ${green}, ${blue}, 0.8)`,
     })
     paper.path(line).attr({
       stroke: `rgba(${red}, ${green}, ${blue}, 1)`,
