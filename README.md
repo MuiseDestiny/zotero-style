@@ -122,6 +122,10 @@ Zotero有`关联文献`功能，那么可视化是必然的，也是刚需的，
 
 当然，你不喜欢这个功能可以`Shift+P`将其关闭。
 
+建议配合[zotero-pdf-preview](https://github.com/windingwind/zotero-pdf-preview)
+
+![image](https://user-images.githubusercontent.com/51939531/214523710-80967ec7-6ef5-45e0-85c8-1f5c6a1536aa.png)
+
 
 ## 视图组功能
 ![image](https://user-images.githubusercontent.com/51939531/211489602-5081d55f-cdd2-4df1-9e26-2038a0a91b6f.png)
