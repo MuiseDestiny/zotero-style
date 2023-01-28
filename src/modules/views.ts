@@ -48,15 +48,15 @@ export default class Views {
       (index: number, data: string, column: any, original: Function) => {
         const cellSpan = original(index, data, column) as HTMLSpanElement;
         let titleSpan = cellSpan.querySelector(".cell-text") as HTMLSpanElement;
-        const title = titleSpan.innerText
-        titleSpan.innerText = ""
+        const titleHTML = titleSpan.innerHTML
+        titleSpan.innerHTML = ""
         const span = ztoolkit.UI.createElement(
           document,
           "span",
           {
             id: "title",
             properties: {
-              innerText: title
+              innerHTML: titleHTML
             }
           })
         titleSpan.appendChild(span)
@@ -539,8 +539,8 @@ export default class Views {
         let columnsView = columnsViews[i]
         const r: number = .7
         const color = {
-          active: "#fd91a6",
-          default: "#7f7f88"
+          active: "#FF597B",
+          default: "#97DECE"
         }
         let optionNode = switchContainer.appendChild(
           ztoolkit.UI.createElement(
