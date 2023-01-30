@@ -17,58 +17,11 @@ async function onStartup() {
     Zotero.uiReadyPromise,
   ]);
   initLocale();
-  // const popupWin = ztoolkit.Tool.createProgressWindow(config.addonName, {
-  //   closeOnClick: true,
-  //   closeTime: -1,
-  // })
-  //   .createLine({
-  //     text: getString("startup.begin"),
-  //     type: "default",
-  //     progress: 0,
-  //   })
-  //   .show();
 
-  // BasicExampleFactory.registerPrefs();
-
-  // BasicExampleFactory.registerNotifier();
-
-  // await Zotero.Promise.delay(1000);
-  // popupWin.changeLine({
-  //   progress: 30,
-  //   text: `[30%] ${getString("startup.begin")}`,
-  // });
-
-  // UIExampleFactory.registerStyleSheet();
-
-  // UIExampleFactory.registerRightClickMenuItem();
-
-  // UIExampleFactory.registerRightClickMenuPopup();
-
-  // UIExampleFactory.registerWindowMenuWithSeprator();
-
-  // await UIExampleFactory.registerExtraColumn();
-
-  // await UIExampleFactory.registerExtraColumnWithCustomCell();
-
-  // await UIExampleFactory.registerCustomCellRenderer();
-
-  // UIExampleFactory.registerLibraryTabPanel();
-
-  // await UIExampleFactory.registerReaderTabPanel();
-
-  // await Zotero.Promise.delay(1000);
-
-  // popupWin.changeLine({
-  //   progress: 100,
-  //   text: `[100%] ${getString("startup.finish")}`,
-  // });
-  // popupWin.startCloseTimer(5000);
-  
-  // return
   ztoolkit.UI.basicOptions.ui.enableElementRecord = false
   ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
 
-  if (!addonItem.item) { await addonItem.init() }
+  if (!addonItem.item) { await addonItem.init()  }
 
   const views = new Views(addonItem)
   await views.renderTitleProgress()
@@ -76,6 +29,7 @@ async function onStartup() {
   await views.createTextTagsColumn()
   await views.createProgressColumn()
   await views.createIFColumn()
+  // await views.createRatingColumn()
   let createForceGraph = views.createForceGraph()
   views.registerSwitchColumnsViewUI()
   await views.registerCommands()
@@ -104,17 +58,14 @@ async function onStartup() {
     },
     false
   );
-
-
   await createForceGraph
-
 }
 
 function onShutdown(): void {
   ztoolkit.log("zotero style onShutdown")
   ztoolkit.unregisterAll()
-  ztoolkit.UI.unregisterAll()
-  ztoolkit.ItemTree.unregisterAll()
+  // ztoolkit.UI.unregisterAll()
+  // ztoolkit.ItemTree.unregisterAll()
 
   // Remove addon object
   addon.data.alive = false;

@@ -1,7 +1,7 @@
 {
   "name": "zotero-style",
-  "version": "2.0.5",
-  "description": "Zotero Style",
+  "version": "2.0.6",
+  "description": "让你的Zotero看起来更有趣",
   "config": {
     "addonName": "Zotero Style",
     "addonID": "zoterostyle@polygon.org",
@@ -37,7 +37,7 @@
     "raphael": "^2.3.0",
     "runes": "^0.4.3",
     "three": "^0.148.0",
-    "zotero-plugin-toolkit": "^1.0.4"
+    "zotero-plugin-toolkit": "^1.1.2"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

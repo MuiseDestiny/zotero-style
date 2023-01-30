@@ -3,9 +3,7 @@ import AddonItem from "./item";
 import Progress from "./progress";
 import Requests from "./requests";
 import { getString, initLocale } from "./locale";
-
-import { ZoteroToolkit } from "E:/Github/zotero-plugin-toolkit/dist"
-import { Command, Prompt } from "../../zotero-plugin-toolkit/dist/managers/prompt";
+import { Command } from "zotero-plugin-toolkit/dist/managers/prompt";
 
 export default class Views {
   private progress: Progress;
@@ -75,7 +73,7 @@ export default class Views {
         // @ts-ignore
         titleSpan.firstChild.style.marginLeft = ".3em"
 
-        const item = ZoteroPane.getSortedItems()[index]
+        const item = ZoteroPane.itemsView.getRow(index).ref
         let record: Record = this.addonItem.get(item, "readingTime") as Record
         if(!record) { return cellSpan }
         let values = []
@@ -249,30 +247,41 @@ export default class Views {
       {
         renderCellHook(index, data, column) {
           let getTagSpan = (tag: string, color: string) => {
-            let tagSpan = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
             color = color || "#FF8787"
-            // @ts-ignore
-            tagSpan.style = `
-              background-color: ${color || "#FF8787"};
-              height: 1.5em;
-              line-height: 1.5em;
-              padding: 0 .5em;
-              color: white;
-              display: inline-block;
-              border-radius: 3px;
-              margin: 0 .2em;
-            `
-            tagSpan.innerText = tag;
+            let [red, green, blue] = (new Progress()).getRGB(color)
+            let opacity = parseFloat(
+              Zotero.Prefs.get(
+                `${config.addonRef}.text${key}Column.opacity`
+              ) as string
+            )
+            let tagSpan = ztoolkit.UI.createElement(document, "span", {
+              namespace: "html",
+              styles: {
+                backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
+                height: "1.5em",
+                lineHeight: "1.5em",
+                padding: "0 .5em",
+                color: "black",
+                display: "inline-block",
+                borderRadius: "3px",
+                margin: "0.2em"
+              },
+              properties: {
+                innerText: tag
+              }
+            }) as HTMLSpanElement
             return tagSpan
           }
-          const tagSpans = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
-          // @ts-ignore
-          tagSpans.style = `
-            display: felx;
-            flex-direction: row;
-            justify-content: start;
-            align-items: center;
-          `
+          const tagSpans = ztoolkit.UI.createElement(document, "span", {
+            namespace: "html",
+            styles: {
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "start",
+              alignItems: "center",
+              height: "20px"
+            }
+          }) as HTMLSpanElement
           if (!data) { return tagSpans }
           let tags: { tag: string, color: string }[] = JSON.parse(data)
           tags.forEach(tagObj => {
@@ -285,6 +294,17 @@ export default class Views {
         },
       }
     );
+    this.patchSetting(
+      "Text" + key,
+      [
+        {
+          prefKey: "textTagsColumn.opacity",
+          name: "Opacity",
+          type: "range",
+          range: [0, 1, 0.01]
+        }
+      ]
+    )
   }
 
   /**
@@ -317,7 +337,7 @@ export default class Views {
             }
           }) as HTMLSpanElement
           
-          let item = ZoteroPane.getSortedItems()[index]
+          let item = ZoteroPane.itemsView.getRow(index).ref
           let page: number
           try {
             page = Number(this.addonItem.get(item, "readingTime").page)
@@ -483,6 +503,49 @@ export default class Views {
         }
       ]
     )
+  }
+
+  /**
+   * 模仿Endnote评级
+   */
+  public async createRatingColumn() {
+    const key = "Rating"
+    await ztoolkit.ItemTree.register(
+      key,
+      getString(`column.${key}`),
+      (
+        field: string,
+        unformatted: boolean,
+        includeBaseMapped: boolean,
+        item: Zotero.Item
+      ) => {
+        const publicationTitle = item.getField("publicationTitle")
+        if (!(publicationTitle && publicationTitle != "")) { return "-1" }
+        let sciif = ztoolkit.ExtraField.getExtraField(item, "sciif")
+        if (sciif) {
+          return sciif
+        }
+        const rating = ztoolkit.ExtraField.getExtraField(item, "Rating")
+        return rating ? rating : "0"
+      },
+      {
+        renderCellHook: (index: any, data: any, column: any) => {
+          const rating = Number(data)
+          const span = ztoolkit.UI.createElement(document, "button", {
+            namespace: "html",
+            styles: {
+              display: "inline-block",
+              height: "20px",
+              width: "100%",
+              zIndex: "999"
+            }
+          }) as HTMLSpanElement
+          span.addEventListener('mousedown', event => event.stopPropagation());
+          span.addEventListener('mouseup', event => console.log("OKKK"));
+          return span
+        },
+      }
+    );
   }
 
   /**
@@ -1523,7 +1586,7 @@ export default class Views {
       let graph: { [key: string]: any } = { nodes }
       items.forEach((item, i) => {
         let id = getItemGraphID(item)
-        nodes[id] = { links: {}, type: item.getID() }
+        nodes[id] = { links: {}, type: item.id }
         const relatedKeys = item.relatedItems
         items
           .forEach((_item, _i) => {
@@ -1641,7 +1704,6 @@ export default class Views {
    */
   public async registerCommands() {
     // Prompt
-    const tool = new ZoteroToolkit()
     // 旧版数据迁移
     let getItem = () => {
       let readingItem = Zotero.Items.get(
@@ -1657,7 +1719,7 @@ export default class Views {
       let tags = item.getTags().filter((tag: any) => coloredTags.map((tag: any) => tag.tag).indexOf(tag.tag) == -1)
       return [...coloredTags, ...tags]
     }
-    tool.Prompt.register([
+    ztoolkit.Prompt.register([
       {
         name: "关系图谱",
         label: "Style",
@@ -2077,7 +2139,7 @@ export default class Views {
         }
       })
     }
-    tool.Prompt.register(commands)
+    ztoolkit.Prompt.register(commands)
 
     // 注册Prefs
     const branch = "extensions.zotero"
