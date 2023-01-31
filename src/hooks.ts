@@ -1,7 +1,6 @@
 import { BasicExampleFactory, UIExampleFactory } from "./modules/examples";
 import { config } from "../package.json";
 import { getString, initLocale } from "./modules/locale";
-import { registerPrefsScripts } from "./modules/preferenceScript";
 import Views from "./modules/views"; 
 import Events from "./modules/events";
 import AddonItem from "./modules/item";
@@ -64,8 +63,8 @@ async function onStartup() {
 function onShutdown(): void {
   ztoolkit.log("zotero style onShutdown")
   ztoolkit.unregisterAll()
-  // ztoolkit.UI.unregisterAll()
-  // ztoolkit.ItemTree.unregisterAll()
+  ztoolkit.UI.unregisterAll()
+  ztoolkit.ItemTree.unregisterAll()
 
   // Remove addon object
   addon.data.alive = false;
@@ -103,21 +102,6 @@ async function onNotify(
   }
 }
 
-/**
- * This function is just an example of dispatcher for Preference UI events.
- * Any operations should be placed in a function to keep this funcion clear.
- * @param type event type
- * @param data event data
- */
-async function onPrefsEvent(type: string, data: { [key: string]: any }) {
-  switch (type) {
-    case "load":
-      registerPrefsScripts(data.window);
-      break;
-    default:
-      return;
-  }
-}
 
 // Add your hooks here. For element click, etc.
 // Keep in mind hooks only do dispatch. Don't add code that does real jobs in hooks.
@@ -126,6 +110,5 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
 export default {
   onStartup,
   onShutdown,
-  onNotify,
-  onPrefsEvent,
+  onNotify
 };

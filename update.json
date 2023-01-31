@@ -3,7 +3,7 @@
     "zoterostyle@polygon.org": {
       "updates": [
         {
-          "version": "2.0.6",
+          "version": "2.0.7",
           "update_link": "https://github.com/muisedestiny/zotero-style/releases/latest/download/zotero-style.xpi",
           "applications": {
             "gecko": {
@@ -12,7 +12,7 @@
           }
         },
         {
-          "version": "2.0.6",
+          "version": "2.0.7",
           "update_link": "https://github.com/muisedestiny/zotero-style/releases/latest/download/zotero-style.xpi",
           "applications": {
             "zotero": {

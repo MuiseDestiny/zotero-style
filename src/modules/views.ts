@@ -482,6 +482,7 @@ export default class Views {
         },
       }
     );
+
     this.patchSetting(
       key,
       [
@@ -699,12 +700,16 @@ export default class Views {
     )
     
     // menu UI
+    const sign = "zoterostyle-registerSwitchColumnsViewUI"
+    if (ZoteroPane.itemsView[sign]) { return }
     ztoolkit.patch(
       ZoteroPane.itemsView,
       "_displayColumnPickerMenu",
-      "zoterostyle-registerSwitchColumnsViewUI",
+      sign,
       (original) =>
-        function() {
+        function () {
+          original.apply(ZoteroPane.itemsView, arguments);
+          if (!Zotero.ZoteroStyle) { return }
           let sort = (columnsViews: ColumnsView[]) => {
             return columnsViews.sort((a: ColumnsView, b: ColumnsView) => Number(a.position) - Number(b.position))
           }
@@ -828,9 +833,7 @@ export default class Views {
             colViewPopup.appendChild(saveMenuItem)
           }
           const ns = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-          // @ts-ignore
-          original.apply(ZoteroPane.itemsView, arguments);
-          const menupopup = document.querySelector("#zotero-column-picker")!
+          const menupopup = [...document.querySelectorAll("#zotero-column-picker")].slice(-1)[0]
           // 分割线
           let sep = document.createElementNS(ns, "menuseparator");
           menupopup.appendChild(sep);
@@ -895,6 +898,7 @@ export default class Views {
           menupopup.appendChild(colViewPrimaryMenu)
         }
     )
+    ZoteroPane.itemsView[sign] = true
   }
 
   /**
@@ -906,15 +910,18 @@ export default class Views {
     colKey: string,
     args: { prefKey: string, name: string, type: string, range?: number[], values?: string[] }[]
   ) {
+    const sign = `zoterostyle-setting-${colKey}`
+    if (ZoteroPane.itemsView[sign]) { return }
     ztoolkit.patch(
       ZoteroPane.itemsView,
       "_displayColumnPickerMenu",
-      `zoterostyle-setting-${colKey}`,
+      sign,
       (original) =>
         function () {
           // @ts-ignore
           original.apply(ZoteroPane.itemsView, arguments);
-          const menupopup = document.querySelector("#zotero-column-picker")!
+          if (!Zotero.ZoteroStyle) { return }
+          const menupopup = [...document.querySelectorAll("#zotero-column-picker")].slice(-1)[0]
           let left = menupopup.getBoundingClientRect().left
           let rect
           try {
@@ -1157,6 +1164,7 @@ export default class Views {
           }
         }
     )
+    ZoteroPane.itemsView[sign] = true
   }
 
   /**
