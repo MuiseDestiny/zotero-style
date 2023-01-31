@@ -241,8 +241,9 @@ export default class Views {
         item: Zotero.Item
       ) => {
         let coloredTags = item.getColoredTags()
-        let tags = item.getTags().filter(tag => coloredTags.map((tag: any)=>tag.tag).indexOf(tag.tag) == -1)
-        return coloredTags.length > 0 ? JSON.stringify([...coloredTags, ...tags]) : "";
+        let tags = item.getTags().filter(tag => coloredTags.map((tag: any) => tag.tag).indexOf(tag.tag) == -1)
+        tags = [...coloredTags, ...tags]
+        return tags.length > 0 ? JSON.stringify(tags) : "";
       },
       {
         renderCellHook(index, data, column) {
