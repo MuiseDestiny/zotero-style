@@ -127,37 +127,11 @@ Zotero有`关联文献`功能，那么可视化是必然的，也是刚需的，
 ![image](https://user-images.githubusercontent.com/51939531/214523710-80967ec7-6ef5-45e0-85c8-1f5c6a1536aa.png)
 
 
-## 视图组功能
-![image](https://user-images.githubusercontent.com/51939531/211489602-5081d55f-cdd2-4df1-9e26-2038a0a91b6f.png)
+## 视图组功能 
+
+![视图组](https://user-images.githubusercontent.com/51939531/215951572-d30c030d-1376-45fd-adbf-fbb3d7426469.gif)
+
 借助这个功能，你可以从`Zotero`众多字段中任意组合出你经常浏览的视图。
-
-下面跟着我来新建一个视图吧：
-第一步，右键任意列，勾选或取消勾选你需要显示或不需要显示的列，
-
-![image](https://user-images.githubusercontent.com/51939531/211495084-34cf2702-72b1-41e8-a606-569177194b5e.png)
-
-第二步，仍然是右键任意列，鼠标移动到最后一个选项`视图组`，点击最后一个按钮`新增视图`，
-
-![image](https://user-images.githubusercontent.com/51939531/212251408-d8ca84d6-d831-460e-a1fe-4dba629ada78.png)
-
-不出意外的话，会有一个弹窗出现，
-
-![image](https://user-images.githubusercontent.com/51939531/212251522-e9963319-b1a2-43b8-9159-5cf24546a00e.png)
-
-在这里你可以为当前视图起一个名字，指派它的优先排列位置，做一些备注，比如下面这样，
-
-![image](https://user-images.githubusercontent.com/51939531/212251686-1606edce-31a2-4db1-88c1-d71cc0198f10.png)
-
-点击添加后，这里会显示出当前所有视图按钮，并一会自动消失。
-
-![image](https://user-images.githubusercontent.com/51939531/212252957-1c4071fd-023d-480f-a0c0-6d82acccdcd5.png)
-
-到此，你已经成功添加了一个视图到视图组中。
-
-你可以通过那些一闪而过的小圆点里切换它们，鼠标悬停会为你提示你刚写的名称和备注。你不找小圆点（鼠标不靠近它），小圆点不会出现（避免突兀）。
-
-![image](https://user-images.githubusercontent.com/51939531/212253162-accfd330-8d97-42f7-b017-fb891d3f9b5e.png)
-
 
 **增删改**
 > 如果你当前视图没被保存，不在视图组中，就会出现`新增视图`按钮
