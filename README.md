@@ -114,7 +114,7 @@ Zotero有`关联文献`功能，那么可视化是必然的，也是刚需的，
 
 我先后试过好几种方案，目前绘制关系图谱的工具分两种，一种渲染在canvas上（pixi库，Obsidian目前方案），一种是svg（d3库，Obsidian早期方案）。在性能上canvas是最好的，svg面对大量数据会很卡。
 
-![image](https://user-images.githubusercontent.com/51939531/214501487-5cbc8a20-46dd-47f1-a430-9491c4752d61.png)
+![关系图谱](https://user-images.githubusercontent.com/51939531/215948838-ed88f7b4-dab7-4ae4-8d80-b1ed1f8e3c74.gif)
 
 在`关系图谱`中点击一个节点，会快速定位到该文献。点击任意文献，按住`Ctrl`，会快速定位到`关系图谱`中的节点。
 
