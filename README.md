@@ -67,7 +67,9 @@ zoterostyle.tagsColumn.margin = "0.35"
 ![image](https://user-images.githubusercontent.com/51939531/216234246-f60a2f8b-4134-4144-a7bf-95436c253d39.png)
 
 ### 标注
+
 > PDF标注颜色无限定义
+
 ![image](https://user-images.githubusercontent.com/51939531/216233926-78fea15c-adbc-47ea-80b0-7d5474051510.png)
 ![image](https://user-images.githubusercontent.com/51939531/216233948-1cc994cc-1657-41e0-bb28-78eb932c2d91.png)
 
