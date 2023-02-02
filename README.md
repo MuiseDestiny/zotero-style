@@ -79,6 +79,12 @@ TODO
 zoterostyle.IFColumn.color = "#A8D1D1"
 zoterostyle.IFColumn.opacity = "0.7"
 ```
+### 标注
+> PDF标注颜色无限定义
+![image](https://user-images.githubusercontent.com/51939531/216233926-78fea15c-adbc-47ea-80b0-7d5474051510.png)
+![image](https://user-images.githubusercontent.com/51939531/216233948-1cc994cc-1657-41e0-bb28-78eb932c2d91.png)
+
+吐槽一下：这个功能Zotero应该自己实现的。
 
 ### 进度
 
