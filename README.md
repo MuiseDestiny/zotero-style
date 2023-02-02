@@ -61,10 +61,17 @@ zoterostyle.tagsColumn.margin = "0.35"
 ```
 
 ### #标签
-标签里以`#`开头的标签，会以文字标签形式展现到这一列。
-Notion里有这种标签，目前没想到它的应用场景，但是先做出来了。
 
-开发中...
+标签里以`#`开头的标签，会以文字标签形式展现到这一列。
+经常在`其它/Extra`做一些标注的同学可以试试这个#标签，以后`其它/Extra`会被各种插件使用，用于存储数据，所以在#标签下做备注相对安全。
+![image](https://user-images.githubusercontent.com/51939531/216234246-f60a2f8b-4134-4144-a7bf-95436c253d39.png)
+
+### 标注
+> PDF标注颜色无限定义
+![image](https://user-images.githubusercontent.com/51939531/216233926-78fea15c-adbc-47ea-80b0-7d5474051510.png)
+![image](https://user-images.githubusercontent.com/51939531/216233948-1cc994cc-1657-41e0-bb28-78eb932c2d91.png)
+
+吐槽一下：这个功能Zotero应该自己实现的。
 
 ### 影响因子
 
@@ -79,12 +86,6 @@ TODO
 zoterostyle.IFColumn.color = "#A8D1D1"
 zoterostyle.IFColumn.opacity = "0.7"
 ```
-### 标注
-> PDF标注颜色无限定义
-![image](https://user-images.githubusercontent.com/51939531/216233926-78fea15c-adbc-47ea-80b0-7d5474051510.png)
-![image](https://user-images.githubusercontent.com/51939531/216233948-1cc994cc-1657-41e0-bb28-78eb932c2d91.png)
-
-吐槽一下：这个功能Zotero应该自己实现的。
 
 ### 进度
 
