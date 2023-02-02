@@ -1,5 +1,6 @@
 # Zotero Style
 > 做一些简单的可视化，让你的Zotero面板看起来更有趣
+> 
 > 你的Zotero应该有自己的Style
 
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
@@ -19,12 +20,8 @@
 
 新版本去除了`Shift+P`的设置，取而代之的是更直观的设置弹窗；没有了`>`按钮，取而代之的是`视图组`，视图组的功能包含`>`的全部功能。
 
-新的一年跟着`Zotero Style`从新出发吧。
-
-TODO
-- [x] 数据迁移，老版本数据通过shift+p调出命令面板执行迁移
-
 ## 字段
+
 新增了一些可视化字段，style最初只可视化了标题进度条，新版本将赋予style更广泛的含义
 
 在此感谢[@windingwind](https://github.com/MuiseDestiny/zotero-plugin-toolkit)开发的工具箱，有了工具箱style的一些奇思妙想才得以实现
