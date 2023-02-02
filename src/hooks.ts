@@ -10,6 +10,19 @@ const addonItem = Zotero._AddonItemGlobal
 
 
 async function onStartup() {
+  // Register the callback in Zotero as an item observer
+  const notifierID = Zotero.Notifier.registerObserver(
+    { notify: onNotify },
+    ["tab"]
+  );
+  // Unregister callback when the window closes (important to avoid a memory leak)
+  window.addEventListener(
+    "unload",
+    (e: Event) => {
+      Zotero.Notifier.unregisterObserver(notifierID);
+    },
+    false
+  );
   await Promise.all([
     Zotero.initializationPromise,
     Zotero.unlockPromise,
@@ -23,6 +36,7 @@ async function onStartup() {
   if (!addonItem.item) { await addonItem.init()  }
 
   const views = new Views(addonItem)
+  Zotero.ZoteroStyle.data.views = views
   await views.renderTitleProgress()
   await views.createTagsColumn()
   await views.createTextTagsColumn()
@@ -33,7 +47,6 @@ async function onStartup() {
   views.registerSwitchColumnsViewUI()
   await views.registerCommands()
 
-
   try {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
     //@ts-ignore
@@ -42,22 +55,7 @@ async function onStartup() {
 
   const events = new Events(addonItem)
   events.onInit()
-
-  // Register the callback in Zotero as an item observer
-  const notifierID = Zotero.Notifier.registerObserver(
-    { notify: onNotify },
-    [ "tab" ]
-  );
-
-  // Unregister callback when the window closes (important to avoid a memory leak)
-  window.addEventListener(
-    "unload",
-    (e: Event) => {
-      Zotero.Notifier.unregisterObserver(notifierID);
-    },
-    false
-  );
-  await createForceGraph
+  await createForceGraph;
 }
 
 function onShutdown(): void {
@@ -78,19 +76,21 @@ async function onNotify(
   extraData: { [key: string]: any }
 ) {
   // You can add your code to the corresponding notify type
-  ztoolkit.log("notify", event, type, ids, extraData);
+  console.log("notify", event, type, ids, extraData);
   if (
     event == "select" &&
     type == "tab" &&
     extraData[ids[0]].type == "reader"
   ) {
-    let reader = Zotero.Reader.getByTabID(ids[0]);
+    console.log("select reader tab")
+    let reader = await ztoolkit.Reader.getReader();
     // 重置等待更新
     addonItem.set(
       (Zotero.Items.get(reader.itemID) as _ZoteroItem).parentItem as _ZoteroItem,
       "annotationNumber",
       ""
     )
+    Zotero.ZoteroStyle.data.views.modifyAnnotationColors(reader);
   } else if (
     event == "select" &&
     type == "tab" &&
@@ -101,11 +101,6 @@ async function onNotify(
     return;
   }
 }
-
-
-// Add your hooks here. For element click, etc.
-// Keep in mind hooks only do dispatch. Don't add code that does real jobs in hooks.
-// Otherwise the code would be hard to read and maintian.
 
 export default {
   onStartup,

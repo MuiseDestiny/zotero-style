@@ -3,7 +3,7 @@ import AddonItem from "./item";
 import Progress from "./progress";
 import Requests from "./requests";
 import { getString, initLocale } from "./locale";
-import { Command } from "zotero-plugin-toolkit/dist/managers/prompt";
+import { Command, Prompt } from "E:/Github/zotero-plugin-toolkit/dist/managers/prompt";
 
 export default class Views {
   private progress: Progress;
@@ -462,7 +462,7 @@ export default class Views {
           //   let span = this.cache[cacheKey].cloneNode(true)
           //   return span
           // }
-          const span = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
+          const span = ztoolkit.UI.createElement(document, "span") as HTMLSpanElement
           let value = Number(data)
           if (value == -1) { return span }
           let progressNode = (new Progress()).linePercent(
@@ -1014,6 +1014,7 @@ export default class Views {
               )
               // 控制
               let prefValue = Zotero.Prefs.get(`${config.addonRef}.${arg.prefKey}`)
+              console.log(`${config.addonRef}.${arg.prefKey}`, prefValue )
               let id = arg.prefKey.replace(/\./g, "-")
               let vbox = element.querySelector("#control") as XUL.Box
               const width = "10em"
@@ -1811,7 +1812,7 @@ export default class Views {
           prompt.inputNode.value = ""
           prompt.exit()
           prompt.showTip(
-            `数据迁移完成，新的一年和Style一起出发吧！\n\n` +
+            `数据迁移完成!\n\n` +
             `从安装Style开始，它与您共同阅读了${ids.length}篇文献，总用时${(totalTime / 60 / 60).toFixed(2)}小时。\n\n` +
             `你走过的路，每一步都算数。`
           )
@@ -2026,6 +2027,122 @@ export default class Views {
         }
       },
       {
+        name: "标注",
+        label: "Style",
+        callback: (prompt: Prompt) => {
+          const container = prompt.createCommandsContainer()
+          const inputStyles = {
+            height: "2em",
+            border: "1px solid #eee",
+            borderRadius: ".1em",
+            paddingLeft: "0.5em"
+          }
+          let set = () => {
+            let flags: boolean[] = []
+            let annotationColors: [string, string][] = []
+            container.querySelectorAll(".command").forEach((line) => {
+              const name = (line.querySelector("#name") as HTMLInputElement).value
+              const color = (line.querySelector("#color") as HTMLInputElement).value
+              flags.push(/^#(\w{3}|\w{6})$/i.test(color))
+              annotationColors.push([name, color])
+            })
+            if (flags.every(e => e)) {
+              Zotero.Prefs.set(`${config.addonRef}.annotationColors`, JSON.stringify(annotationColors))
+            }
+            // TODO: reload PDF
+            window.setTimeout(async () => {
+              this.modifyAnnotationColors(await ztoolkit.Reader.getReader())
+            })
+          }
+          const annotationColors = JSON.parse(Zotero.Prefs.get(`${config.addonRef}.annotationColors`) as string)
+          annotationColors.forEach((color: [string, string]) => {
+            const line = ztoolkit.UI.createElement(
+              document,
+              "div",
+              {
+                classList: ["command"],
+                styles: {
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-around",
+                  alignItems: "center",
+                  width: "100%",
+                },
+                children: [
+                  {
+                    tag: "span",
+                    id: "circle",
+                    styles: {
+                      display: "inline-block",
+                      height: ".7em",
+                      width: ".7em",
+                      borderRadius: ".1em",
+                      backgroundColor: color[1] as string,
+                    }
+                  },
+                  {
+                    tag: "div",
+                    children: [
+                      {
+                        tag: "input",
+                        id: "name",
+                        styles: inputStyles,
+                        properties: {
+                          value: color[0],
+                          placeholder: "名称"
+                        },
+                        listeners: [
+                          {
+                            type: "change",
+                            listener: () => {
+                              set();
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    tag: "div",
+                    styles: {
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center"
+                    },
+                    children: [
+                      {
+                        tag: "input",
+                        id: "color",
+                        styles: inputStyles,
+                        properties: {
+                          value: color[1],
+                          placeholder: "颜色"
+                        },
+                        listeners: [
+                          {
+                            type: "change",
+                            listener: () => {
+                              ztoolkit.log((line.querySelector("#circle")! as HTMLElement)
+                                .style.backgroundColor);
+                              (line.querySelector("#circle")! as HTMLElement)
+                                .style.backgroundColor = (line.querySelector("#color")! as HTMLInputElement).value
+                              ztoolkit.log((line.querySelector("#circle")! as HTMLElement)
+                                .style.backgroundColor);
+                              set();
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                ]
+              }
+            )
+            container.appendChild(line)
+          })
+        }
+      },
+      {
         name: "查看阅读进度",
         label: "Style",
         when: () => {
@@ -2136,19 +2253,23 @@ export default class Views {
       key_find: "查找",
       key_findAgain: "查找下一个",
       key_findPrevious: "查找上一个",
+      key_pdf_preview: "开启/关闭PDF预览",
+      "zoteropdftranslate-translateKey": "翻译标题"
     }
     for (let keyOptions of ztoolkit.Shortcut.getAll()) {
       if (keyOptions.type != "element") { continue }
-      commands.push({
-        // @ts-ignore
-        name: en2zh[keyOptions.id] || keyOptions.id,
-        label: getLable(keyOptions),
-        callback: async () => {
-          await keyOptions.callback(keyOptions)
-        }
-      })
+      if (keyOptions.id in en2zh) {
+        commands.push({
+          // @ts-ignore
+          name: en2zh[keyOptions.id] || keyOptions.id,
+          label: getLable(keyOptions),
+          callback: async () => {
+            await keyOptions.callback()
+          }
+        })
+      }
     }
-    ztoolkit.Prompt.register(commands)
+    // ztoolkit.Prompt.register(commands)
 
     // 注册Prefs
     const branch = "extensions.zotero"
@@ -2164,7 +2285,53 @@ export default class Views {
         }
       })
     }
-    // tool.Prompt.register(commands)
+    // ztoolkit.Prompt.register(commands)
+  }
+
+  public modifyAnnotationColors(reader: _ZoteroReaderInstance) {
+    // @ts-ignore
+    let win = reader._iframeWindow.wrappedJSObject;
+    var Zotero = ztoolkit.getGlobal("Zotero")
+    if (!win.document.querySelector(`script#${config.addonRef}`)) {
+      let script = ztoolkit.UI.createElement(win.document, "script", {
+        ignoreIfExists: true,
+        namespace: "html",
+        id: config.addonRef,
+        properties: {
+          innerHTML: `
+            let map = window.map ? window.map : Array.prototype.map
+            Array.prototype.map = function (func) {
+              try {
+                let annotationColors = this
+                if (
+                  annotationColors.length > 0 &&
+                  annotationColors.every(e=>e.length==2 && e[1].startsWith("#"))
+                ) {
+                  console.log(window._annotationColors);
+                  annotationColors.length = window._annotationColors.length;
+                  for (let i = 0; i < window._annotationColors.length;i++) {
+                    annotationColors[i][0] = window._annotationColors[i][0]
+                    annotationColors[i][1] = window._annotationColors[i][1]
+                  }
+                }
+              } catch (e) {console.log(e)}
+              return map.call(this, func);
+            }
+          `
+        }
+      })
+      win.document.querySelector("head")?.appendChild(script)
+    }
+    const annotationColors = Zotero.Prefs.get(`${config.addonRef}.annotationColors`)
+    let script = ztoolkit.UI.createElement(win.document, "script", {
+      namespace: "html",
+      properties: {
+        innerHTML: `
+          window._annotationColors = ${annotationColors}
+        `
+      }
+    })
+    win.document.querySelector("head")?.appendChild(script)
   }
   /**
    * 显示右下角消息

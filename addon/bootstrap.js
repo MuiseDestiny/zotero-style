@@ -59,10 +59,15 @@ async function waitForZotero() {
   await Zotero.initializationPromise;
 }
 
-function install(data, reason) {}
+function install(data, reason) { }
 
 async function startup({ id, version, resourceURI, rootURI }, reason) {
   await waitForZotero();
+
+  // String 'rootURI' introduced in Zotero 7
+  if (!rootURI) {
+    rootURI = resourceURI.spec;
+  }
 
   if (Zotero.platformMajorVersion >= 102) {
     var aomStartup = Components.classes[
@@ -74,11 +79,8 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
       ["locale", "__addonRef__", "en-US", rootURI + "chrome/locale/en-US/"],
       ["locale", "__addonRef__", "zh-CN", rootURI + "chrome/locale/zh-CN/"],
     ]);
-  }
-
-  // String 'rootURI' introduced in Zotero 7
-  if (!rootURI) {
-    rootURI = resourceURI.spec;
+  } else {
+    setDefaultPrefs(rootURI);
   }
 
   // Global variables for plugin code
@@ -102,7 +104,7 @@ function shutdown({ id, version, resourceURI, rootURI }, reason) {
       Components.interfaces.nsISupports
     ).wrappedJSObject;
   }
-  Zotero.ZoteroStyle.hooks.onShutdown();
+  Zotero.__addonInstance__.hooks.onShutdown();
 
   Cc["@mozilla.org/intl/stringbundle;1"]
     .getService(Components.interfaces.nsIStringBundleService)
@@ -116,4 +118,28 @@ function shutdown({ id, version, resourceURI, rootURI }, reason) {
   }
 }
 
-function uninstall(data, reason) {}
+function uninstall(data, reason) { }
+
+// Loads default preferences from defaults/preferences/prefs.js in Zotero 6
+function setDefaultPrefs(rootURI) {
+  var branch = Services.prefs.getDefaultBranch("");
+  var obj = {
+    pref(pref, value) {
+      switch (typeof value) {
+        case "boolean":
+          branch.setBoolPref(pref, value);
+          break;
+        case "string":
+          branch.setStringPref(pref, value);
+          break;
+        case "number":
+          branch.setIntPref(pref, value);
+          break;
+        default:
+          Zotero.logError(`Invalid type '${typeof value}' for pref '${pref}'`);
+      }
+    },
+  };
+  Zotero.getMainWindow().console.log(rootURI + "prefs.js");
+  Services.scriptloader.loadSubScript(rootURI + "prefs.js", obj);
+}

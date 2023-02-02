@@ -7,4 +7,4 @@ try {
   } else {
     execSync(killZoteroUnix);
   }
-} catch (e) {}
+} catch (e) { }

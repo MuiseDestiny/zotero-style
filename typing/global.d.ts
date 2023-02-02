@@ -9,7 +9,7 @@ declare const _globalThis: {
   addon: typeof addon;
 };
 
-declare const ztoolkit: import("zotero-plugin-toolkit").ZoteroToolkit;
+declare const ztoolkit: import("E:/Github/zotero-plugin-toolkit").ZoteroToolkit;
 
 declare const rootURI: string;
 
