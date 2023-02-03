@@ -72,7 +72,13 @@ export default class Views {
         }
         // @ts-ignore
         titleSpan.firstChild.style.marginLeft = ".3em"
-
+        const color = Zotero.Prefs.get(
+          `${config.addonRef}.titleColumn.color`
+        ) as string;
+        const opacity = Zotero.Prefs.get(
+            `${config.addonRef}.titleColumn.opacity`
+          ) as string
+        if (Number(opacity) == 0) { return cellSpan }
         const item = ZoteroPane.itemsView.getRow(index).ref
         let record: Record = this.addonItem.get(item, "readingTime") as Record
         if(!record) { return cellSpan }
@@ -86,12 +92,8 @@ export default class Views {
         titleSpan.style.zIndex = "1"
         let progressNode = this.progress.opacity(
           values,
-          Zotero.Prefs.get(
-            `${config.addonRef}.titleColumn.color`
-          ) as string,
-          Zotero.Prefs.get(
-            `${config.addonRef}.titleColumn.opacity`
-          ) as string,
+          color,
+          opacity,
           60
         )
         progressNode.style.top = "0"
@@ -1704,7 +1706,7 @@ export default class Views {
         if (!(items && items.length == 1)) { return }
         let item = items[0]
         let id = getItemGraphID(item)
-        frame.contentWindow!.postMessage(id, "*")
+        frame.contentWindow!.postMessage(id, frame.contentWindow!.origin)
       }
     })
   }
@@ -2044,7 +2046,7 @@ export default class Views {
               const name = (line.querySelector("#name") as HTMLInputElement).value
               const color = (line.querySelector("#color") as HTMLInputElement).value
               flags.push(/^#(\w{3}|\w{6})$/i.test(color))
-              annotationColors.push([name, color])
+              annotationColors.push([name, color.toLowerCase()])
             })
             if (flags.every(e => e)) {
               Zotero.Prefs.set(`${config.addonRef}.annotationColors`, JSON.stringify(annotationColors))
@@ -2294,7 +2296,6 @@ export default class Views {
     var Zotero = ztoolkit.getGlobal("Zotero")
     if (!win.document.querySelector(`script#${config.addonRef}`)) {
       let script = ztoolkit.UI.createElement(win.document, "script", {
-        ignoreIfExists: true,
         namespace: "html",
         id: config.addonRef,
         properties: {
@@ -2323,16 +2324,11 @@ export default class Views {
       win.document.querySelector("head")?.appendChild(script)
     }
     const annotationColors = Zotero.Prefs.get(`${config.addonRef}.annotationColors`)
-    let script = ztoolkit.UI.createElement(win.document, "script", {
-      namespace: "html",
-      properties: {
-        innerHTML: `
-          window._annotationColors = ${annotationColors}
-        `
-      }
-    })
-    win.document.querySelector("head")?.appendChild(script)
+    win.eval(`window._annotationColors = ${annotationColors}`)
+    // TODO: 初始化
+    
   }
+
   /**
    * 显示右下角消息
    * @param header 

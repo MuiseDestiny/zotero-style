@@ -4,6 +4,8 @@ import { getString, initLocale } from "./modules/locale";
 import Views from "./modules/views"; 
 import Events from "./modules/events";
 import AddonItem from "./modules/item";
+import Record from "./modules/record";
+
 Zotero._AddonItemGlobal = Zotero._AddonItemGlobal || new AddonItem()
 const addonItem = Zotero._AddonItemGlobal
 
@@ -29,6 +31,8 @@ async function onStartup() {
     Zotero.uiReadyPromise,
   ]);
   initLocale();
+
+  // Record();
 
   ztoolkit.UI.basicOptions.ui.enableElementRecord = false
   ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
