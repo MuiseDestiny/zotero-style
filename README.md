@@ -1,5 +1,7 @@
 # Zotero Style
 > 做一些简单的可视化，让你的Zotero面板看起来更有趣
+> 
+> 你的Zotero应该有自己的Style
 
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
 ![Release Date](https://img.shields.io/github/release-date/MuiseDestiny/zotero-style?color=9cf)
@@ -18,12 +20,8 @@
 
 新版本去除了`Shift+P`的设置，取而代之的是更直观的设置弹窗；没有了`>`按钮，取而代之的是`视图组`，视图组的功能包含`>`的全部功能。
 
-新的一年跟着`Zotero Style`从新出发吧。
-
-TODO
-- [x] 数据迁移，老版本数据通过shift+p调出命令面板执行迁移
-
 ## 字段
+
 新增了一些可视化字段，style最初只可视化了标题进度条，新版本将赋予style更广泛的含义
 
 在此感谢[@windingwind](https://github.com/MuiseDestiny/zotero-plugin-toolkit)开发的工具箱，有了工具箱style的一些奇思妙想才得以实现
@@ -61,10 +59,19 @@ zoterostyle.tagsColumn.margin = "0.35"
 ```
 
 ### #标签
-标签里以`#`开头的标签，会以文字标签形式展现到这一列。
-Notion里有这种标签，目前没想到它的应用场景，但是先做出来了。
 
-开发中...
+标签里以`#`开头的标签，会以文字标签形式展现到这一列。
+经常在`其它/Extra`做一些标注的同学可以试试这个#标签，以后`其它/Extra`会被各种插件使用，用于存储数据，所以在#标签下做备注相对安全。
+![image](https://user-images.githubusercontent.com/51939531/216234246-f60a2f8b-4134-4144-a7bf-95436c253d39.png)
+
+### 标注
+
+> PDF标注颜色无限定义
+
+![image](https://user-images.githubusercontent.com/51939531/216233926-78fea15c-adbc-47ea-80b0-7d5474051510.png)
+![image](https://user-images.githubusercontent.com/51939531/216233948-1cc994cc-1657-41e0-bb28-78eb932c2d91.png)
+
+吐槽一下：这个功能Zotero应该自己实现的。
 
 ### 影响因子
 
