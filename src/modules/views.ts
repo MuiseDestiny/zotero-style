@@ -249,9 +249,15 @@ export default class Views {
       },
       {
         renderCellHook(index, data, column) {
-          let getTagSpan = (tag: string, color: string) => {
-            color = color || "#FF8787"
-            let [red, green, blue] = (new Progress()).getRGB(color)
+          let getTagSpan = (tag: string, backgroundColor?: string) => {
+            const _backgroundColor = Zotero.Prefs.get(
+              `${config.addonRef}.text${key}Column.backgroundColor`
+            ) as string
+            const textColor = Zotero.Prefs.get(
+              `${config.addonRef}.text${key}Column.textColor`
+            ) as string
+            backgroundColor = backgroundColor || _backgroundColor || "#fadec9"
+            let [red, green, blue] = (new Progress()).getRGB(backgroundColor)
             let opacity = parseFloat(
               Zotero.Prefs.get(
                 `${config.addonRef}.text${key}Column.opacity`
@@ -264,7 +270,7 @@ export default class Views {
                 height: "1.5em",
                 lineHeight: "1.5em",
                 padding: "0 .5em",
-                color: "black",
+                color: textColor,
                 display: "inline-block",
                 borderRadius: "3px",
                 margin: "0.2em"
@@ -301,11 +307,22 @@ export default class Views {
       "Text" + key,
       [
         {
+          prefKey: "textTagsColumn.textColor",
+          name: "Text",
+          type: "input"
+        },
+        {
+          prefKey: "textTagsColumn.backgroundColor",
+          name: "Background",
+          type: "input"
+        },
+        {
           prefKey: "textTagsColumn.opacity",
           name: "Opacity",
           type: "range",
           range: [0, 1, 0.01]
-        }
+        },
+        
       ]
     )
   }
@@ -1019,7 +1036,7 @@ export default class Views {
               console.log(`${config.addonRef}.${arg.prefKey}`, prefValue )
               let id = arg.prefKey.replace(/\./g, "-")
               let vbox = element.querySelector("#control") as XUL.Box
-              const width = "10em"
+              const width = "90%"
               let control
               switch (arg.type) {
                 case "boolean":
@@ -1525,12 +1542,10 @@ export default class Views {
     const mainNode = document.querySelector("#item-tree-main-default")!
     const enable = Zotero.Prefs.get(`${config.addonRef}.graphView.enable`)
     const resizer = ztoolkit.UI.createElement(document, "div", {
-      classList: ["resizer"],
       id: "graph-view-resizer",
       styles: {
         width: "100%",
-        height: enable ? "3px" : "0",
-        backgroundColor: "rgba(0, 0, 0, 0.1)",
+        height: "0px",
         cursor: "ns-resize",
       }
     })
@@ -1540,8 +1555,7 @@ export default class Views {
       id: "graph-view",
       styles: {
         width: "100%",
-        height: enable ? "50%" : "0",
-        backgroundColor: "#f5f6f8",
+        height: "0px",
         position: "relative",
       }
     }) as HTMLDivElement
@@ -1549,7 +1563,6 @@ export default class Views {
     frame.style.border = "none"
     frame.style.height = "100%"
     frame.style.width = "100%"
-    frame.style.backgroundColor = "#f5f6f8"
     frame.style.opacity = "0"
     frame.style.transition = "opacity 1 linear"
     container.appendChild(frame)
@@ -1571,7 +1584,9 @@ export default class Views {
     };
     const mouseMoveHandler = function (e: any) {
       const dy = e.clientY - y;
-      container.style.height = `${h - dy}px`;
+      const height = `${h - dy}px`;
+      container.style.height = height;
+      Zotero.Prefs.set(`${config.addonRef}.graphView.height`, height)
     };
     const mouseUpHandler = function () {
       frame.style.display = ""
@@ -1649,7 +1664,7 @@ export default class Views {
                   break
                 default:
                   break
-              }              
+              }      
             });
           `
         }
@@ -1661,6 +1676,7 @@ export default class Views {
         height: 100vh;
         border-radius: 0;
         border: none;
+        padding: 0 !important;
       `
       window.addEventListener("message", (event) => {
         let key = event.data
@@ -1676,8 +1692,51 @@ export default class Views {
       break
     }
     let itemKeys: string[] = []
+    const themeColor = {
+      light: {
+        backgroundColor: "#ffffff",
+        resizerColor: "#cccccc"
+      },
+      dark: {
+        backgroundColor: "#2e3441",
+        resizerColor: "#3b4252"
+      }
+    }
+    let theme = ""
     window.setInterval(async () => {
-      if ( container.style.height == "0" ) { return }
+      if (!enable) {
+        resizer.style.height = "0px";
+        container.style.height = "0";
+        return
+      }
+      resizer.style.height = "1px";
+      if (container.style.height == "0px") {
+        container.style.height = Zotero.Prefs.get(`${config.addonRef}.graphView.height`) as string || "50%";
+      }
+      // 主题
+      if (document.querySelector("#main-window[theme=dark]")) {
+        if (theme != "dark") {
+          container.style.backgroundColor = themeColor.dark.backgroundColor;
+          resizer.style.backgroundColor = themeColor.dark.resizerColor;
+          (frame.contentWindow as any).eval(`
+          app.graph.renderer.containerEl.style.backgroundColor = "";
+          app.graph.renderer.containerEl.style.backgroundColor = "${themeColor.dark.backgroundColor}";
+            app.themeInEffect == "light" && document.querySelector(".checkbox-container").click();
+            app.graph.renderer.colors.line.rgb = 10066329;
+          `)
+          theme = "dark"
+        }
+      } else {       
+        if (theme != "light") {
+          container.style.backgroundColor = themeColor.light.backgroundColor;
+          resizer.style.backgroundColor = themeColor.light.resizerColor;
+          (frame.contentWindow as any).eval(`
+            app.graph.renderer.containerEl.style.backgroundColor = "${themeColor.light.backgroundColor}";
+            app.themeInEffect == "dark" && document.querySelector(".checkbox-container").click();
+          `)
+          theme = "light"
+        }
+      }
       const items = ZoteroPane.getSortedItems()
       let _itemKeys = items.map(i => i.key)
       if (
@@ -1691,7 +1750,7 @@ export default class Views {
       }
       container.querySelector("#loading")?.remove()
       frame.style.opacity = "1"
-    }, 100)
+    }, 10)
 
     let isFocus = true
     mainNode.addEventListener("blur", () => {
@@ -1737,15 +1796,10 @@ export default class Views {
         label: "Style",
         callback: async () => {
           const key = `${config.addonRef}.graphView.enable`
-          const container = document.querySelector("#graph-view")! as HTMLDivElement
-          const resizer = document.querySelector("#graph-view-resizer")! as HTMLDivElement
           if (Zotero.Prefs.get(key)) {
             Zotero.Prefs.set(key, false)
-            resizer.style.height = container.style.height = "0"
           } else {
             Zotero.Prefs.set(key, true)
-            resizer.style.height = "3px"
-            container.style.height = "50%"
           }
         }
       },

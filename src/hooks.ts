@@ -32,7 +32,6 @@ async function onStartup() {
   ]);
   initLocale();
 
-  // Record();
 
   ztoolkit.UI.basicOptions.ui.enableElementRecord = false
   ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
@@ -55,7 +54,10 @@ async function onStartup() {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
     //@ts-ignore
     ztoolkit.ItemTree.refresh()
-  } catch {}
+  } catch { }
+  window.setTimeout(() => {
+    Record();
+  }, 5000)
 
   const events = new Events(addonItem)
   events.onInit()
