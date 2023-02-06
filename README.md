@@ -66,9 +66,11 @@ zoterostyle.tagsColumn.margin = "0.35"
 
 > PDF标注颜色无限定义
 
+![image](https://user-images.githubusercontent.com/51939531/216866921-1dfff7ea-28c9-46ac-993a-334b3fe415f4.png)
+
 ![image](https://user-images.githubusercontent.com/51939531/216866821-acd1836e-53ac-4511-bf75-fa91286ea582.png)
 ![image](https://user-images.githubusercontent.com/51939531/216866990-63f1c72f-ac5c-4605-94bb-b821189ffeb0.png)
-![image](https://user-images.githubusercontent.com/51939531/216866921-1dfff7ea-28c9-46ac-993a-334b3fe415f4.png)
+![image](https://user-images.githubusercontent.com/51939531/216867176-b1d19074-c47d-4a54-924d-b3f5dadfc61f.png)
 
 
 ### 影响因子
