@@ -36,8 +36,6 @@
 
 ![image](https://user-images.githubusercontent.com/51939531/213071592-5657c470-f663-42ed-be31-235302ac1709.png)
 
-
-
 ### 标题-阅读进度条
 
 PDF每一页阅读时间，颜色越深代表时间越久
@@ -68,10 +66,12 @@ zoterostyle.tagsColumn.margin = "0.35"
 
 > PDF标注颜色无限定义
 
-![image](https://user-images.githubusercontent.com/51939531/216233926-78fea15c-adbc-47ea-80b0-7d5474051510.png)
-![image](https://user-images.githubusercontent.com/51939531/216233948-1cc994cc-1657-41e0-bb28-78eb932c2d91.png)
+![image](https://user-images.githubusercontent.com/51939531/216866921-1dfff7ea-28c9-46ac-993a-334b3fe415f4.png)
 
-吐槽一下：这个功能Zotero应该自己实现的。
+![image](https://user-images.githubusercontent.com/51939531/216866821-acd1836e-53ac-4511-bf75-fa91286ea582.png)
+![image](https://user-images.githubusercontent.com/51939531/216866990-63f1c72f-ac5c-4605-94bb-b821189ffeb0.png)
+![image](https://user-images.githubusercontent.com/51939531/216867176-b1d19074-c47d-4a54-924d-b3f5dadfc61f.png)
+
 
 ### 影响因子
 
@@ -132,6 +132,9 @@ Zotero有`关联文献`功能，那么可视化是必然的，也是刚需的，
 建议配合[zotero-pdf-preview](https://github.com/windingwind/zotero-pdf-preview)
 
 ![image](https://user-images.githubusercontent.com/51939531/214523710-80967ec7-6ef5-45e0-85c8-1f5c6a1536aa.png)
+
+已适配`Zotero Night`夜间模式
+![image](https://user-images.githubusercontent.com/51939531/216801169-85a941f2-df40-4036-a436-7ef81748e75e.png)
 
 
 ## 视图组功能 
