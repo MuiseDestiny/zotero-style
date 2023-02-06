@@ -10,7 +10,6 @@ Zotero._AddonItemGlobal = Zotero._AddonItemGlobal || new AddonItem()
 const addonItem = Zotero._AddonItemGlobal
 
 
-
 async function onStartup() {
   // Register the callback in Zotero as an item observer
   const notifierID = Zotero.Notifier.registerObserver(
@@ -52,12 +51,8 @@ async function onStartup() {
 
   try {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
-    //@ts-ignore
     ztoolkit.ItemTree.refresh()
   } catch { }
-  window.setTimeout(() => {
-    Record();
-  }, 5000)
 
   const events = new Events(addonItem)
   events.onInit()

@@ -29,6 +29,7 @@ pref("extensions.zotero.__addonRef__.progressColumn.circle", true);
 pref("extensions.zotero.__addonRef__.columnsViews", "[]");
 
 pref("extensions.zotero.__addonRef__.annotationColors", '[["general.yellow","#ffd400"],["general.red","#ff6666"],["general.green","#5fb236"],["general.blue","#2ea8e5"],["general.purple","#a28ae5"]]');
+pref("extensions.zotero.__addonRef__.annotationColorsGroups", '[["Untitled",[["general.yellow","#ffd400"],["general.red","#ff6666"],["general.green","#5fb236"],["general.blue","#2ea8e5"],["general.purple","#a28ae5"]]]]');
 
 
 

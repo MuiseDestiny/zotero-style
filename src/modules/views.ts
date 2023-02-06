@@ -1704,7 +1704,7 @@ export default class Views {
     }
     let theme = ""
     window.setInterval(async () => {
-      if (!enable) {
+      if (!Zotero.Prefs.get(`${config.addonRef}.graphView.enable`)) {
         resizer.style.height = "0px";
         container.style.height = "0";
         return
@@ -1957,7 +1957,7 @@ export default class Views {
             height: "2em",
             border: "1px solid #eee",
             borderRadius: ".1em",
-            paddingLeft: "0.5em"
+            paddingLeft: "0 0.5em"
           }
           tags.forEach((tag: { tag: string, color?: string }) => {
             let position = Zotero.Tags.getColor(libraryID, tag.tag)?.position
@@ -2083,119 +2083,428 @@ export default class Views {
         }
       },
       {
+        /**
+         * 实现标注颜色组，可以新创建新组，组内可以新建新的标注颜色
+         */
         name: "标注",
         label: "Style",
         callback: (prompt: Prompt) => {
+          prompt.inputNode.placeholder = "左击使用，右击删除，左长按进入编辑"
           const container = prompt.createCommandsContainer()
+          type Name = string;
+          type Color = string;
+          type Annotation = [Name, Color];
+          type Group = [string, Annotation[]];
+
+          // 从prefs初始化
+          // [标注组名称，[[颜色名称, 颜色], [颜色名称, 颜色]]]
+          let groups: Group[]= JSON.parse(Zotero.Prefs.get(`${config.addonRef}.annotationColorsGroups`) as string)
+          // [[颜色名称, 颜色], [颜色名称, 颜色]]
+          // let defaultAnno: Annotation[] = JSON.parse(Zotero.Prefs.get(`${config.addonRef}.annotationColors`) as string)
+          let defaultAnno: Annotation[] = [["general.yellow", "#ffd400"], ["general.red", "#ff6666"], ["general.green", "#5fb236"], ["general.blue", "#2ea8e5"], ["general.purple", "#a28ae5"]]
+
+          const svg = `<svg t="1675648090111" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2675" width="20" height="20" style="height: 100%;"><path d="M863.328262 481.340895l-317.344013 0.099772L545.984249 162.816826c0-17.664722-14.336138-32.00086-32.00086-32.00086s-31.99914 14.336138-31.99914 32.00086l0 318.400215-322.368714-0.17718c-0.032684 0-0.063647 0-0.096331 0-17.632039 0-31.935493 14.239806-32.00086 31.904529-0.096331 17.664722 14.208843 32.031824 31.871845 32.095471l322.59234 0.17718 0 319.167424c0 17.695686 14.336138 32.00086 31.99914 32.00086s32.00086-14.303454 32.00086-32.00086L545.982529 545.440667l317.087703-0.099772c0.063647 0 0.096331 0 0.127295 0 17.632039 0 31.935493-14.239806 32.00086-31.904529S880.960301 481.404542 863.328262 481.340895z" fill="#575B66" p-id="2676"></path></svg>`
+          console.log(groups, defaultAnno)
           const inputStyles = {
-            height: "2em",
+            height: "22.4px",
             border: "1px solid #eee",
             borderRadius: ".1em",
-            paddingLeft: "0.5em"
+            padding: "0 0.5em"
           }
-          let set = () => {
-            let flags: boolean[] = []
-            let annotationColors: [string, string][] = []
-            container.querySelectorAll(".command").forEach((line) => {
-              const name = (line.querySelector("#name") as HTMLInputElement).value
-              const color = (line.querySelector("#color") as HTMLInputElement).value
-              flags.push(/^#(\w{3}|\w{6})$/i.test(color))
-              annotationColors.push([name, color.toLowerCase()])
-            })
-            if (flags.every(e => e)) {
-              Zotero.Prefs.set(`${config.addonRef}.annotationColors`, JSON.stringify(annotationColors))
-            }
-            // TODO: reload PDF
-            window.setTimeout(async () => {
-              this.modifyAnnotationColors(await ztoolkit.Reader.getReader())
-            })
+          let copy = (obj: any) => {
+            return JSON.parse(JSON.stringify(obj))
           }
-          const annotationColors = JSON.parse(Zotero.Prefs.get(`${config.addonRef}.annotationColors`) as string)
-          annotationColors.forEach((color: [string, string]) => {
-            const line = ztoolkit.UI.createElement(
-              document,
-              "div",
-              {
+          let save = () => {
+            Zotero.Prefs.set(`${config.addonRef}.annotationColorsGroups`, JSON.stringify(groups))
+
+          }
+          /**
+           * 将colorsGroup渲染到groupContainer
+           * @param colorsGroup 
+           */
+          let timer: Number | undefined
+          let updateGroup = () => {
+            save()
+            container.querySelectorAll(".command").forEach(e => e.remove())
+            // 已创建的标注颜色
+            for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+              const group = groups[groupIndex]
+              container.appendChild(ztoolkit.UI.createElement(document, "div", {
                 classList: ["command"],
                 styles: {
                   display: "flex",
                   flexDirection: "row",
-                  justifyContent: "space-around",
                   alignItems: "center",
-                  width: "100%",
                 },
+                listeners: [
+                  {
+                    type: "mousemove",
+                    listener: function () {
+                      // @ts-ignore
+                      prompt.selectItem(this);
+                    },
+                  },
+                ],
                 children: [
                   {
                     tag: "span",
-                    id: "circle",
+                    id: "group-name",
+                    properties: {
+                      innerText: group[0],
+                    },
+                    listeners: [
+                      {
+                        type: "click",
+                        listener: function (event) {
+                          event.stopPropagation()
+                          event.preventDefault()
+                          // 单击名称变为可输入状态更改名称
+                          // @ts-ignore
+                          const spanNode = this as HTMLSpanElement;
+                          const inputNode = spanNode.nextSibling as HTMLInputElement;
+                          spanNode.style.display = "none"
+                          inputNode.style.display = ""
+                        }
+                      }
+                    ],
                     styles: {
-                      display: "inline-block",
-                      height: ".7em",
-                      width: ".7em",
-                      borderRadius: ".1em",
-                      backgroundColor: color[1] as string,
+                      borderRadius: "5px",
+                      backgroundColor: JSON.stringify(group[1]) == Zotero.Prefs.get(`${config.addonRef}.annotationColors`)
+                        ? "rgba(244, 132, 132, 0.3)" : "none",
+                      padding: "0 .5em",
+                      fontSize: ".9em"
                     }
                   },
                   {
-                    tag: "div",
-                    children: [
+                    tag: "input",
+                    listeners: [
                       {
-                        tag: "input",
-                        id: "name",
-                        styles: inputStyles,
-                        properties: {
-                          value: color[0],
-                          placeholder: "名称"
-                        },
-                        listeners: [
-                          {
-                            type: "change",
-                            listener: () => {
-                              set();
-                            }
-                          }
-                        ]
+                        type: "keyup",
+                        listener: function () {
+                          // @ts-ignore
+                          const inputNode = this as HTMLInputElement;
+                          group[0] = inputNode.value;
+                          save()
+                        }
+                      },
+                      {
+                        type: "blur",
+                        listener: function () {
+                          // @ts-ignore
+                          const inputNode = this as HTMLInputElement;
+                          group[0] = inputNode.value;
+                          const spanNode = inputNode.previousSibling as HTMLSpanElement;
+                          spanNode.style.display = ""
+                          spanNode.innerText = inputNode.value
+                          inputNode.style.display = "none"
+                          save()
+                        }
                       }
-                    ]
+                    ],
+                    styles: {
+                      display: "none",
+                      width: "20%",
+                      ...inputStyles,
+                    },
+                    attributes: {
+                      value: group[0],
+                      placeholder: "Name"
+                    },
                   },
                   {
                     tag: "div",
+                    listeners: [
+                      {
+                        type: "mousedown",
+                        listener: async (event: any) => {
+                          if (event.button == 0) {
+                            // 长按进入编辑，短按使用
+                            timer = window.setTimeout(() => {
+                              timer = undefined
+                              editAnnotationColors(group)
+                            }, 1000)
+                          } else if (event.button == 2) {
+                            // 单击右键删除
+                            groups.splice(groupIndex, 1)
+                            updateGroup()
+                          }
+                        },
+                      },
+                      {
+                        type: "mouseup",
+                        listener: async (event: any) => {
+                          if (event.button == 0) {
+                            if (timer) {
+                              // 长按事件未达到，执行选中
+                              window.clearTimeout(timer as number)
+                              Zotero.Prefs.set(`${config.addonRef}.annotationColors`, JSON.stringify(group[1]))
+                              const reader = await ztoolkit.Reader.getReader()
+                              reader && this.modifyAnnotationColors(reader)
+                              updateGroup()
+                            }
+                          }
+                        },
+                      }
+                    ],
                     styles: {
                       display: "flex",
                       flexDirection: "row",
-                      alignItems: "center"
+                      aliginItems: "center",
+                      justifyContent: "space-around",
+                      width: "80%",
                     },
-                    children: [
-                      {
-                        tag: "input",
-                        id: "color",
-                        styles: inputStyles,
-                        properties: {
-                          value: color[1],
-                          placeholder: "颜色"
+                    children: (() => {
+                      let children: any[] = []
+                      for (let anno of group[1]) {
+                        children.push({
+                        tag: "span",
+                        id: "circle",
+                        attributes: {
+                          title: anno[0]
                         },
-                        listeners: [
-                          {
-                            type: "change",
-                            listener: () => {
-                              ztoolkit.log((line.querySelector("#circle")! as HTMLElement)
-                                .style.backgroundColor);
-                              (line.querySelector("#circle")! as HTMLElement)
-                                .style.backgroundColor = (line.querySelector("#color")! as HTMLInputElement).value
-                              ztoolkit.log((line.querySelector("#circle")! as HTMLElement)
-                                .style.backgroundColor);
-                              set();
-                            }
-                          }
-                        ]
+                        styles: {
+                          display: "inline-block",
+                          height: ".7em",
+                          width: ".7em",
+                          borderRadius: ".1em",
+                          backgroundColor: anno[1],
+                          margin: "0 auto"
+                        }
+                      })
                       }
-                    ]
-                  },
+                      return children
+                    })()
+                  }
                 ]
-              }
-            )
-            container.appendChild(line)
-          })
+              }))
+            }
+            // 新增按钮
+            container.appendChild(ztoolkit.UI.createElement(document, "div", {
+              classList: ["command"],
+              styles: {
+                color: "rgba(0, 0, 0, 0.4)"
+              },
+              listeners: [
+                {
+                  type: "mousemove",
+                  listener: function () {
+                    // @ts-ignore
+                    prompt.selectItem(this);
+                  },
+                },
+                {
+                  type: "click",
+                  listener: async () => {
+                    // 新建标注颜色
+                    groups.push(["Untitled", copy(defaultAnno)])
+                    updateGroup()
+                    let node = [...container.querySelectorAll(".command")].slice(-2)[0];
+                    (node.querySelector("#group-name") as HTMLSpanElement).click()
+                  },
+                },
+              ],
+              children: [
+                {
+                  tag: "div",
+                  styles: {
+                    width: "100%",
+                    border: "none",
+                    background: "transparent",
+                    textAlign: "center"
+                  },
+                  properties: {
+                    innerHTML: svg,
+                  }
+                }
+              ]
+            }))
+          }
+          updateGroup()
+
+          /**
+           * 编辑长按选中的标注颜色
+           * 可以删除，但最少要保留两个颜色，只剩下两个颜色删除是无效的
+           * @param annotationColors 
+           */
+          let editAnnotationColors = (group: Group) => {
+            prompt.inputNode.placeholder = "右击删除"
+            let annotations: Annotation[] = group[1]
+            const container = prompt.createCommandsContainer()
+            // let set = () => {
+            //   let flags: boolean[] = []
+            //   let annotationColors: [string, string][] = []
+            //   container.querySelectorAll(".command").forEach((line) => {
+            //     const name = (line.querySelector("#name") as HTMLInputElement).value
+            //     const color = (line.querySelector("#color") as HTMLInputElement).value
+            //     flags.push(/^#(\w{3}|\w{6})$/i.test(color))
+            //     annotationColors.push([name, color.toLowerCase()])
+            //   })
+            //   groups[groupIndex][1] = annotationColors
+            //   updateGroup()
+            //   // if (flags.every(e => e)) {
+            //   //   Zotero.Prefs.set(`${config.addonRef}.annotationColors`, JSON.stringify(annotationColors))
+            //   // }
+            //   // window.setTimeout(async () => {
+            //   //   this.modifyAnnotationColors(await ztoolkit.Reader.getReader())
+            //   // })
+            // }
+            /**
+             * 根据anno创建ele
+             * @param anno [标注名称, 标注颜色]
+             * @param index 用于删除
+             * @returns 
+             */
+            let create = (anno: string[], index: number) => {
+              const ele = ztoolkit.UI.createElement(
+                document,
+                "div",
+                {
+                  classList: ["command"],
+                  listeners: [
+                    {
+                      type: "mousemove",
+                      listener: function () {
+                        // @ts-ignore
+                        prompt.selectItem(this);
+                      },
+                    },
+                    {
+                      type: "mouseup",
+                      listener: async (event: any) => {
+                        if (event.button == 2) {
+                          // 单击右键删除
+                          if (annotations.length > 2) {
+                            annotations.splice(index, 1)
+                            ele.remove()
+                            updateGroup()
+                          }
+                        }
+                      },
+                    }
+                  ],
+                  styles: {
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "space-around",
+                    alignItems: "center",
+                    width: "100%",
+                  },
+                  children: [
+                    {
+                      tag: "span",
+                      id: "circle",
+                      styles: {
+                        display: "inline-block",
+                        height: ".7em",
+                        width: ".7em",
+                        borderRadius: ".1em",
+                        backgroundColor: anno[1] as string,
+                      }
+                    },
+                    {
+                      tag: "div",
+                      children: [
+                        {
+                          tag: "input",
+                          id: "name",
+                          styles: inputStyles,
+                          properties: {
+                            value: anno[0],
+                            placeholder: "Name"
+                          },
+                          listeners: [
+                            {
+                              type: "change",
+                              listener: () => {
+                                let name = anno[0] = (ele.querySelector("#name") as HTMLInputElement).value
+                                console.log(name)
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      tag: "div",
+                      styles: {
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center"
+                      },
+                      children: [
+                        {
+                          tag: "input",
+                          id: "color",
+                          styles: inputStyles,
+                          properties: {
+                            value: anno[1],
+                            placeholder: "Color"
+                          },
+                          listeners: [
+                            {
+                              type: "change",
+                              listener: () => {
+                                let color = anno[1] = (ele.querySelector("#color") as HTMLInputElement).value
+                                console.log(color)
+                                ele.querySelector("#circle")!.style.backgroundColor = color
+                                updateGroup()
+
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                  ]
+                }
+              )
+              return ele
+            }
+            annotations.forEach((anno, index) => {
+              container.appendChild(create(anno, index))
+            })
+            // 增加一个创建按钮
+            const ele = ztoolkit.UI.createElement(document, "div", {
+              classList: ["command"],
+              styles: {
+                color: "rgba(0, 0, 0, 0.4)"
+              },
+              listeners: [
+                {
+                  type: "mousemove",
+                  listener: function () {
+                    // @ts-ignore
+                    prompt.selectItem(this);
+                  },
+                },
+                {
+                  type: "click",
+                  listener: async () => {
+                    const anno: Annotation = copy(defaultAnno[0]);
+                    annotations.push(anno)
+                    container.insertBefore(create(anno, annotations.length), ele)
+                    updateGroup()
+                  },
+                },
+              ],
+              children: [
+                {
+                  tag: "div",
+                  styles: {
+                    width: "100%",
+                    border: "none",
+                    background: "transparent",
+                    textAlign: "center"
+                  },
+                  properties: {
+                    innerHTML: svg,
+                  }
+                }
+              ]
+            })
+            container.appendChild(ele)
+          } 
+
         }
       },
       {
