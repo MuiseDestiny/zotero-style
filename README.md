@@ -66,10 +66,10 @@ zoterostyle.tagsColumn.margin = "0.35"
 
 > PDF标注颜色无限定义
 
-![image](https://user-images.githubusercontent.com/51939531/216233926-78fea15c-adbc-47ea-80b0-7d5474051510.png)
-![image](https://user-images.githubusercontent.com/51939531/216233948-1cc994cc-1657-41e0-bb28-78eb932c2d91.png)
+![image](https://user-images.githubusercontent.com/51939531/216866821-acd1836e-53ac-4511-bf75-fa91286ea582.png)
+![image](https://user-images.githubusercontent.com/51939531/216866990-63f1c72f-ac5c-4605-94bb-b821189ffeb0.png)
+![image](https://user-images.githubusercontent.com/51939531/216866921-1dfff7ea-28c9-46ac-993a-334b3fe415f4.png)
 
-吐槽一下：这个功能Zotero应该自己实现的。
 
 ### 影响因子
 
