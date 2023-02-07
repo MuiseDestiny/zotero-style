@@ -1957,7 +1957,7 @@ export default class Views {
             height: "2em",
             border: "1px solid #eee",
             borderRadius: ".1em",
-            paddingLeft: "0 0.5em"
+            padding: "0 0.5em"
           }
           tags.forEach((tag: { tag: string, color?: string }) => {
             let position = Zotero.Tags.getColor(libraryID, tag.tag)?.position
@@ -2002,7 +2002,7 @@ export default class Views {
                         styles: inputStyles,
                         properties: {
                           value: tag.tag,
-                          placeholder: "名称"
+                          placeholder: "Name"
                         },
                         listeners: [
                           {
@@ -2031,7 +2031,7 @@ export default class Views {
                         styles: inputStyles,
                         properties: {
                           value: tag.color || "",
-                          placeholder: "颜色"
+                          placeholder: "Color"
                         },
                         listeners: [
                           {
@@ -2062,7 +2062,7 @@ export default class Views {
                         styles: inputStyles,
                         properties: {
                           value: position,
-                          placeholder: "位置"
+                          placeholder: "Position"
                         },
                         listeners: [
                           {
@@ -2114,17 +2114,23 @@ export default class Views {
           let copy = (obj: any) => {
             return JSON.parse(JSON.stringify(obj))
           }
-          let save = () => {
+          let saveGroups = (groups: Group[]) => {
             Zotero.Prefs.set(`${config.addonRef}.annotationColorsGroups`, JSON.stringify(groups))
-
+          }
+          let saveAnnotations = (anno: Annotation[]) => {
+            Zotero.Prefs.set(`${config.addonRef}.annotationColors`, JSON.stringify(anno))
+            window.setTimeout(async () => {
+              const reader = await ztoolkit.Reader.getReader()
+              reader && this.modifyAnnotationColors(reader)
+            })
           }
           /**
            * 将colorsGroup渲染到groupContainer
            * @param colorsGroup 
            */
           let timer: Number | undefined
-          let updateGroup = () => {
-            save()
+          let updateGroups = () => {
+            saveGroups(groups)
             container.querySelectorAll(".command").forEach(e => e.remove())
             // 已创建的标注颜色
             for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
@@ -2221,12 +2227,12 @@ export default class Views {
                             // 长按进入编辑，短按使用
                             timer = window.setTimeout(() => {
                               timer = undefined
-                              editAnnotationColors(group)
+                              editAnnotations(group)
                             }, 1000)
                           } else if (event.button == 2) {
                             // 单击右键删除
                             groups.splice(groupIndex, 1)
-                            updateGroup()
+                            updateGroups()
                           }
                         },
                       },
@@ -2237,10 +2243,9 @@ export default class Views {
                             if (timer) {
                               // 长按事件未达到，执行选中
                               window.clearTimeout(timer as number)
-                              Zotero.Prefs.set(`${config.addonRef}.annotationColors`, JSON.stringify(group[1]))
-                              const reader = await ztoolkit.Reader.getReader()
-                              reader && this.modifyAnnotationColors(reader)
-                              updateGroup()
+                              saveAnnotations(group[1])
+                              
+                              updateGroups()
                             }
                           }
                         },
@@ -2297,7 +2302,7 @@ export default class Views {
                   listener: async () => {
                     // 新建标注颜色
                     groups.push(["Untitled", copy(defaultAnno)])
-                    updateGroup()
+                    updateGroups()
                     let node = [...container.querySelectorAll(".command")].slice(-2)[0];
                     (node.querySelector("#group-name") as HTMLSpanElement).click()
                   },
@@ -2319,35 +2324,19 @@ export default class Views {
               ]
             }))
           }
-          updateGroup()
+          updateGroups()
 
           /**
            * 编辑长按选中的标注颜色
            * 可以删除，但最少要保留两个颜色，只剩下两个颜色删除是无效的
            * @param annotationColors 
            */
-          let editAnnotationColors = (group: Group) => {
+          let editAnnotations = (group: Group) => {
             prompt.inputNode.placeholder = "右击删除"
             let annotations: Annotation[] = group[1]
             const container = prompt.createCommandsContainer()
-            // let set = () => {
-            //   let flags: boolean[] = []
-            //   let annotationColors: [string, string][] = []
-            //   container.querySelectorAll(".command").forEach((line) => {
-            //     const name = (line.querySelector("#name") as HTMLInputElement).value
-            //     const color = (line.querySelector("#color") as HTMLInputElement).value
-            //     flags.push(/^#(\w{3}|\w{6})$/i.test(color))
-            //     annotationColors.push([name, color.toLowerCase()])
-            //   })
-            //   groups[groupIndex][1] = annotationColors
-            //   updateGroup()
-            //   // if (flags.every(e => e)) {
-            //   //   Zotero.Prefs.set(`${config.addonRef}.annotationColors`, JSON.stringify(annotationColors))
-            //   // }
-            //   // window.setTimeout(async () => {
-            //   //   this.modifyAnnotationColors(await ztoolkit.Reader.getReader())
-            //   // })
-            // }
+            const isUsed = JSON.stringify(annotations) == Zotero.Prefs.get(`${config.addonRef}.annotationColors`)
+            console.log(isUsed)
             /**
              * 根据anno创建ele
              * @param anno [标注名称, 标注颜色]
@@ -2376,7 +2365,8 @@ export default class Views {
                           if (annotations.length > 2) {
                             annotations.splice(index, 1)
                             ele.remove()
-                            updateGroup()
+                            isUsed && saveAnnotations(annotations)
+                            updateGroups()
                           }
                         }
                       },
@@ -2417,6 +2407,8 @@ export default class Views {
                               type: "change",
                               listener: () => {
                                 let name = anno[0] = (ele.querySelector("#name") as HTMLInputElement).value
+                                isUsed && saveAnnotations(annotations)
+                                updateGroups()
                                 console.log(name)
                               }
                             }
@@ -2446,9 +2438,9 @@ export default class Views {
                               listener: () => {
                                 let color = anno[1] = (ele.querySelector("#color") as HTMLInputElement).value
                                 console.log(color)
+                                isUsed && saveAnnotations(annotations)
                                 ele.querySelector("#circle")!.style.backgroundColor = color
-                                updateGroup()
-
+                                updateGroups()
                               }
                             }
                           ]
@@ -2483,7 +2475,8 @@ export default class Views {
                     const anno: Annotation = copy(defaultAnno[0]);
                     annotations.push(anno)
                     container.insertBefore(create(anno, annotations.length), ele)
-                    updateGroup()
+                    isUsed && saveAnnotations(annotations)
+                    updateGroups()
                   },
                 },
               ],
@@ -2671,11 +2664,10 @@ export default class Views {
                   annotationColors.length > 0 &&
                   annotationColors.every(e=>e.length==2 && e[1].startsWith("#"))
                 ) {
-                  console.log(window._annotationColors);
                   annotationColors.length = window._annotationColors.length;
+                  console.log(window._annotationColors, annotationColors);
                   for (let i = 0; i < window._annotationColors.length;i++) {
-                    annotationColors[i][0] = window._annotationColors[i][0]
-                    annotationColors[i][1] = window._annotationColors[i][1]
+                    annotationColors[i] = [window._annotationColors[i][0], window._annotationColors[i][1].toLowerCase()]
                   }
                 }
               } catch (e) {console.log(e)}
@@ -2688,8 +2680,6 @@ export default class Views {
     }
     const annotationColors = Zotero.Prefs.get(`${config.addonRef}.annotationColors`)
     win.eval(`window._annotationColors = ${annotationColors}`)
-    // TODO: 初始化
-    
   }
 
   /**

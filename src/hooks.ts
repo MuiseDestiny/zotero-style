@@ -4,7 +4,6 @@ import { getString, initLocale } from "./modules/locale";
 import Views from "./modules/views"; 
 import Events from "./modules/events";
 import AddonItem from "./modules/item";
-import Record from "./modules/record";
 
 Zotero._AddonItemGlobal = Zotero._AddonItemGlobal || new AddonItem()
 const addonItem = Zotero._AddonItemGlobal
@@ -36,7 +35,9 @@ async function onStartup() {
   ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
 
   if (!addonItem.item) { await addonItem.init()  }
-
+  const events = new Events(addonItem)
+  events.onInit()
+  
   const views = new Views(addonItem)
   Zotero.ZoteroStyle.data.views = views
   await views.renderTitleProgress()
@@ -54,8 +55,7 @@ async function onStartup() {
     ztoolkit.ItemTree.refresh()
   } catch { }
 
-  const events = new Events(addonItem)
-  events.onInit()
+
   await createForceGraph;
 }
 
