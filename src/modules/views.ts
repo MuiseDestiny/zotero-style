@@ -293,10 +293,18 @@ export default class Views {
           }) as HTMLSpanElement
           if (!data) { return tagSpans }
           let tags: { tag: string, color: string }[] = JSON.parse(data)
+          const prefix = Zotero.Prefs.get(`${config.addonRef}.text${key}Column.prefix`) as string
           tags.forEach(tagObj => {
+            let startIndex: number
             let tag = tagObj.tag, color = tagObj.color
-            if (!tag.startsWith("#")) { return }
-            let tagSpan = getTagSpan(tag.slice(1), color)
+            if (prefix.startsWith("~~")) {
+              if (tag.startsWith(prefix.slice(2))) { return }
+              startIndex = 0
+            } else {
+              if (prefix != "" && !tag.startsWith(prefix)) { return }
+              startIndex = prefix.length
+            }
+            let tagSpan = getTagSpan(tag.slice(startIndex), color)
             tagSpans.appendChild(tagSpan)
           })
           return tagSpans;
@@ -306,6 +314,11 @@ export default class Views {
     this.patchSetting(
       "Text" + key,
       [
+        {
+          prefKey: `textTagsColumn.prefix`,
+          name: "Prefix",
+          type: "input"
+        },
         {
           prefKey: "textTagsColumn.textColor",
           name: "Text",
