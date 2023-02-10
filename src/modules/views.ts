@@ -257,7 +257,7 @@ export default class Views {
               `${config.addonRef}.text${key}Column.textColor`
             ) as string
             backgroundColor = backgroundColor || _backgroundColor || "#fadec9"
-            let [red, green, blue] = (new Progress()).getRGB(backgroundColor)
+            let [red, green, blue] = Progress.getRGB(backgroundColor)
             let opacity = parseFloat(
               Zotero.Prefs.get(
                 `${config.addonRef}.text${key}Column.opacity`
@@ -484,7 +484,7 @@ export default class Views {
               ztoolkit.ExtraField.setExtraField(item, "sci", data.sci)
             }
           }
-        }, 0)
+        })
         return "0"
       },
       {
@@ -557,6 +557,330 @@ export default class Views {
           prefKey: "IFColumn.info",
           name: "Info",
           type: "boolean"
+        }
+      ]
+    )
+  }
+
+  /**
+ * 创建分区影响因子列
+ * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
+ */
+  public async createPublicationTagsColumn() {
+    const allFields = [{
+      field: "paperName",
+      title: "\u520A\u7269\u540D\u79F0",
+      showOverflow: "tooltip",
+      fixed: "left",
+      width: "350"
+    }, {
+      field: "sci",
+      title: "SCI\u5206\u533A",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "ssci",
+      title: "SSCI\u5206\u533A",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "sciBase",
+      title: "SCI\u4E2D\u79D1\u9662\u57FA\u7840\u7248",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "sciUp",
+      title: "SCI\u4E2D\u79D1\u9662\u5347\u7EA7\u7248",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "sciif",
+      title: "SCI\u5F71\u54CD\u56E0\u5B50",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "sciif5",
+      title: "SCI5\u5E74\u5F71\u54CD\u56E0\u5B50",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "cscd",
+      title: "\u4E2D\u56FD\u79D1\u5B66\u5F15\u6587\u6570\u636E\u5E93",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "pku",
+      title: "\u5317\u5927\u4E2D\u6587\u6838\u5FC3",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "ccf",
+      title: "\u4E2D\u56FD\u8BA1\u7B97\u673A\u5B66\u4F1A",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "eii",
+      title: "EI\u7D22\u5F15",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "ahci",
+      title: "A&HCI",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "cssci",
+      title: "\u4E2D\u6587\u793E\u4F1A\u79D1\u5B66\u5F15\u6587\u7D22\u5F15",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "zhongguokejihexin",
+      title: "\u4E2D\u56FD\u79D1\u6280\u6838\u5FC3\u671F\u520A",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "ajg",
+      title: "AJG",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "sciwarn",
+      title: "SCI\u544A\u8B66\u671F\u520A",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "fms",
+      title: "FMS",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "jci",
+      title: "JCI\u6307\u6570",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "ft50",
+      title: "FT50",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "utd24",
+      title: "UTD24",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "scu",
+      title: "\u56DB\u5DDD\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "zju",
+      title: "\u6D59\u6C5F\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "cju",
+      title: "\u957F\u6C5F\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "swufe",
+      title: "\u897F\u5357\u8D22\u7ECF\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "cufe",
+      title: "\u4E2D\u592E\u8D22\u7ECF\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "uibe",
+      title: "\u5BF9\u5916\u7ECF\u6D4E\u8D38\u6613\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "sdufe",
+      title: "\u5C71\u4E1C\u8D22\u7ECF\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "xdu",
+      title: "\u897F\u5B89\u7535\u5B50\u79D1\u6280\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "swjtu",
+      title: "\u897F\u5357\u4EA4\u901A\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "ruc",
+      title: "\u4E2D\u56FD\u4EBA\u6C11\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "xmu",
+      title: "\u53A6\u95E8\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "sjtu",
+      title: "\u4E0A\u6D77\u4EA4\u901A\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "fdu",
+      title: "\u590D\u65E6\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "hhu",
+      title: "\u6CB3\u6D77\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "cqu",
+      title: "\u91CD\u5E86\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "nju",
+      title: "\u5357\u4EAC\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "xju",
+      title: "\u65B0\u7586\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }, {
+      field: "cug",
+      title: "\u4E2D\u56FD\u5730\u8D28\u5927\u5B66",
+      showOverflow: "tooltip",
+      width: "120"
+    }]
+    const key = "PublicationTags"
+    await ztoolkit.ItemTree.register(
+      key,
+      getString(`column.${key}`),
+      (
+        field: string,
+        unformatted: boolean,
+        includeBaseMapped: boolean,
+        item: Zotero.Item
+      ) => {
+        const sortBy = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
+        const publicationTitle = item.getField("publicationTitle")
+        if (!(publicationTitle && publicationTitle != "")) { return "" }
+        let data: any = ztoolkit.ExtraField.getExtraField(item, "publication")
+        if (data) {
+          return JSON.parse(data)[sortBy] + "\n" + data
+        }
+        // 开启一个异步更新影响因子
+        window.setTimeout(async () => {
+          const response = await this.requests.post(
+            "https://easyscholar.cc/homeController/getQueryTable.ajax",
+            {
+              page: "1",
+              limit: "1",
+              sourceName: publicationTitle
+            }
+          )
+          ztoolkit.log(response)
+          if (response && response.data) {
+            let data = response.data[0]
+            if (data) {
+              ztoolkit.ExtraField.setExtraField(item, "publication", JSON.stringify(data))
+            }
+          }
+        })
+        return ""
+      },
+      {
+        renderCellHook: (index: any, data: any, column: any) => {
+          console.log(data)
+          const span = ztoolkit.UI.createElement(document, "span", {
+            styles: {
+              display: "flex",
+              flexDirection: "row"
+            }
+          }) as HTMLSpanElement
+          if (data == "") { return span }
+          try {
+            data = JSON.parse(data.split("\n")[1])
+          } catch {
+            return span
+          }
+          if (Object.keys(data).length == 0) { return span }
+          // 渲染逻辑
+          const fieldColor = JSON.parse(Zotero.Prefs.get(`${config.addonRef}.${key}Column.fieldColor`) as string)
+          const defaultColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.defaultColor`) as string
+          const textColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.textColor`) as string
+          const opacity = Zotero.Prefs.get(`${config.addonRef}.${key}Column.opacity`) as string
+          let fields: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.fields`) as string
+          fields = fields.split(/,\s*/g).filter((i: string)=>data[i])
+          for (let i = 0; i < fields.length; i++) {
+            let field = fields[i]
+            // let fieldTitle = allFields.find(e => e.field == field)?.title
+            let fieldTitle = field.toUpperCase()
+            let fieldValue = data[field]
+            let [red, green, blue] = Progress.getRGB(
+              fieldColor[field] ? fieldColor[field][fieldValue] : defaultColor
+            )
+            span.appendChild(ztoolkit.UI.createElement(document, "span", {
+              styles: {
+                backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
+                color: textColor,
+                height: "1.5em",
+                lineHeight: "1.5em",
+                padding: "0 .5em",
+                display: "inline-block",
+                borderRadius: "3px",
+                margin: "0.2em"
+              },
+              properties: {
+                innerText: field == "eii" ? "EI" : `${fieldTitle} ${fieldValue}`
+              }
+            })) 
+          }
+          return span;
+        },
+      }
+    );
+
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: `${key}Column.fields`,
+          name: "Fields",
+          type: "input",
+        },
+        {
+          prefKey: `${key}Column.opacity`,
+          name: "Opacity",
+          type: "range",
+          range: [0, 1, 0.01],
+        },
+        {
+          prefKey: `${key}Column.fieldColor`,
+          name: "Field Color",
+          type: "input"
+        },
+        {
+          prefKey: `${key}Column.defaultColor`,
+          name: "Default Color",
+          type: "input"
+        },
+        {
+          prefKey: `${key}Column.textColor`,
+          name: "Text Color",
+          type: "input"
+        },
+        {
+          prefKey: `${key}Column.sortBy`,
+          name: "Sort By",
+          type: "input"
         }
       ]
     )

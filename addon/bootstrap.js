@@ -125,19 +125,21 @@ function setDefaultPrefs(rootURI) {
   var branch = Services.prefs.getDefaultBranch("");
   var obj = {
     pref(pref, value) {
-      switch (typeof value) {
-        case "boolean":
-          branch.setBoolPref(pref, value);
-          break;
-        case "string":
-          branch.setStringPref(pref, value);
-          break;
-        case "number":
-          branch.setIntPref(pref, value);
-          break;
-        default:
-          Zotero.logError(`Invalid type '${typeof value}' for pref '${pref}'`);
-      }
+      try {        
+        switch (typeof value) {
+          case "boolean":
+            branch.setBoolPref(pref, value);
+            break;
+          case "string":
+            branch.setStringPref(pref, value);
+            break;
+          case "number":
+            branch.setIntPref(pref, value);
+            break;
+          default:
+            Zotero.logError(`Invalid type '${typeof value}' for pref '${pref}'`);
+        }
+      } catch {}
     },
   };
   Zotero.getMainWindow().console.log(rootURI + "prefs.js");

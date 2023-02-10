@@ -41,7 +41,7 @@ export default class Progress {
     if (limit > 0) {
       maxValue = maxValue > limit ? maxValue : limit
     }
-    let [r, g, b] = this.getRGB(color)
+    let [r, g, b] = Progress.getRGB(color)
     for (let value of values) {
       span.appendChild(
         ztoolkit.UI.createElement(
@@ -100,7 +100,7 @@ export default class Progress {
     
     const paper = Raphael(container, "100%", "100%");
     paper.setViewBox(0, 0, w, h, true)
-    const [red, green, blue] = this.getRGB(color)
+    const [red, green, blue] = Progress.getRGB(color)
     paper.path(polygon).attr({
       stroke: "transparent",
       fill: `90-rgba(${red}, ${green}, ${blue}, ${opacity})-rgba(${red}, ${green}, ${blue}, 0.8)`,
@@ -149,7 +149,7 @@ export default class Progress {
         opacity
       }
     })
-    const [red, green, blue] = this.getRGB(color)
+    const [red, green, blue] = Progress.getRGB(color)
     for (let value of values) {
       const styles = {
         position: "absolute",
@@ -186,7 +186,7 @@ export default class Progress {
    * 显示百分比
    */
   public linePercent(value: number, maxValue: number, color: string = "#62B6B7", opacity: string = "1"): HTMLSpanElement {
-    const [red, green, blue] = this.getRGB(color)
+    const [red, green, blue] = Progress.getRGB(color)
     const percent = value / maxValue * 100
     const heightPct = 0.28
     const span = ztoolkit.UI.createElement(
@@ -245,7 +245,7 @@ export default class Progress {
 
   }
 
-  public getRGB(color: string) {
+  static getRGB(color: string) {
     var sColor = color.toLowerCase();
     //十六进制颜色值的正则表达式
     var reg = /^#([0-9a-fA-f]{3}|[0-9a-fA-f]{6})$/;
