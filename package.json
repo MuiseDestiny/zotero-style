@@ -38,7 +38,7 @@
     "raphael": "^2.3.0",
     "runes": "^0.4.3",
     "three": "^0.148.0",
-    "zotero-plugin-toolkit": "^1.1.5"
+    "zotero-plugin-toolkit": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

@@ -489,12 +489,13 @@ export default class Views {
       },
       {
         renderCellHook: (index: any, data: any, column: any) => {
-          // const cacheKey = `IF-${data}-${index}`
-          // if (this.cache[cacheKey]) {
-          //   let span = this.cache[cacheKey].cloneNode(true)
-          //   return span
-          // }
-          const span = ztoolkit.UI.createElement(document, "span") as HTMLSpanElement
+          const span = ztoolkit.UI.createElement(document, "span", {
+            styles: {
+              display: "flex",
+              flexDirection: "row",
+              paddingRight: ".5em"
+            }
+          }) as HTMLSpanElement
           let value = Number(data)
           if (value == -1) { return span }
           let progressNode = (new Progress()).linePercent(
@@ -510,7 +511,24 @@ export default class Views {
             ) as string
           )
           span.appendChild(progressNode)
-          // this.cache[cacheKey] = span.cloneNode(true)
+          if (Zotero.Prefs.get(
+            `${config.addonRef}.IFColumn.info`
+          ) as boolean) {
+            span.appendChild(ztoolkit.UI.createElement(document, "span", {
+              styles: {
+                display: "inline-block",
+                width: "4em",
+                marginLeft: "0.5em",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+
+              },
+              properties: {
+                innerText: value
+              }
+            }))
+          }
           return span;
         },
       }
@@ -534,6 +552,11 @@ export default class Views {
           prefKey: "IFColumn.max",
           name: "Max",
           type: "input"
+        },
+        {
+          prefKey: "IFColumn.info",
+          name: "Info",
+          type: "boolean"
         }
       ]
     )
@@ -831,24 +854,6 @@ export default class Views {
                 },
               }
             }, 350, 330)
-            // // @ts-ignore
-            // window.openDialog(
-            //   `chrome://${config.addonRef}/content/addView.xul`,
-            //   "add-view",
-            //   "chrome,modal,centerscreen",
-            //   io
-            // );
-            // if (!io.name) { return }
-            // // 获取到用户输入后
-            // columnsViews.push({
-            //   name: io.name,
-            //   position: io.position,
-            //   content: io.content || io.name,
-            //   dataKeys: io.dataKeys.length > 0 ? io.dataKeys : getCurrentDataKeys()
-            // })
-            // columnsViews = sort(columnsViews)
-            // Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
-            // updateOptionNode(1000)
           }
           let addButton = () => {
             if (document.querySelector("#add-save-item")) { return }
@@ -1879,6 +1884,7 @@ export default class Views {
             await Zotero.Promise.delay(10)
           }
           prompt.inputNode.value = ""
+          // @ts-ignore
           prompt.exit()
           prompt.showTip(
             `数据迁移完成!\n\n` +
@@ -2657,6 +2663,142 @@ export default class Views {
       })
     }
     // ztoolkit.Prompt.register(commands)
+
+    // 注册搜索文库
+    ztoolkit.Prompt.register([{
+      id: "search",
+      callback: async (prompt: Prompt) => {
+        // https://github.com/zotero/zotero/blob/7262465109c21919b56a7ab214f7c7a8e1e63909/chrome/content/zotero/integration/quickFormat.js#L589
+        function getItemDescription(item: Zotero.Item) {
+          var nodes = [];
+          var str = "";
+          var author, authorDate = "";
+          if (item.firstCreator) { author = authorDate = item.firstCreator; }
+          var date = item.getField("date", true, true);
+          if (date && (date = date.substr(0, 4)) !== "0000") {
+            authorDate += " (" + parseInt(date) + ")";
+          }
+          authorDate = authorDate.trim();
+          if (authorDate) nodes.push(authorDate);
+
+          var publicationTitle = item.getField("publicationTitle", false, true);
+          if (publicationTitle) {
+            nodes.push(`<i>${publicationTitle}</i>`);
+          }
+          var volumeIssue = item.getField("volume");
+          var issue = item.getField("issue");
+          if (issue) volumeIssue += "(" + issue + ")";
+          if (volumeIssue) nodes.push(volumeIssue);
+
+          var publisherPlace = [], field;
+          if ((field = item.getField("publisher"))) publisherPlace.push(field);
+          if ((field = item.getField("place"))) publisherPlace.push(field);
+          if (publisherPlace.length) nodes.push(publisherPlace.join(": "));
+
+          var pages = item.getField("pages");
+          if (pages) nodes.push(pages);
+
+          if (!nodes.length) {
+            var url = item.getField("url");
+            if (url) nodes.push(url);
+          }
+
+          // compile everything together
+          for (var i = 0, n = nodes.length; i < n; i++) {
+            var node = nodes[i];
+
+            if (i != 0) str += ", ";
+
+            if (typeof node === "object") {
+              var label = document.createElement("label");
+              label.setAttribute("value", str);
+              label.setAttribute("crop", "end");
+              str = "";
+            } else {
+              str += node;
+            }
+          }
+          str.length && (str += ".")
+          return str
+        }
+        prompt.showTip("Searching...")
+        const text = prompt.inputNode.value;
+        console.log("text", text)
+        const s = new Zotero.Search();
+        s.addCondition("quicksearch-titleCreatorYear", "contains", text)
+        s.addCondition("itemType", "isNot", "attachment");
+        const ids = await s.search();
+        console.log(ids)
+        // @ts-ignore
+        prompt.exit()
+        const container = prompt.createCommandsContainer();
+        container.classList.add("suggestions")
+        if (ids.length) {
+          ids.forEach((id: number) => {
+            const item = Zotero.Items.get(id)
+            if(!item.isRegularItem()) { return }
+            const title = item.getField("title")
+            const ele = ztoolkit.UI.createElement(document, "div", {
+              namespace: "html",
+              classList: ["command"],
+              listeners: [
+                {
+                  type: "mousemove",
+                  listener: function () {
+                    // @ts-ignore
+                    prompt.selectItem(this)
+                  }
+                },
+                {
+                  type: "click",
+                  listener: () => {
+                    prompt.promptNode.style.display = "none"
+                    Zotero_Tabs.select('zotero-pane');
+                    ZoteroPane.selectItem(item.id);
+                  }
+                }
+              ],
+              styles: {
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "start",
+              },
+              children: [
+                {
+                  tag: "span",
+                  styles: {
+                    fontWeight: "bold",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+  
+                  },
+                  properties: {
+                    innerText: title
+                  }
+                },
+                {
+                  tag: "span",
+                  styles: {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  },
+                  properties: {
+                    innerHTML: getItemDescription(item)
+                  }
+                }
+              ]
+            })
+            container.appendChild(ele)
+          })
+        } else {
+          // @ts-ignore
+          prompt.exit()
+          prompt.showTip("Not Found.")
+        }
+      }
+    }])
   }
 
   public modifyAnnotationColors(reader: _ZoteroReaderInstance) {

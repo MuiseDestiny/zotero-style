@@ -21,6 +21,8 @@ pref("extensions.zotero.__addonRef__.titleColumn.opacity", "0.7");
 pref("extensions.zotero.__addonRef__.IFColumn.color", "#A8D1D1");
 pref("extensions.zotero.__addonRef__.IFColumn.opacity", "0.7");
 pref("extensions.zotero.__addonRef__.IFColumn.max", "15");
+pref("extensions.zotero.__addonRef__.IFColumn.info", false);
+
 
 
 pref("extensions.zotero.__addonRef__.progressColumn.style", "bar");
