@@ -37,6 +37,9 @@
 
 ![image](https://user-images.githubusercontent.com/51939531/213071592-5657c470-f663-42ed-be31-235302ac1709.png)
 
+![image](https://user-images.githubusercontent.com/51939531/217996337-9437d61e-3c7f-4906-8288-ffec28baf2a6.png)
+
+
 ### 标题-阅读进度条
 
 PDF每一页阅读时间，颜色越深代表时间越久
