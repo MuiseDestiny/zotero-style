@@ -32,16 +32,16 @@
   },
   "homepage": "https://github.com/muisedestiny/zotero-style#readme",
   "dependencies": {
-    "3d-force-graph": "^1.70.19",
+    "3d-force-graph": "^1.71.1",
     "math": "^0.0.3",
     "pixi": "^0.3.1",
     "raphael": "^2.3.0",
     "runes": "^0.4.3",
     "three": "^0.148.0",
-    "zotero-plugin-toolkit": "^2.0.0"
+    "zotero-plugin-toolkit": "^2.0.3"
   },
   "devDependencies": {
-    "@types/node": "^18.11.18",
+    "@types/node": "^18.13.0",
     "compressing": "^1.7.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.16.17",

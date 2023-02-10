@@ -4,6 +4,7 @@ import Progress from "./progress";
 import Requests from "./requests";
 import { getString, initLocale } from "./locale";
 import { Command, Prompt } from "E:/Github/zotero-plugin-toolkit/dist/managers/prompt";
+import field2Info from "./easyscholar";
 
 export default class Views {
   private progress: Progress;
@@ -163,7 +164,7 @@ export default class Views {
       {
         renderCellHook(index, data, column) {
           let getTagSpan = (tag: string, color: string) => {
-            let tagSpan = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
+            let tagSpan = ztoolkit.UI.createElement(document, "span") as HTMLSpanElement
             tagSpan.className = "tag-swatch"
             if (Zotero.Utilities.Internal.isOnlyEmoji(tag)) {
               tagSpan.textContent = tag;
@@ -567,198 +568,6 @@ export default class Views {
  * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
  */
   public async createPublicationTagsColumn() {
-    const allFields = [{
-      field: "paperName",
-      title: "\u520A\u7269\u540D\u79F0",
-      showOverflow: "tooltip",
-      fixed: "left",
-      width: "350"
-    }, {
-      field: "sci",
-      title: "SCI\u5206\u533A",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "ssci",
-      title: "SSCI\u5206\u533A",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "sciBase",
-      title: "SCI\u4E2D\u79D1\u9662\u57FA\u7840\u7248",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "sciUp",
-      title: "SCI\u4E2D\u79D1\u9662\u5347\u7EA7\u7248",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "sciif",
-      title: "SCI\u5F71\u54CD\u56E0\u5B50",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "sciif5",
-      title: "SCI5\u5E74\u5F71\u54CD\u56E0\u5B50",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "cscd",
-      title: "\u4E2D\u56FD\u79D1\u5B66\u5F15\u6587\u6570\u636E\u5E93",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "pku",
-      title: "\u5317\u5927\u4E2D\u6587\u6838\u5FC3",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "ccf",
-      title: "\u4E2D\u56FD\u8BA1\u7B97\u673A\u5B66\u4F1A",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "eii",
-      title: "EI\u7D22\u5F15",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "ahci",
-      title: "A&HCI",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "cssci",
-      title: "\u4E2D\u6587\u793E\u4F1A\u79D1\u5B66\u5F15\u6587\u7D22\u5F15",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "zhongguokejihexin",
-      title: "\u4E2D\u56FD\u79D1\u6280\u6838\u5FC3\u671F\u520A",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "ajg",
-      title: "AJG",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "sciwarn",
-      title: "SCI\u544A\u8B66\u671F\u520A",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "fms",
-      title: "FMS",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "jci",
-      title: "JCI\u6307\u6570",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "ft50",
-      title: "FT50",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "utd24",
-      title: "UTD24",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "scu",
-      title: "\u56DB\u5DDD\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "zju",
-      title: "\u6D59\u6C5F\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "cju",
-      title: "\u957F\u6C5F\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "swufe",
-      title: "\u897F\u5357\u8D22\u7ECF\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "cufe",
-      title: "\u4E2D\u592E\u8D22\u7ECF\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "uibe",
-      title: "\u5BF9\u5916\u7ECF\u6D4E\u8D38\u6613\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "sdufe",
-      title: "\u5C71\u4E1C\u8D22\u7ECF\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "xdu",
-      title: "\u897F\u5B89\u7535\u5B50\u79D1\u6280\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "swjtu",
-      title: "\u897F\u5357\u4EA4\u901A\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "ruc",
-      title: "\u4E2D\u56FD\u4EBA\u6C11\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "xmu",
-      title: "\u53A6\u95E8\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "sjtu",
-      title: "\u4E0A\u6D77\u4EA4\u901A\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "fdu",
-      title: "\u590D\u65E6\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "hhu",
-      title: "\u6CB3\u6D77\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "cqu",
-      title: "\u91CD\u5E86\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "nju",
-      title: "\u5357\u4EAC\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "xju",
-      title: "\u65B0\u7586\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }, {
-      field: "cug",
-      title: "\u4E2D\u56FD\u5730\u8D28\u5927\u5B66",
-      showOverflow: "tooltip",
-      width: "120"
-    }]
     const key = "PublicationTags"
     await ztoolkit.ItemTree.register(
       key,
@@ -769,12 +578,24 @@ export default class Views {
         includeBaseMapped: boolean,
         item: Zotero.Item
       ) => {
-        const sortBy = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
+        let sortBy: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
+        sortBy = sortBy.split(/,\s*/g)
         const publicationTitle = item.getField("publicationTitle")
         if (!(publicationTitle && publicationTitle != "")) { return "" }
         let data: any = ztoolkit.ExtraField.getExtraField(item, "publication")
         if (data) {
-          return JSON.parse(data)[sortBy] + "\n" + data
+          /**
+           * 默认排序列的值包含数字
+           */
+          let _data = JSON.parse(data)
+          let s = sortBy.map((k: string) => {
+            if (k.startsWith("-")) {
+              return (1e5 - parseInt(String(Number(_data[k.slice(1)].replace(/[^0-9\.]/g, "")) * 1e3)))
+            } else {
+              return parseInt(String(Number(_data[k].replace(/[^0-9\.]/g, "")) * 1e3))
+            }
+          }).join("")
+          return s + " \n" + data
         }
         // 开启一个异步更新影响因子
         window.setTimeout(async () => {
@@ -813,7 +634,7 @@ export default class Views {
           }
           if (Object.keys(data).length == 0) { return span }
           // 渲染逻辑
-          const fieldColor = JSON.parse(Zotero.Prefs.get(`${config.addonRef}.${key}Column.fieldColor`) as string)
+          let rankColors = (Zotero.Prefs.get(`${config.addonRef}.${key}Column.rankColors`) as string).split(/,\s*/g)
           const defaultColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.defaultColor`) as string
           const textColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.textColor`) as string
           const opacity = Zotero.Prefs.get(`${config.addonRef}.${key}Column.opacity`) as string
@@ -821,12 +642,18 @@ export default class Views {
           fields = fields.split(/,\s*/g).filter((i: string)=>data[i])
           for (let i = 0; i < fields.length; i++) {
             let field = fields[i]
-            // let fieldTitle = allFields.find(e => e.field == field)?.title
-            let fieldTitle = field.toUpperCase()
             let fieldValue = data[field]
-            let [red, green, blue] = Progress.getRGB(
-              fieldColor[field] ? fieldColor[field][fieldValue] : defaultColor
-            )
+            let text, color
+            if (field in field2Info) {
+              let info = field2Info[field](fieldValue)
+              let rank = info.rank
+              text = info.text
+              color = rank >= rankColors.length ? rankColors.slice(-1)[0] : rankColors[rank]
+            } else {
+              text = `${field.toUpperCase()} ${fieldValue}`
+              color = defaultColor
+            }
+            let [red, green, blue] = Progress.getRGB(color)
             span.appendChild(ztoolkit.UI.createElement(document, "span", {
               styles: {
                 backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
@@ -839,7 +666,7 @@ export default class Views {
                 margin: "0.2em"
               },
               properties: {
-                innerText: field == "eii" ? "EI" : `${fieldTitle} ${fieldValue}`
+                innerText: text
               }
             })) 
           }
@@ -863,8 +690,8 @@ export default class Views {
           range: [0, 1, 0.01],
         },
         {
-          prefKey: `${key}Column.fieldColor`,
-          name: "Field Color",
+          prefKey: `${key}Column.rankColors`,
+          name: "Rank Colors",
           type: "input"
         },
         {
