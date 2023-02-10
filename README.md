@@ -72,6 +72,13 @@ zoterostyle.tagsColumn.margin = "0.35"
 |~~/|除了以/开头的标签外，其他所有标签都显示|
 | | 显示所有标签 |
 
+### 期刊标签
+> easyscholar API，easyscholar风格，当然你也可以自定义颜色
+
+设置见https://github.com/MuiseDestiny/zotero-style/releases/tag/2.1.3
+
+![image](https://user-images.githubusercontent.com/51939531/218053553-8257a0f1-128a-441b-b279-e544ce5072bb.png)
+
 
 ### 标注
 
