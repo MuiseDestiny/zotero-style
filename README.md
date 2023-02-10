@@ -77,8 +77,9 @@ zoterostyle.tagsColumn.margin = "0.35"
 
 设置见https://github.com/MuiseDestiny/zotero-style/releases/tag/2.1.3
 
-![image](https://user-images.githubusercontent.com/51939531/218053553-8257a0f1-128a-441b-b279-e544ce5072bb.png)
+![image](https://user-images.githubusercontent.com/51939531/218092114-44ac3db6-9304-418f-a838-91c3ca8e1f48.png)
 
+等级是自动匹配的，但我只从easyscholar迁移了一部分（我认为常用的），如你对某个字段有分区需求可以提issue。
 
 ### 标注
 
