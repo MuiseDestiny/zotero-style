@@ -146,7 +146,7 @@ const field2Info: any = {
   ccf(s: string) {
     let text = `CCF ${s}`
     let rank
-    if (rank == "A") {
+    if (s == "A") {
       rank = 1;
     } else if (s == "B") {
       rank = 2;
