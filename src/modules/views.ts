@@ -2913,16 +2913,28 @@ export default class Views {
         const s = new Zotero.Search();
         s.addCondition("quicksearch-titleCreatorYear", "contains", text)
         s.addCondition("itemType", "isNot", "attachment");
-        const ids = await s.search();
+        let ids = await s.search();
         console.log(ids)
         // @ts-ignore
         prompt.exit()
         const container = prompt.createCommandsContainer();
         container.classList.add("suggestions")
+        if (!ids.length) {
+          // 尝试增改变条件
+          const s = new Zotero.Search();
+          const operators = ['is', 'isNot', 'true',  'false', 'isInTheLast', 'isBefore', 'isAfter', 'contains', 'doesNotContain', 'beginsWith']
+          text.split(/\s*&&\s*/g).forEach(conditinString => {            
+            let conditions = conditinString.split(/\s+/g)
+            if (conditions.length == 3 && operators.indexOf(conditions[1]) != -1) {
+              s.addCondition(...conditions)
+            }
+          })
+          ids = await s.search();
+        } 
         if (ids.length) {
           ids.forEach((id: number) => {
             const item = Zotero.Items.get(id)
-            if(!item.isRegularItem()) { return }
+            if (!item.isRegularItem()) { return }
             const title = item.getField("title")
             const ele = ztoolkit.UI.createElement(document, "div", {
               namespace: "html",
@@ -2957,7 +2969,7 @@ export default class Views {
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap"
-  
+
                   },
                   properties: {
                     innerText: title
