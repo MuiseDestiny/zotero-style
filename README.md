@@ -1,7 +1,5 @@
 # Zotero Style
-> 做一些简单的可视化，让你的Zotero面板看起来更有趣
-> 
-> 你的Zotero应该有自己的Style
+> 为Zotero增添色彩！
 
 [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-round&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
@@ -11,15 +9,11 @@
 
 诚恳地邀请你，在[这里](https://github.com/MuiseDestiny/zotero-style/issues/48)贴上你的配色，这对以后的主题切换很有帮助！
 
-**这是一个重写的版本，与以往版本有较大差异，安装之前还请阅读本文，再决定是否安装**
+如您需要数据迁移（使得新版本能够加载以前的进度），[见此](https://github.com/MuiseDestiny/zotero-style/issues/55)。
 
-如您需要数据迁移（使得新版本能够加载以前的进度），[见此](https://github.com/MuiseDestiny/zotero-style/issues/55)，新版本将不再监督您的清空回收站行为。
-
-安装插件后会产生一个`Addon Item`条目用于数据储存，不要将其删除，如您有更好的数据储存策略（可同步），可反馈[至此](https://github.com/MuiseDestiny/zotero-reference/issues/43)
+安装插件后会产生一个`Addon Item`条目用于数据储存，不要将其删除，如您有更好的数据储存可同步策略，可反馈[至此](https://github.com/MuiseDestiny/zotero-reference/issues/43)
 
 ---
-
-新版本去除了`Shift+P`的设置，取而代之的是更直观的设置弹窗；没有了`>`按钮，取而代之的是`视图组`，视图组的功能包含`>`的全部功能。
 
 ## 字段
 
@@ -77,8 +71,9 @@ zoterostyle.tagsColumn.margin = "0.35"
 
 设置见https://github.com/MuiseDestiny/zotero-style/releases/tag/2.1.3
 
-![image](https://user-images.githubusercontent.com/51939531/218053553-8257a0f1-128a-441b-b279-e544ce5072bb.png)
+![image](https://user-images.githubusercontent.com/51939531/218092114-44ac3db6-9304-418f-a838-91c3ca8e1f48.png)
 
+等级是自动匹配的，但我只从easyscholar迁移了一部分（我认为常用的），如你对某个字段有分区需求可以提issue。
 
 ### 标注
 
@@ -190,3 +185,8 @@ Zotero有`关联文献`功能，那么可视化是必然的，也是刚需的，
 - 本插件基于Zotero工具箱开发 - https://github.com/windingwind/zotero-plugin-toolkit
 - 本插件部分代码参考`Chartero` - https://github.com/volatile-static/Chartero
 - 本插件参考`Zotero Tag`插件 - https://github.com/windingwind/zotero-tag
+- 本插件部分功能基于`Zotero PDF Translate`插件 - https://github.com/windingwind/zotero-pdf-translate
+- 本插件感谢[科研通](https://www.ablesci.com/)，[easyscholar](https://easyscholar.cc/console/query)等免费网站
+- 本插件感谢提出宝贵意见的同学们
+
+因插件部分API尚未做出请求限制，如有对任何网站造成不良影响，可以联系我删除该功能。
