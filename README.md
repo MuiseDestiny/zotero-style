@@ -1,7 +1,5 @@
 # Zotero Style
-> 做一些简单的可视化，让你的Zotero面板看起来更有趣
-> 
-> 你的Zotero应该有自己的Style
+> 为Zotero增添色彩！
 
 [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-round&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
@@ -11,15 +9,11 @@
 
 诚恳地邀请你，在[这里](https://github.com/MuiseDestiny/zotero-style/issues/48)贴上你的配色，这对以后的主题切换很有帮助！
 
-**这是一个重写的版本，与以往版本有较大差异，安装之前还请阅读本文，再决定是否安装**
+如您需要数据迁移（使得新版本能够加载以前的进度），[见此](https://github.com/MuiseDestiny/zotero-style/issues/55)。
 
-如您需要数据迁移（使得新版本能够加载以前的进度），[见此](https://github.com/MuiseDestiny/zotero-style/issues/55)，新版本将不再监督您的清空回收站行为。
-
-安装插件后会产生一个`Addon Item`条目用于数据储存，不要将其删除，如您有更好的数据储存策略（可同步），可反馈[至此](https://github.com/MuiseDestiny/zotero-reference/issues/43)
+安装插件后会产生一个`Addon Item`条目用于数据储存，不要将其删除，如您有更好的数据储存可同步策略，可反馈[至此](https://github.com/MuiseDestiny/zotero-reference/issues/43)
 
 ---
-
-新版本去除了`Shift+P`的设置，取而代之的是更直观的设置弹窗；没有了`>`按钮，取而代之的是`视图组`，视图组的功能包含`>`的全部功能。
 
 ## 字段
 
