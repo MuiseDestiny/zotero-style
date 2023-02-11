@@ -1,14 +1,13 @@
 import { config } from "../../package.json";
 import AddonItem from "./item";
 import Progress from "./progress";
-import Requests from "./requests";
 import { getString, initLocale } from "./locale";
 import { Command, Prompt } from "E:/Github/zotero-plugin-toolkit/dist/managers/prompt";
 import field2Info from "./easyscholar";
+import utils from "./utils";
 
 export default class Views {
   private progress: Progress;
-  private requests: Requests
   private progressWindow: any;
   private progressWindowIcon: any;
   private addonItem: AddonItem;
@@ -21,7 +20,6 @@ export default class Views {
     };
     this.addonItem = addonItem;
     this.progress = new Progress()
-    this.requests = new Requests()
     this.addStyle()
   }
 
@@ -250,6 +248,8 @@ export default class Views {
       },
       {
         renderCellHook(index, data, column) {
+          const margin = Zotero.Prefs.get(`${config.addonRef}.text${key}Column.margin`) as string
+          const padding = Zotero.Prefs.get(`${config.addonRef}.text${key}Column.padding`) as string
           let getTagSpan = (tag: string, backgroundColor?: string) => {
             const _backgroundColor = Zotero.Prefs.get(
               `${config.addonRef}.text${key}Column.backgroundColor`
@@ -264,17 +264,18 @@ export default class Views {
                 `${config.addonRef}.text${key}Column.opacity`
               ) as string
             )
+
             let tagSpan = ztoolkit.UI.createElement(document, "span", {
               namespace: "html",
               styles: {
                 backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
                 height: "1.5em",
                 lineHeight: "1.5em",
-                padding: "0 .5em",
+                padding: `0 ${padding}em`,
                 color: textColor,
                 display: "inline-block",
                 borderRadius: "3px",
-                margin: "0.2em"
+                margin: `${margin}em`
               },
               properties: {
                 innerText: tag
@@ -335,6 +336,18 @@ export default class Views {
           name: "Opacity",
           type: "range",
           range: [0, 1, 0.01]
+        },
+        {
+          prefKey: "textTagsColumn.margin",
+          name: "Margin",
+          type: "range",
+          range: [0, 0.5, 0.001]
+        },
+        {
+          prefKey: "textTagsColumn.padding",
+          name: "Padding",
+          type: "range",
+          range: [0, 1, 0.001]
         },
         
       ]
@@ -462,31 +475,12 @@ export default class Views {
         includeBaseMapped: boolean,
         item: Zotero.Item
       ) => {
-        const publicationTitle = item.getField("publicationTitle")
-        if (!(publicationTitle && publicationTitle != "")) { return "-1" }
-        let sciif = ztoolkit.ExtraField.getExtraField(item, "sciif")
-        if (sciif) {
-          return sciif
+        const data = utils.wait(item, "publication")
+        if (!data) { return "-1" }
+        let value = data[Zotero.Prefs.get(`${config.addonRef}.${key}Column.field`) as string] || data.sciif || data.sciif5
+        if (value) {
+          return value
         }
-        // 开启一个异步更新影响因子
-        window.setTimeout(async () => {
-          const response = await this.requests.post(
-            "https://easyscholar.cc/homeController/getQueryTable.ajax",
-            {
-              page: "1",
-              limit: "1",
-              sourceName: publicationTitle
-            }
-          )
-          if (response) {
-            let data = response.data[0]
-            if (data && data.sciif && data.sci) {
-              ztoolkit.ExtraField.setExtraField(item, "sciif", data.sciif)
-              ztoolkit.ExtraField.setExtraField(item, "sci", data.sci)
-            }
-          }
-        })
-        return "0"
       },
       {
         renderCellHook: (index: any, data: any, column: any) => {
@@ -539,6 +533,11 @@ export default class Views {
       key,
       [
         {
+          prefKey: "IFColumn.field",
+          name: "Field",
+          type: "input"
+        },
+        {
           prefKey: "IFColumn.color",
           name: "Color",
           type: "input",
@@ -564,9 +563,9 @@ export default class Views {
   }
 
   /**
- * 创建分区影响因子列
- * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
- */
+   * 创建分区影响因子列
+   * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
+   */
   public async createPublicationTagsColumn() {
     const key = "PublicationTags"
     await ztoolkit.ItemTree.register(
@@ -578,44 +577,40 @@ export default class Views {
         includeBaseMapped: boolean,
         item: Zotero.Item
       ) => {
-        let sortBy: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
-        sortBy = sortBy.split(/,\s*/g)
-        const publicationTitle = item.getField("publicationTitle")
-        if (!(publicationTitle && publicationTitle != "")) { return "" }
-        let data: any = ztoolkit.ExtraField.getExtraField(item, "publication")
-        if (data) {
-          /**
-           * 默认排序列的值包含数字
-           */
-          let _data = JSON.parse(data)
+        try {
+          const data = utils.wait(item, "publication")
+          if (!data) { return "" }
+          // 排序
+          let sortBy: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
+          sortBy = sortBy.split(/,\s*/g)
           let s = sortBy.map((k: string) => {
+            let value
             if (k.startsWith("-")) {
-              return (1e5 - parseInt(String(Number(_data[k.slice(1)].replace(/[^0-9\.]/g, "")) * 1e3)))
+              k = k.slice(1)
+              if (!data[k]) {
+                value = 1e5
+              } else {
+                value = (1e5 - parseInt(String(Number(data[k].replace(/[^0-9\.]/g, "")) * 1e3)))
+              }
             } else {
-              return parseInt(String(Number(_data[k].replace(/[^0-9\.]/g, "")) * 1e3))
+              if (!data[k]) {
+                value = 1e5
+              } else {
+                value = parseInt(String(Number(data[k].replace(/[^0-9\.]/g, "")) * 1e3))
+              }
             }
-          }).join("")
-          return s + " \n" + data
+            value = String(value)
+            value = value.slice(0, 6)
+            while (value.length < 6) {
+              value = "0" + value
+            }
+            return value
+          }).join(".")
+          return s + " \n" + JSON.stringify(data)
+        } catch (e) {
+          console.log(e)
+          return ""
         }
-        // 开启一个异步更新影响因子
-        window.setTimeout(async () => {
-          const response = await this.requests.post(
-            "https://easyscholar.cc/homeController/getQueryTable.ajax",
-            {
-              page: "1",
-              limit: "1",
-              sourceName: publicationTitle
-            }
-          )
-          ztoolkit.log(response)
-          if (response && response.data) {
-            let data = response.data[0]
-            if (data) {
-              ztoolkit.ExtraField.setExtraField(item, "publication", JSON.stringify(data))
-            }
-          }
-        })
-        return ""
       },
       {
         renderCellHook: (index: any, data: any, column: any) => {
@@ -623,54 +618,82 @@ export default class Views {
           const span = ztoolkit.UI.createElement(document, "span", {
             styles: {
               display: "flex",
-              flexDirection: "row"
+              flexDirection: "row",
+              justifyContent: "start",
+              alignItems: "center",
+              height: "20px"
             }
           }) as HTMLSpanElement
           if (data == "") { return span }
           try {
-            data = JSON.parse(data.split("\n")[1])
-          } catch {
+            try {
+              data = JSON.parse(data.split("\n")[1])
+            } catch {
+              return span
+            }
+            if (Object.keys(data).length == 0) { return span }
+            // 渲染逻辑
+            let rankColors = (Zotero.Prefs.get(`${config.addonRef}.${key}Column.rankColors`) as string).split(/,\s*/g)
+            const defaultColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.defaultColor`) as string
+            const textColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.textColor`) as string
+            const opacity = Zotero.Prefs.get(`${config.addonRef}.${key}Column.opacity`) as string
+            const margin = Zotero.Prefs.get(`${config.addonRef}.${key}Column.margin`) as string
+            const padding = Zotero.Prefs.get(`${config.addonRef}.${key}Column.padding`) as string
+            let fields: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.fields`) as string
+            fields = fields.split(/,\s*/g).filter((i: string)=>data[i])
+            for (let i = 0; i < fields.length; i++) {
+              let field = fields[i]
+              let fieldValue = data[field]
+              let text, color
+              if (field in field2Info) {
+                let info = field2Info[field](fieldValue)
+                let rankIndex = info.rank - 1
+                text = info.text
+                color = rankIndex >= rankColors.length ? rankColors.slice(-1)[0] : rankColors[rankIndex]
+              } else {
+                if (field.toUpperCase() == fieldValue.toUpperCase()) {
+                  text = fieldValue.toUpperCase()
+                } else {
+                  text = `${field.toUpperCase()} ${fieldValue}`
+                }
+                color = defaultColor
+              }
+              let [red, green, blue] = Progress.getRGB(color)
+              span.appendChild(ztoolkit.UI.createElement(document, "span", {
+                styles: {
+                  backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
+                  color: textColor,
+                  height: "1.5em",
+                  lineHeight: "1.5em",
+                  padding: `0 ${padding}em`,
+                  display: "inline-block",
+                  borderRadius: "3px",
+                  margin: `${margin}em`
+                },
+                properties: {
+                  innerText: text
+                }
+              })) 
+            }
+            //   styles: {
+            //     backgroundColor: "none",
+            //     color: "black",
+            //     height: "1.5em",
+            //     lineHeight: "1.5em",
+            //     padding: "0 .5em",
+            //     display: "inline-block",
+            //     borderRadius: "3px",
+            //     margin: "0.2em"
+            //   },
+            //   properties: {
+            //     innerText: _text
+            //   }
+            // })) 
+            return span;
+          } catch (e) {
+            ztoolkit.log(e)
             return span
           }
-          if (Object.keys(data).length == 0) { return span }
-          // 渲染逻辑
-          let rankColors = (Zotero.Prefs.get(`${config.addonRef}.${key}Column.rankColors`) as string).split(/,\s*/g)
-          const defaultColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.defaultColor`) as string
-          const textColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.textColor`) as string
-          const opacity = Zotero.Prefs.get(`${config.addonRef}.${key}Column.opacity`) as string
-          let fields: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.fields`) as string
-          fields = fields.split(/,\s*/g).filter((i: string)=>data[i])
-          for (let i = 0; i < fields.length; i++) {
-            let field = fields[i]
-            let fieldValue = data[field]
-            let text, color
-            if (field in field2Info) {
-              let info = field2Info[field](fieldValue)
-              let rank = info.rank
-              text = info.text
-              color = rank >= rankColors.length ? rankColors.slice(-1)[0] : rankColors[rank]
-            } else {
-              text = `${field.toUpperCase()} ${fieldValue}`
-              color = defaultColor
-            }
-            let [red, green, blue] = Progress.getRGB(color)
-            span.appendChild(ztoolkit.UI.createElement(document, "span", {
-              styles: {
-                backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
-                color: textColor,
-                height: "1.5em",
-                lineHeight: "1.5em",
-                padding: "0 .5em",
-                display: "inline-block",
-                borderRadius: "3px",
-                margin: "0.2em"
-              },
-              properties: {
-                innerText: text
-              }
-            })) 
-          }
-          return span;
         },
       }
     );
@@ -682,12 +705,6 @@ export default class Views {
           prefKey: `${key}Column.fields`,
           name: "Fields",
           type: "input",
-        },
-        {
-          prefKey: `${key}Column.opacity`,
-          name: "Opacity",
-          type: "range",
-          range: [0, 1, 0.01],
         },
         {
           prefKey: `${key}Column.rankColors`,
@@ -708,7 +725,25 @@ export default class Views {
           prefKey: `${key}Column.sortBy`,
           name: "Sort By",
           type: "input"
-        }
+        },
+        {
+          prefKey: `${key}Column.opacity`,
+          name: "Opacity",
+          type: "range",
+          range: [0, 1, 0.01],
+        },
+        {
+          prefKey: `${key}Column.margin`,
+          name: "Margin",
+          type: "range",
+          range: [0, 0.5, 0.001]
+        },
+        {
+          prefKey: `${key}Column.padding`,
+          name: "Padding",
+          type: "range",
+          range: [0, 1, 0.001]
+        },
       ]
     )
   }
@@ -1329,7 +1364,7 @@ export default class Views {
                       },
                       listeners: [
                         {
-                          type: "change",
+                          type: "keyup",
                           listener: function () {
                             //@ts-ignore
                             prefs[arg.prefKey] = this.value

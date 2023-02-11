@@ -81,15 +81,15 @@ const field2Info: any = {
   ssci(s: string) {
     let text = `SSCI ${s}`
     let rank
-    if (s == "SSCI Q1") {
+    if (s == "Q1") {
       rank = 1
-    } else if (rank == "SSCI Q2") {
+    } else if (s == "Q2") {
       rank = 2
-    } else if (rank == "SSCI Q3") {
+    } else if (s == "Q3") {
       rank = 3
-    } else if (rank == "SSCI Q4") {
+    } else if (s == "Q4") {
       rank = 4
-    } else if (rank == "SSCI SSCI") {
+    } else if (s == "SSCI") {
       rank = 5
       text = "SSCI";
     }
@@ -98,6 +98,16 @@ const field2Info: any = {
   eii(s: string) {
     let text = "EI检索"
     let rank = 2
+    return {rank, text}
+  },
+  cssci(s: string) {
+    let text = s
+    let rank
+    if (s == "CSSCI") {
+      rank = 1
+    } else if (rank == "CSSCI扩展版") {
+      rank = 2
+    }
     return {rank, text}
   },
   nju(s: string) {
@@ -116,6 +126,40 @@ const field2Info: any = {
     let text = "北大中文核心"
     let rank = 1
     return { rank, text }
+  },
+  xju(s: string) {
+    let text = `XJU ${s}`
+    let rank
+    if (s == "一区") {
+      rank = 1
+    } else if (s == "二区") {
+      rank = 2
+    } else if (s == "三区") {
+      rank = 3
+    } else if (s == "四区") {
+      rank = 4
+    } else if (s == "五区") {
+      rank = 5
+    } 
+    return {rank, text}
+  },
+  ccf(s: string) {
+    let text = `CCF ${s}`
+    let rank
+    if (rank == "A") {
+      rank = 1;
+    } else if (s == "B") {
+      rank = 2;
+    } else if (s == "C") {
+      rank = 3;
+    } else if (s == "T1") {
+      rank = 1;
+    } else if (s == "T2") {
+      rank = 2;
+    } else if (s == "T3") {
+      rank = 3;
+    }
+    return {rank, text}
   }
 }
 
