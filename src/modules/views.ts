@@ -608,13 +608,11 @@ export default class Views {
           }).join(".")
           return s + " \n" + JSON.stringify(data)
         } catch (e) {
-          console.log(e)
           return ""
         }
       },
       {
         renderCellHook: (index: any, data: any, column: any) => {
-          console.log(data)
           const span = ztoolkit.UI.createElement(document, "span", {
             styles: {
               display: "flex",
@@ -640,7 +638,16 @@ export default class Views {
             const margin = Zotero.Prefs.get(`${config.addonRef}.${key}Column.margin`) as string
             const padding = Zotero.Prefs.get(`${config.addonRef}.${key}Column.padding`) as string
             let fields: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.fields`) as string
-            fields = fields.split(/,\s*/g).filter((i: string)=>data[i])
+            fields = fields.split(/,\s*/g).filter((i: string) => data[i])
+            let mapString: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.map`) as string
+            const textMap = new Map()
+            mapString.split(/,\s*/g).filter((s: string) => s.indexOf("=") != -1).forEach((s: string) => {
+              let [k, v] = s.split("=").map((s: string) => s.trim())
+              k && v && textMap.set(k, v)
+            })
+            let getMapString = (k: string) => {
+              return textMap.get(k) || k
+            }
             for (let i = 0; i < fields.length; i++) {
               let field = fields[i]
               let fieldValue = data[field]
@@ -648,13 +655,13 @@ export default class Views {
               if (field in field2Info) {
                 let info = field2Info[field](fieldValue)
                 let rankIndex = info.rank - 1
-                text = info.text
                 color = rankIndex >= rankColors.length ? rankColors.slice(-1)[0] : rankColors[rankIndex]
+                text = [getMapString(info.key), getMapString(info.value) ].filter(i=>i.length>0).join(" ")
               } else {
                 if (field.toUpperCase() == fieldValue.toUpperCase()) {
-                  text = fieldValue.toUpperCase()
+                  text = getMapString(fieldValue.toUpperCase())
                 } else {
-                  text = `${field.toUpperCase()} ${fieldValue}`
+                  text = `${getMapString(field.toUpperCase())} ${getMapString(fieldValue)}`
                 }
                 color = defaultColor
               }
@@ -707,6 +714,11 @@ export default class Views {
           type: "input",
         },
         {
+          prefKey: `${key}Column.map`,
+          name: "Map",
+          type: "input",
+        },
+        {
           prefKey: `${key}Column.rankColors`,
           name: "Rank Colors",
           type: "input"
@@ -744,7 +756,8 @@ export default class Views {
           type: "range",
           range: [0, 1, 0.001]
         },
-      ]
+      ],
+      500
     )
   }
 
@@ -1132,7 +1145,8 @@ export default class Views {
    */
   public patchSetting(
     colKey: string,
-    args: { prefKey: string, name: string, type: string, range?: number[], values?: string[] }[]
+    args: { prefKey: string, name: string, type: string, range?: number[], values?: string[]}[],
+    width: number = 233
   ) {
     const sign = `zoterostyle-setting-${colKey}`
     if (ZoteroPane.itemsView[sign]) { return }
@@ -1384,7 +1398,7 @@ export default class Views {
               }, 
               element: element,
               hooks: { accept }
-            }, 233, (args.length + 2.5) * eachHeight
+            }, width, (args.length + 2.5) * eachHeight
             )
           }
         }
@@ -2294,7 +2308,6 @@ export default class Views {
         name: "标注",
         label: "Style",
         callback: (prompt: Prompt) => {
-          prompt.inputNode.placeholder = "左击使用，右击删除，左长按进入编辑"
           const container = prompt.createCommandsContainer()
           type Name = string;
           type Color = string;
@@ -2306,7 +2319,16 @@ export default class Views {
           let groups: Group[]= JSON.parse(Zotero.Prefs.get(`${config.addonRef}.annotationColorsGroups`) as string)
           // [[颜色名称, 颜色], [颜色名称, 颜色]]
           // let defaultAnno: Annotation[] = JSON.parse(Zotero.Prefs.get(`${config.addonRef}.annotationColors`) as string)
-          let defaultAnno: Annotation[] = [["general.yellow", "#ffd400"], ["general.red", "#ff6666"], ["general.green", "#5fb236"], ["general.blue", "#2ea8e5"], ["general.purple", "#a28ae5"]]
+          let defaultAnno: Annotation[] = [
+            ['general.yellow', '#ffd400'],
+            ['general.red', '#ff6666'],
+            ['general.green', '#5fb236'],
+            ['general.blue', '#2ea8e5'],
+            ['general.purple', '#a28ae5'],
+            ['general.magenta', '#e56eee'],
+            ['general.orange', '#f19837'],
+            ['general.gray', '#aaaaaa']
+          ];
 
           const svg = `<svg t="1675648090111" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2675" width="20" height="20" style="height: 100%;"><path d="M863.328262 481.340895l-317.344013 0.099772L545.984249 162.816826c0-17.664722-14.336138-32.00086-32.00086-32.00086s-31.99914 14.336138-31.99914 32.00086l0 318.400215-322.368714-0.17718c-0.032684 0-0.063647 0-0.096331 0-17.632039 0-31.935493 14.239806-32.00086 31.904529-0.096331 17.664722 14.208843 32.031824 31.871845 32.095471l322.59234 0.17718 0 319.167424c0 17.695686 14.336138 32.00086 31.99914 32.00086s32.00086-14.303454 32.00086-32.00086L545.982529 545.440667l317.087703-0.099772c0.063647 0 0.096331 0 0.127295 0 17.632039 0 31.935493-14.239806 32.00086-31.904529S880.960301 481.404542 863.328262 481.340895z" fill="#575B66" p-id="2676"></path></svg>`
           console.log(groups, defaultAnno)
@@ -2537,7 +2559,6 @@ export default class Views {
            * @param annotationColors 
            */
           let editAnnotations = (group: Group) => {
-            prompt.inputNode.placeholder = "右击删除"
             let annotations: Annotation[] = group[1]
             const container = prompt.createCommandsContainer()
             const isUsed = JSON.stringify(annotations) == Zotero.Prefs.get(`${config.addonRef}.annotationColors`)
@@ -3078,7 +3099,7 @@ function dialog(io: {
   window.openDialog(
     `chrome://${config.addonRef}/content/dialog.xul`,
     "zotero-style",
-    `chrome,centerscreen,width=${width},height=${height},alwaysRaised=yes`,
+    `chrome,centerscreen,width=${width},height=${height},alwaysRaised=yes,resizable=yes`,
     io
   );
 }

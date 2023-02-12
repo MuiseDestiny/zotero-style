@@ -1,7 +1,7 @@
 const field2Info: any = {
   sci(s: string) {
     let rank;
-    let text = `SCI ${s}`
+    let key = "SCI", value = s;
     if (s == "Q1") {
       rank = 1
     } else if (s == "Q2") {
@@ -11,11 +11,10 @@ const field2Info: any = {
     } else if (s == "Q4") {
       rank = 4
     }
-    return {rank, text}
-
+    return { rank, key, value}
   },
   sciif(s: string) {
-    let text = `SCIIF ${s}`
+    let key = "SCIIF", value = s;
     let number = Number(s);
     let rank
     if (number >= 10) {
@@ -29,11 +28,11 @@ const field2Info: any = {
     } else if (number >= 0 && number < 1) {
       rank = 5
     }
-    return {rank, text}
+    return {rank, key, value}
   },
   sciif5(s: string) {
     let number = parseFloat(s);
-    let text = `SCIIF(5) ${s}`
+    let key = "SCIIF(5)", value = s;
     let rank
     if (number >= 10) {
       rank = 1
@@ -46,10 +45,10 @@ const field2Info: any = {
     } else if (number >= 0 && number < 1) {
       rank = 5
     }
-    return {rank, text}
+    return { rank, key, value }
   },
   sciBase(s: string) {
-    let text = `SCI基础版 ${s}`
+    let key = "SCI基础版", value = s;
     s = s.substring(s.length - 2);
     let rank
     if (s == "1区") {
@@ -61,10 +60,10 @@ const field2Info: any = {
     } else if (s == "4区") {
       rank = 4
     }
-    return {rank, text}
+    return { rank, key, value }
   },
   sciUp(s: string) {
-    let text = `SCI升级版 ${s}`
+    let key = "SCI升级版", value = s;
     s = s.substring(s.length - 2);
     let rank
     if (s == "1区") {
@@ -76,10 +75,10 @@ const field2Info: any = {
     } else if (s == "4区") {
       rank = 4
     }
-    return {rank, text}
+    return {rank, key, value}
   },
   ssci(s: string) {
-    let text = `SSCI ${s}`
+    let key = "SSCI", value = s
     let rank
     if (s == "Q1") {
       rank = 1
@@ -91,44 +90,43 @@ const field2Info: any = {
       rank = 4
     } else if (s == "SSCI") {
       rank = 5
-      text = "SSCI";
     }
-    return {rank, text}
+    return {rank, key, value}
   },
   eii(s: string) {
-    let text = "EI检索"
+    let key = "EI检索", value = "";
     let rank = 2
-    return {rank, text}
+    return { rank, key, value: ""}
   },
   cssci(s: string) {
-    let text = s
+    let key = s, value = "";
     let rank
     if (s == "CSSCI") {
       rank = 1
-    } else if (rank == "CSSCI扩展版") {
+    } else if (s == "CSSCI扩展版") {
       rank = 2
     }
-    return {rank, text}
+    return {rank, key, value}
   },
   nju(s: string) {
-    let text = `NJU ${s}`
+    let key = "NJU", value = s;
     let rank
     if (s == "超一流期刊" || s == "学科群一流期刊") {
       rank = 1
-    } else if (rank == "A") {
+    } else if (s == "A") {
       rank = 2
-    } else if (rank == "B") {
+    } else if (s == "B") {
       rank = 3
     }
-    return {rank, text}
+    return {rank, key, value}
   },
   pku(s: string) {
-    let text = "北大中文核心"
+    let key = "北大中文核心", value = ""
     let rank = 1
-    return { rank, text }
+    return { rank, key, value }
   },
   xju(s: string) {
-    let text = `XJU ${s}`
+    let key = "XJU", value = s;
     let rank
     if (s == "一区") {
       rank = 1
@@ -141,10 +139,10 @@ const field2Info: any = {
     } else if (s == "五区") {
       rank = 5
     } 
-    return {rank, text}
+    return {rank, key, value}
   },
   ccf(s: string) {
-    let text = `CCF ${s}`
+    let key = "CCF", value=s
     let rank
     if (s == "A") {
       rank = 1;
@@ -159,7 +157,7 @@ const field2Info: any = {
     } else if (s == "T3") {
       rank = 3;
     }
-    return {rank, text}
+    return {rank, key, value}
   }
 }
 
