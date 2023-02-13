@@ -71,6 +71,15 @@ zoterostyle.tagsColumn.margin = "0.35"
 
 设置见https://github.com/MuiseDestiny/zotero-style/releases/tag/2.1.3
 
+以下是所有支持fields
+```js
+// from easyscholar
+let default_displayUnit = ['sci', 'swufe', 'ccf', 'cufe', 'sciif', 'fdu', 'sjtu', 'cssci', 'xmu', 'ruc', 'cscd',
+    'uibe', 'swjtu', 'xdu', 'sci-base', 'sci-up', 'pku', 'sdufe', 'eii', 'nju', 'ahci', 'zhongguokejihexin', 'cqu',
+    'hhu', 'ajg', 'xju', 'cug', 'ssci', 'scu', 'sciif5', 'sciwarn', 'jci', 'ft50', 'utd24', 'enintro', 'zhintro', 'fms',
+    'zju', 'cju'];
+```
+
 ![image](https://user-images.githubusercontent.com/51939531/218295175-b503b7b9-bbe8-4904-bf33-bf55df659d9f.png)
 
 等级是自动匹配的，但我只从easyscholar迁移了一部分（我认为常用的），如你对某个字段有分区需求可以提issue。
