@@ -71,14 +71,57 @@ zoterostyle.tagsColumn.margin = "0.35"
 
 设置见https://github.com/MuiseDestiny/zotero-style/releases/tag/2.1.3
 
-以下是所有支持fields
-```js
-// from easyscholar
-let default_displayUnit = ['sci', 'swufe', 'ccf', 'cufe', 'sciif', 'fdu', 'sjtu', 'cssci', 'xmu', 'ruc', 'cscd',
-    'uibe', 'swjtu', 'xdu', 'sci-base', 'sci-up', 'pku', 'sdufe', 'eii', 'nju', 'ahci', 'zhongguokejihexin', 'cqu',
-    'hhu', 'ajg', 'xju', 'cug', 'ssci', 'scu', 'sciif5', 'sciwarn', 'jci', 'ft50', 'utd24', 'enintro', 'zhintro', 'fms',
-    'zju', 'cju'];
+<details>
+
+<summary>所有Fields</summary>
+
+```ts
+ajg
+fms
+ccf
+zju
+utd24
+sciUp
+sciif
+sjtu
+xju
+eii
+hhu
+zhongguokejihexin
+sciwarn
+nju
+uibe
+scu
+ahci
+cssci
+swufe
+Custom
+cju
+xmu
+enintro
+jci
+xdu
+ft50
+cscd
+ssci
+cnki
+ruc
+sci
+cufe
+sdufe
+Title
+pku
+sciBase
+fdu
+sciif5
+cqu
+swjtu
+zhintro
+cug
 ```
+
+</details>
+
 
 ![image](https://user-images.githubusercontent.com/51939531/218295175-b503b7b9-bbe8-4904-bf33-bf55df659d9f.png)
 
