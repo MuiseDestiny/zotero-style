@@ -126,8 +126,6 @@ cug
 ![image](https://user-images.githubusercontent.com/51939531/218376871-016f4810-87a1-45bd-83f5-672d88e8171f.png)
 
 
-![image](https://user-images.githubusercontent.com/51939531/218295175-b503b7b9-bbe8-4904-bf33-bf55df659d9f.png)
-
 等级是自动匹配的，但我只从easyscholar迁移了一部分（我认为常用的），如你对某个字段有分区需求可以提issue。
 
 ### 标注
