@@ -270,11 +270,8 @@ export default class Views {
               namespace: "html",
               styles: {
                 backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
-                height: "1.5em",
-                lineHeight: "1.5em",
-                padding: `0 ${padding}em`,
+                padding: `0.05em ${padding}em`,
                 color: textColor,
-                display: "inline-block",
                 borderRadius: "3px",
                 margin: `${margin}em`
               },
@@ -287,11 +284,7 @@ export default class Views {
           const tagSpans = ztoolkit.UI.createElement(document, "span", {
             namespace: "html",
             styles: {
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "start",
-              alignItems: "center",
-              height: "20px"
+              display: "block"
             }
           }) as HTMLSpanElement
           if (!data) { return tagSpans }
@@ -352,6 +345,200 @@ export default class Views {
         },
         
       ]
+    )
+  }
+
+  /**
+ * 创建分区影响因子列
+ * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
+ */
+  public async createPublicationTagsColumn() {
+    const key = "PublicationTags"
+    await ztoolkit.ItemTree.register(
+      key,
+      getString(`column.${key}`),
+      (
+        field: string,
+        unformatted: boolean,
+        includeBaseMapped: boolean,
+        item: Zotero.Item
+      ) => {
+        console.log("Get data")
+        try {
+          const data = utils.wait(item, "publication")
+          if (!data) { return "" }
+          // 排序
+          let sortBy: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
+          sortBy = sortBy.split(/,\s*/g)
+          let s = sortBy.map((k: string) => {
+            let value
+            if (k.startsWith("-")) {
+              k = k.slice(1)
+              if (!data[k]) {
+                value = 1e5
+              } else {
+                value = (1e5 - parseInt(String(Number(data[k].replace(/[^0-9\.]/g, "")) * 1e3)))
+              }
+            } else {
+              if (!data[k]) {
+                value = 1e5
+              } else {
+                value = parseInt(String(Number(data[k].replace(/[^0-9\.]/g, "")) * 1e3))
+              }
+            }
+            value = String(value)
+            value = value.slice(0, 6)
+            while (value.length < 6) {
+              value = "0" + value
+            }
+            return value
+          }).join(".")
+          return s + " \n" + JSON.stringify(data)
+        } catch (e) {
+          console.log(e)
+          return ""
+        }
+      },
+      {
+        renderCellHook: (index: any, data: any, column: any) => {
+          const span = ztoolkit.UI.createElement(document, "span", {
+            styles: {
+              display: "block",
+            }
+          }) as HTMLSpanElement
+          if (data == "") { return span }
+          try {
+            try {
+              data = JSON.parse(data.split("\n")[1])
+            } catch {
+              return span
+            }
+            if (Object.keys(data).length == 0) { return span }
+            // 渲染逻辑
+            let rankColors = (Zotero.Prefs.get(`${config.addonRef}.${key}Column.rankColors`) as string).split(/,\s*/g)
+            const defaultColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.defaultColor`) as string
+            const textColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.textColor`) as string
+            const opacity = Zotero.Prefs.get(`${config.addonRef}.${key}Column.opacity`) as string
+            const margin = Zotero.Prefs.get(`${config.addonRef}.${key}Column.margin`) as string
+            const padding = Zotero.Prefs.get(`${config.addonRef}.${key}Column.padding`) as string
+            let fields: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.fields`) as string
+            fields = fields.split(/,\s*/g).filter((i: string) => data[i])
+            let mapString: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.map`) as string
+            const textMap = new Map()
+            mapString.split(/,\s*/g).filter((s: string) => s.indexOf("=") != -1).forEach((s: string) => {
+              let [k, v] = s.split("=").map((s: string) => s.trim())
+              k && textMap.set(k, v)
+            })
+            let getMapString = (k: string) => {
+              return textMap.get(k) ?? k
+            }
+            for (let i = 0; i < fields.length; i++) {
+              let field = fields[i]
+              let fieldValue = data[field]
+              let text, color
+              if (field in field2Info) {
+                let info = field2Info[field](fieldValue)
+                let rankIndex = info.rank - 1
+                color = rankIndex >= rankColors.length ? rankColors.slice(-1)[0] : rankColors[rankIndex]
+                text = [getMapString(info.key), getMapString(info.value)].filter(i => i.length > 0).join(" ")
+              } else {
+                if (field.toUpperCase() == fieldValue.toUpperCase()) {
+                  text = getMapString(fieldValue.toUpperCase())
+                } else {
+                  text = `${getMapString(field.toUpperCase())} ${getMapString(fieldValue)}`
+                }
+                color = defaultColor
+              }
+              let [red, green, blue] = Progress.getRGB(color)
+              span.appendChild(ztoolkit.UI.createElement(document, "span", {
+                styles: {
+                  backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
+                  color: textColor,
+                  padding: `0.05em ${padding}em`,
+                  borderRadius: "3px",
+                  margin: `${margin}em`
+                },
+                properties: {
+                  innerText: text
+                }
+              }))
+            }
+            //   styles: {
+            //     backgroundColor: "none",
+            //     color: "black",
+            //     height: "1.5em",
+            //     lineHeight: "1.5em",
+            //     padding: "0 .5em",
+            //     display: "inline-block",
+            //     borderRadius: "3px",
+            //     margin: "0.2em"
+            //   },
+            //   properties: {
+            //     innerText: _text
+            //   }
+            // })) 
+            return span;
+          } catch (e) {
+            ztoolkit.log(e)
+            return span
+          }
+        },
+      }
+    );
+
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: `${key}Column.fields`,
+          name: "Fields",
+          type: "input",
+        },
+        {
+          prefKey: `${key}Column.map`,
+          name: "Map",
+          type: "input",
+        },
+        {
+          prefKey: `${key}Column.rankColors`,
+          name: "Rank Colors",
+          type: "input"
+        },
+        {
+          prefKey: `${key}Column.defaultColor`,
+          name: "Default Color",
+          type: "input"
+        },
+        {
+          prefKey: `${key}Column.textColor`,
+          name: "Text Color",
+          type: "input"
+        },
+        {
+          prefKey: `${key}Column.sortBy`,
+          name: "Sort By",
+          type: "input"
+        },
+        {
+          prefKey: `${key}Column.opacity`,
+          name: "Opacity",
+          type: "range",
+          range: [0, 1, 0.01],
+        },
+        {
+          prefKey: `${key}Column.margin`,
+          name: "Margin",
+          type: "range",
+          range: [0, 0.5, 0.001]
+        },
+        {
+          prefKey: `${key}Column.padding`,
+          name: "Padding",
+          type: "range",
+          range: [0, 1, 0.001]
+        },
+      ],
+      500
     )
   }
 
@@ -563,206 +750,6 @@ export default class Views {
     )
   }
 
-  /**
-   * 创建分区影响因子列
-   * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
-   */
-  public async createPublicationTagsColumn() {
-    const key = "PublicationTags"
-    await ztoolkit.ItemTree.register(
-      key,
-      getString(`column.${key}`),
-      (
-        field: string,
-        unformatted: boolean,
-        includeBaseMapped: boolean,
-        item: Zotero.Item
-      ) => {
-        console.log("Get data")
-        try {
-          const data = utils.wait(item, "publication")
-          if (!data) { return "" }
-          // 排序
-          let sortBy: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
-          sortBy = sortBy.split(/,\s*/g)
-          let s = sortBy.map((k: string) => {
-            let value
-            if (k.startsWith("-")) {
-              k = k.slice(1)
-              if (!data[k]) {
-                value = 1e5
-              } else {
-                value = (1e5 - parseInt(String(Number(data[k].replace(/[^0-9\.]/g, "")) * 1e3)))
-              }
-            } else {
-              if (!data[k]) {
-                value = 1e5
-              } else {
-                value = parseInt(String(Number(data[k].replace(/[^0-9\.]/g, "")) * 1e3))
-              }
-            }
-            value = String(value)
-            value = value.slice(0, 6)
-            while (value.length < 6) {
-              value = "0" + value
-            }
-            return value
-          }).join(".")
-          return s + " \n" + JSON.stringify(data)
-        } catch (e) {
-          console.log(e)
-          return ""
-        }
-      },
-      {
-        renderCellHook: (index: any, data: any, column: any) => {
-          const span = ztoolkit.UI.createElement(document, "span", {
-            styles: {
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "start",
-              alignItems: "center",
-              height: "20px"
-            }
-          }) as HTMLSpanElement
-          if (data == "") { return span }
-          try {
-            try {
-              data = JSON.parse(data.split("\n")[1])
-            } catch {
-              return span
-            }
-            if (Object.keys(data).length == 0) { return span }
-            // 渲染逻辑
-            let rankColors = (Zotero.Prefs.get(`${config.addonRef}.${key}Column.rankColors`) as string).split(/,\s*/g)
-            const defaultColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.defaultColor`) as string
-            const textColor = Zotero.Prefs.get(`${config.addonRef}.${key}Column.textColor`) as string
-            const opacity = Zotero.Prefs.get(`${config.addonRef}.${key}Column.opacity`) as string
-            const margin = Zotero.Prefs.get(`${config.addonRef}.${key}Column.margin`) as string
-            const padding = Zotero.Prefs.get(`${config.addonRef}.${key}Column.padding`) as string
-            let fields: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.fields`) as string
-            fields = fields.split(/,\s*/g).filter((i: string) => data[i])
-            let mapString: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.map`) as string
-            const textMap = new Map()
-            mapString.split(/,\s*/g).filter((s: string) => s.indexOf("=") != -1).forEach((s: string) => {
-              let [k, v] = s.split("=").map((s: string) => s.trim())
-              k && textMap.set(k, v)
-            })
-            let getMapString = (k: string) => {
-              return textMap.get(k) ?? k
-            }
-            for (let i = 0; i < fields.length; i++) {
-              let field = fields[i]
-              let fieldValue = data[field]
-              let text, color
-              if (field in field2Info) {
-                let info = field2Info[field](fieldValue)
-                let rankIndex = info.rank - 1
-                color = rankIndex >= rankColors.length ? rankColors.slice(-1)[0] : rankColors[rankIndex]
-                text = [getMapString(info.key), getMapString(info.value) ].filter(i=>i.length>0).join(" ")
-              } else {
-                if (field.toUpperCase() == fieldValue.toUpperCase()) {
-                  text = getMapString(fieldValue.toUpperCase())
-                } else {
-                  text = `${getMapString(field.toUpperCase())} ${getMapString(fieldValue)}`
-                }
-                color = defaultColor
-              }
-              let [red, green, blue] = Progress.getRGB(color)
-              span.appendChild(ztoolkit.UI.createElement(document, "span", {
-                styles: {
-                  backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
-                  color: textColor,
-                  height: "1.5em",
-                  lineHeight: "1.5em",
-                  padding: `0 ${padding}em`,
-                  display: "inline-block",
-                  borderRadius: "3px",
-                  margin: `${margin}em`
-                },
-                properties: {
-                  innerText: text
-                }
-              })) 
-            }
-            //   styles: {
-            //     backgroundColor: "none",
-            //     color: "black",
-            //     height: "1.5em",
-            //     lineHeight: "1.5em",
-            //     padding: "0 .5em",
-            //     display: "inline-block",
-            //     borderRadius: "3px",
-            //     margin: "0.2em"
-            //   },
-            //   properties: {
-            //     innerText: _text
-            //   }
-            // })) 
-            return span;
-          } catch (e) {
-            ztoolkit.log(e)
-            return span
-          }
-        },
-      }
-    );
-
-    this.patchSetting(
-      key,
-      [
-        {
-          prefKey: `${key}Column.fields`,
-          name: "Fields",
-          type: "input",
-        },
-        {
-          prefKey: `${key}Column.map`,
-          name: "Map",
-          type: "input",
-        },
-        {
-          prefKey: `${key}Column.rankColors`,
-          name: "Rank Colors",
-          type: "input"
-        },
-        {
-          prefKey: `${key}Column.defaultColor`,
-          name: "Default Color",
-          type: "input"
-        },
-        {
-          prefKey: `${key}Column.textColor`,
-          name: "Text Color",
-          type: "input"
-        },
-        {
-          prefKey: `${key}Column.sortBy`,
-          name: "Sort By",
-          type: "input"
-        },
-        {
-          prefKey: `${key}Column.opacity`,
-          name: "Opacity",
-          type: "range",
-          range: [0, 1, 0.01],
-        },
-        {
-          prefKey: `${key}Column.margin`,
-          name: "Margin",
-          type: "range",
-          range: [0, 0.5, 0.001]
-        },
-        {
-          prefKey: `${key}Column.padding`,
-          name: "Padding",
-          type: "range",
-          range: [0, 1, 0.001]
-        },
-      ],
-      500
-    )
-  }
 
   /**
    * 模仿Endnote评级
