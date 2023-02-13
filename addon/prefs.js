@@ -24,8 +24,8 @@ pref("extensions.zotero.__addonRef__.IFColumn.field", "sciif");
 pref("extensions.zotero.__addonRef__.IFColumn.color", "#A8D1D1");
 pref("extensions.zotero.__addonRef__.IFColumn.opacity", "0.7");
 pref("extensions.zotero.__addonRef__.IFColumn.max", "15");
+pref("extensions.zotero.__addonRef__.IFColumn.progress", true);
 pref("extensions.zotero.__addonRef__.IFColumn.info", false);
-
 
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.fields", "sci, sciif5, eii");
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.rankColors", '#ff9999, #86dad1, #ffe78f, #ffd4a9, #cce5ff');

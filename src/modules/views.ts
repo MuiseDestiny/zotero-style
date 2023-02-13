@@ -135,17 +135,24 @@ export default class Views {
     // 用于分离多emoj，很魔鬼的bug
     const runes = require("runes")
     // 新增加的标签列，在调用Zotero.Tags，setColor时不会刷新
-    if (!Zotero.Tags.setColor.CalledRefresh) {
-      ztoolkit.patch(Zotero.Tags, "setColor", "CalledRefresh", (original) => {
-        return (id: number, name: string, color: string, pos: number) => {
-          original.call(Zotero.Tags, id, name, color, pos)
-          window.setTimeout(async () => {
-            // @ts-ignore
-            await ztoolkit.ItemTree.refresh();
-          }, 0)
-        }
-      })
-    }
+    ztoolkit.patch(Zotero.Tags, "setColor", config.addonRef + "setColor", (original) => {
+      return async (id: number, name: string, color: string, pos: number) => {
+        await original.call(Zotero.Tags, id, name, color, pos)
+        window.setTimeout(async () => {
+          // @ts-ignore
+          await ztoolkit.ItemTree.refresh();
+        })
+      }
+    })
+    ztoolkit.patch(Zotero.Tags, "removeFromLibrary", config.addonRef + "removeFromLibrary", (original) => {
+      return async (libraryID: number, tagIDs: number[]) => {
+        await original.call(Zotero.Tags, libraryID, tagIDs)
+        window.setTimeout(async () => {
+          // @ts-ignore
+          await ztoolkit.ItemTree.refresh();
+        })
+      }
+    })
 
     const key = "Tags"
     await ztoolkit.ItemTree.register(
@@ -543,6 +550,117 @@ export default class Views {
   }
 
   /**
+ * 创建分区影响因子列
+ * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
+ */
+  public async createIFColumn() {
+    const key = "IF"
+    await ztoolkit.ItemTree.register(
+      key,
+      getString(`column.${key}`),
+      (
+        field: string,
+        unformatted: boolean,
+        includeBaseMapped: boolean,
+        item: Zotero.Item
+      ) => {
+        const data = utils.wait(item, "publication")
+        if (!data) { return "-1" }
+        let value = data[Zotero.Prefs.get(`${config.addonRef}.${key}Column.field`) as string] || data.sciif || data.sciif5
+        if (value) {
+          return value
+        }
+      },
+      {
+        renderCellHook: (index: any, data: any, column: any) => {
+          const span = ztoolkit.UI.createElement(document, "span", {
+            styles: {
+              display: "flex",
+              flexDirection: "row",
+              paddingRight: ".5em"
+            }
+          }) as HTMLSpanElement
+          let value = Number(data)
+          if (value == -1) { return span }
+          if (Zotero.Prefs.get(
+            `${config.addonRef}.IFColumn.progress`
+          ) as boolean) {
+            let progressNode = (new Progress()).linePercent(
+              value,
+              parseFloat(Zotero.Prefs.get(
+                `${config.addonRef}.IFColumn.max`
+              ) as string),
+              Zotero.Prefs.get(
+                `${config.addonRef}.IFColumn.color`
+              ) as string,
+              Zotero.Prefs.get(
+                `${config.addonRef}.IFColumn.opacity`
+              ) as string
+            )
+            progressNode.style.marginRight = "0.5em"
+            span.appendChild(progressNode)
+          }
+          if (Zotero.Prefs.get(
+            `${config.addonRef}.IFColumn.info`
+          ) as boolean) {
+            span.appendChild(ztoolkit.UI.createElement(document, "span", {
+              styles: {
+                display: "inline-block",
+                width: "4em",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+
+              },
+              properties: {
+                innerText: value
+              }
+            }))
+          }
+          return span;
+        },
+      }
+    );
+
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: "IFColumn.field",
+          name: "Field",
+          type: "input"
+        },
+        {
+          prefKey: "IFColumn.color",
+          name: "Color",
+          type: "input",
+        },
+        {
+          prefKey: "IFColumn.opacity",
+          name: "Opacity",
+          type: "range",
+          range: [0, 1, 0.01],
+        },
+        {
+          prefKey: "IFColumn.max",
+          name: "Max",
+          type: "input"
+        },
+        {
+          prefKey: "IFColumn.progress",
+          name: "Progress",
+          type: "boolean"
+        },
+        {
+          prefKey: "IFColumn.info",
+          name: "Info",
+          type: "boolean"
+        }
+      ]
+    )
+  }
+
+  /**
    * 创建进度列，用于展示标注分布
    */
   public async createProgressColumn() {
@@ -647,109 +765,6 @@ export default class Views {
       ]
     )
   }
-
-  /**
-   * 创建分区影响因子列
-   * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
-   */
-  public async createIFColumn() {
-    const key = "IF"
-    await ztoolkit.ItemTree.register(
-      key,
-      getString(`column.${key}`),
-      (
-        field: string,
-        unformatted: boolean,
-        includeBaseMapped: boolean,
-        item: Zotero.Item
-      ) => {
-        const data = utils.wait(item, "publication")
-        if (!data) { return "-1" }
-        let value = data[Zotero.Prefs.get(`${config.addonRef}.${key}Column.field`) as string] || data.sciif || data.sciif5
-        if (value) {
-          return value
-        }
-      },
-      {
-        renderCellHook: (index: any, data: any, column: any) => {
-          const span = ztoolkit.UI.createElement(document, "span", {
-            styles: {
-              display: "flex",
-              flexDirection: "row",
-              paddingRight: ".5em"
-            }
-          }) as HTMLSpanElement
-          let value = Number(data)
-          if (value == -1) { return span }
-          let progressNode = (new Progress()).linePercent(
-            value, 
-            parseFloat(Zotero.Prefs.get(
-              `${config.addonRef}.IFColumn.max`
-            ) as string),
-            Zotero.Prefs.get(
-              `${config.addonRef}.IFColumn.color`
-            ) as string,
-            Zotero.Prefs.get(
-              `${config.addonRef}.IFColumn.opacity`
-            ) as string
-          )
-          span.appendChild(progressNode)
-          if (Zotero.Prefs.get(
-            `${config.addonRef}.IFColumn.info`
-          ) as boolean) {
-            span.appendChild(ztoolkit.UI.createElement(document, "span", {
-              styles: {
-                display: "inline-block",
-                width: "4em",
-                marginLeft: "0.5em",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap"
-
-              },
-              properties: {
-                innerText: value
-              }
-            }))
-          }
-          return span;
-        },
-      }
-    );
-
-    this.patchSetting(
-      key,
-      [
-        {
-          prefKey: "IFColumn.field",
-          name: "Field",
-          type: "input"
-        },
-        {
-          prefKey: "IFColumn.color",
-          name: "Color",
-          type: "input",
-        },
-        {
-          prefKey: "IFColumn.opacity",
-          name: "Opacity",
-          type: "range",
-          range: [0, 1, 0.01],
-        },
-        {
-          prefKey: "IFColumn.max",
-          name: "Max",
-          type: "input"
-        },
-        {
-          prefKey: "IFColumn.info",
-          name: "Info",
-          type: "boolean"
-        }
-      ]
-    )
-  }
-
 
   /**
    * 模仿Endnote评级
