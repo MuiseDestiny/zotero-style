@@ -6,6 +6,7 @@ import { Command, Prompt } from "E:/Github/zotero-plugin-toolkit/dist/managers/p
 import field2Info from "./easyscholar";
 import utils from "./utils";
 
+
 export default class Views {
   private progress: Progress;
   private progressWindow: any;
@@ -577,6 +578,7 @@ export default class Views {
         includeBaseMapped: boolean,
         item: Zotero.Item
       ) => {
+        console.log("Get data")
         try {
           const data = utils.wait(item, "publication")
           if (!data) { return "" }
@@ -608,6 +610,7 @@ export default class Views {
           }).join(".")
           return s + " \n" + JSON.stringify(data)
         } catch (e) {
+          console.log(e)
           return ""
         }
       },
@@ -643,10 +646,10 @@ export default class Views {
             const textMap = new Map()
             mapString.split(/,\s*/g).filter((s: string) => s.indexOf("=") != -1).forEach((s: string) => {
               let [k, v] = s.split("=").map((s: string) => s.trim())
-              k && v && textMap.set(k, v)
+              k && textMap.set(k, v)
             })
             let getMapString = (k: string) => {
-              return textMap.get(k) || k
+              return textMap.get(k) ?? k
             }
             for (let i = 0; i < fields.length; i++) {
               let field = fields[i]

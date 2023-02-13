@@ -1,4 +1,3 @@
-import { BasicExampleFactory, UIExampleFactory } from "./modules/examples";
 import { config } from "../package.json";
 import { getString, initLocale } from "./modules/locale";
 import Views from "./modules/views"; 
