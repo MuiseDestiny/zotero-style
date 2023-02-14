@@ -370,7 +370,6 @@ export default class Views {
         includeBaseMapped: boolean,
         item: Zotero.Item
       ) => {
-        console.log("Get data")
         try {
           const data = utils.wait(item, "publication")
           if (!data) { return "" }
@@ -470,20 +469,6 @@ export default class Views {
                 }
               }))
             }
-            //   styles: {
-            //     backgroundColor: "none",
-            //     color: "black",
-            //     height: "1.5em",
-            //     lineHeight: "1.5em",
-            //     padding: "0 .5em",
-            //     display: "inline-block",
-            //     borderRadius: "3px",
-            //     margin: "0.2em"
-            //   },
-            //   properties: {
-            //     innerText: _text
-            //   }
-            // })) 
             return span;
           } catch (e) {
             ztoolkit.log(e)
@@ -576,15 +561,18 @@ export default class Views {
           const span = ztoolkit.UI.createElement(document, "span", {
             styles: {
               display: "flex",
-              flexDirection: "row",
-              paddingRight: ".5em"
+              flexDirection: "row"
             }
           }) as HTMLSpanElement
           let value = Number(data)
           if (value == -1) { return span }
-          if (Zotero.Prefs.get(
+          const isProgress = Zotero.Prefs.get(
             `${config.addonRef}.IFColumn.progress`
-          ) as boolean) {
+          ) as boolean
+          const isInfo = Zotero.Prefs.get(
+            `${config.addonRef}.IFColumn.info`
+          ) as boolean
+          if (isProgress) {
             let progressNode = (new Progress()).linePercent(
               value,
               parseFloat(Zotero.Prefs.get(
@@ -597,12 +585,10 @@ export default class Views {
                 `${config.addonRef}.IFColumn.opacity`
               ) as string
             )
-            progressNode.style.marginRight = "0.5em"
+            isInfo && (progressNode.style.marginRight = "0.5em")
             span.appendChild(progressNode)
           }
-          if (Zotero.Prefs.get(
-            `${config.addonRef}.IFColumn.info`
-          ) as boolean) {
+          if (isInfo) {
             span.appendChild(ztoolkit.UI.createElement(document, "span", {
               styles: {
                 display: "inline-block",
@@ -821,7 +807,7 @@ export default class Views {
     }
     const prefKey = `${config.addonRef}.columnsViews`
 
-    // function
+    // functions
     let switchColumnsView = (columnView: ColumnsView) => {
       const allColumns = ZoteroPane.itemsView._getColumns()
 
@@ -856,61 +842,65 @@ export default class Views {
       return JSON.stringify(a.sort()) == JSON.stringify(b.sort())
     }
     let optionTimer: number | undefined = undefined
-    let updateOptionNode = (timeout: number) => {
-      switchContainer.querySelectorAll("span").forEach(e => e.remove())
+    let updateOptionNode = (timeout: number, currentIndex: number = -1) => {
+      window.clearTimeout(optionTimer)
       const columnsViews = JSON.parse(Zotero.Prefs.get(prefKey) as string) as ColumnsView[]
-      for (let i = 0; i < columnsViews.length; i++) {
-        let columnsView = columnsViews[i]
-        const r: number = .7
-        const color = {
-          active: "#FF597B",
-          default: "#97DECE"
+      if (currentIndex != -1 && switchContainer.querySelector("span")) {
+        switchContainer.querySelectorAll("span")[currentIndex].click()
+      } else {
+        switchContainer.querySelectorAll("span").forEach(e => e.remove())
+        for (let i = 0; i < columnsViews.length; i++) {
+          let columnsView = columnsViews[i]
+          const r: number = .7
+          const color = {
+            active: "#FF597B",
+            default: "#97DECE"
+          }
+          let optionNode = switchContainer.appendChild(
+            ztoolkit.UI.createElement(
+              document,
+              "span",
+              {
+                styles: {
+                  display: "inline-block",
+                  borderRadius: "1em",
+                  width: `${r}em`,
+                  height: `${r}em`,
+                  backgroundColor: ((currentIndex == i) || (currentIndex == -1 && isCurrent(columnsView))) ? color.active : color.default,
+                  transition: "background-color .23s linear",
+                  opacity: "0.7",
+                  cursor: "pointer",
+                  margin: " 0 .3em"
+                },
+                listeners: [
+                  {
+                    type: "mouseenter",
+                    listener: () => {
+                      window.clearTimeout(optionTimer)
+                      optionNode.style.opacity = "1"
+                      this.showProgressWindow(columnsView.name, columnsView.content, "default", -1)
+                    }
+                  },
+                  {
+                    type: "mouseleave",
+                    listener: () => {
+                      optionNode.style.opacity = "0.7"
+                      this.progressWindow.close()
+                    }
+                  },
+                  {
+                    type: "click",
+                    listener: () => {
+                      switchColumnsView(columnsView)
+                      optionNode.parentNode?.childNodes.forEach((e: any) => e.style.backgroundColor = color.default)
+                      optionNode.style.backgroundColor = color.active
+                    }
+                  }
+                ]
+              }
+            ) as HTMLSpanElement
+          )
         }
-        let optionNode = switchContainer.appendChild(
-          ztoolkit.UI.createElement(
-            document,
-            "span",
-            {
-              styles: {
-                display: "inline-block",
-                borderRadius: "1em",
-                width: `${r}em`,
-                height: `${r}em`,
-                backgroundColor: isCurrent(columnsView) ? color.active : color.default,
-                transition: "background-color .3s linear",
-                // border: "1px solid rgba(0, 0, 0, 0.3)",
-                opacity: "0.7",
-                cursor: "pointer",
-                margin: " 0 .3em"
-              },
-              listeners: [
-                {
-                  type: "mouseenter",
-                  listener: () => {
-                    window.clearTimeout(optionTimer)
-                    optionNode.style.opacity = "1"
-                    this.showProgressWindow(columnsView.name, columnsView.content, "default", -1)
-                  }
-                },
-                {
-                  type: "mouseleave",
-                  listener: () => {
-                    optionNode.style.opacity = "0.7"
-                    this.progressWindow.close()
-                  }
-                },
-                {
-                  type: "click",
-                  listener: () => {
-                    switchColumnsView(columnsView)
-                    optionNode.parentNode?.childNodes.forEach((e: any) => e.style.backgroundColor = color.default)
-                    optionNode.style.backgroundColor = color.active
-                  }
-                }
-              ]
-            }
-          ) as HTMLSpanElement
-        )
       }
       switchContainer.style.opacity = "1"
       if (timeout > 0) {        
@@ -957,8 +947,36 @@ export default class Views {
         }
       ) as XUL.Spacer,
       toolbar.querySelector("#zotero-tb-search-spinner")
-    )
-    
+    );
+    [",", "."].forEach((key: string, keyIndex: number) => {
+      ztoolkit.Shortcut.register(
+        "event",
+        {
+          id: `zotero-style-column-view-switch-${key}`,
+          key,
+          modifiers: "alt",
+          callback: () => {
+            const columnsViews = JSON.parse(Zotero.Prefs.get(prefKey) as string) as ColumnsView[]
+            let index = columnsViews.findIndex(c => isCurrent(c))
+            if (index == -1) {
+              index = 0
+            } else {
+              index += (keyIndex == 0 ? -1 : 1)
+              if (index < 0) {
+                index = columnsViews.length + index
+              } else if (index >= columnsViews.length) {
+                index -= columnsViews.length
+              }
+            }
+            switchColumnsView(columnsViews[index]);
+            window.setTimeout(() => {              
+              updateOptionNode(1000, index)
+            })
+          }
+        }
+      )
+    })
+
     // menu UI
     const sign = "zoterostyle-registerSwitchColumnsViewUI"
     if (ZoteroPane.itemsView[sign]) { return }

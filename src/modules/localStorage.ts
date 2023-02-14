@@ -1,7 +1,7 @@
 
 import { config } from "../../package.json";
 
-class LocalStroge {
+class LocalStorage {
   private filename: string;
   private cache: any;
   private pending = false
@@ -41,5 +41,5 @@ class LocalStroge {
   }
 }
 
-export default LocalStroge
+export default LocalStorage
 
