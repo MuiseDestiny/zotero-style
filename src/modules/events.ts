@@ -35,12 +35,11 @@ export default class Events {
 	}
 
 	public async listeningReader() {
-		ztoolkit.log("listeningReader is running")
 		const reader = this.getReader()
 		const item = this.getItem()
 		// Zotero is bulr
 		if (!(reader && reader.state && this.state.activate && item)) { return }
-
+		ztoolkit.log("listeningReader is running")
 		const pageIndex = reader.state.pageIndex;
 		if (pageIndex == this.state.pageIndex) {
 			if (reader.state.left == this.state.left && reader.state.top == this.state.top)

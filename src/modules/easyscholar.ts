@@ -273,7 +273,7 @@ const field2Info: any = {
   jci(s: string) {
     let key = "JCI", value = s;
     let rank
-    let number = parseFloat(s.split(" ")[1]);
+    let number = parseFloat(s);
     if (number >= 3) {
       rank = 1
     } else if (number >= 1 && number < 3) {
@@ -453,6 +453,7 @@ const field2Info: any = {
       value = ""
       rank = 1
     }
+    return { rank, key, value }
   }
 }
 

@@ -179,11 +179,17 @@ export default class Views {
             }
             return tagSpan
           }
-          const tagSpans = ztoolkit.UI.createElement(document, "span", "html") as HTMLSpanElement
+          const tagSpans = ztoolkit.UI.createElement(document, "span") as HTMLSpanElement
           tagSpans.style.width = "100%"
           tagSpans.className = "tag-box"
           if (!data) { return tagSpans }
-          let tags: { tag: string, color: string }[] = JSON.parse(data)
+          let tags: { tag: string, color: string }[]
+          try {
+            tags = JSON.parse(data)
+          } catch {
+            console.log(data)
+            return tagSpans
+          }
           const align = Zotero.Prefs.get(
             `${config.addonRef}.tagsColumn.align`
           ) as any || "left"
@@ -295,7 +301,12 @@ export default class Views {
             }
           }) as HTMLSpanElement
           if (!data) { return tagSpans }
-          let tags: { tag: string, color: string }[] = JSON.parse(data)
+          let tags: { tag: string, color: string }[]
+          try {
+            tags = JSON.parse(data)
+          } catch {
+            return tagSpans
+          }
           const prefix = Zotero.Prefs.get(`${config.addonRef}.text${key}Column.prefix`) as string
           tags.forEach(tagObj => {
             let startIndex: number
@@ -1431,349 +1442,6 @@ export default class Views {
 
   /**
    * 关系图谱
-   * d3
-   * 很卡，文字容易和节点重合
-   */
-  // public async _createForceGraph() {
-  //   ztoolkit.log("createForceGraph")
-  //   document.querySelectorAll("#viz").forEach(e => e.remove());
-  //   document.querySelectorAll(".resizer").forEach(e => e.remove())
-  //   while (!document.querySelector("#item-tree-main-default")) {
-  //     await Zotero.Promise.delay(100)
-  //   } 
-  //   const mainNode = document.querySelector("#item-tree-main-default")!
-  //   const resizer = ztoolkit.UI.createElement(document, "div", {
-  //     classList: ["resizer"],
-  //     styles: {
-  //       width: "100%",
-  //       height: "2px",
-  //       backgroundColor: "#cecece",
-  //       cursor: "ns-resize"
-  //     }
-  //   })
-  //   // 图形容器
-  //   const container = ztoolkit.UI.createElement(document, "div", {
-  //     namespace: "html",
-  //     id: "viz",
-  //     styles: {
-  //       width: "100%",
-  //       height: "300px",
-  //     },
-  //     children: [
-  //       {
-  //         namespace: "svg",
-  //         tag: "svg",
-  //         id: "graph",
-  //         styles: {
-  //           width: "100%",
-  //           height: "100%"
-  //         }
-  //       }
-  //     ]
-  //   }) as HTMLDivElement
-  //   mainNode.append(resizer, container)
-  //   // 可调
-  //   let y = 0;
-  //   let bottomHeight = 0;
-  //   const mouseDownHandler = function (e) {
-  //     // Get the current mouse position
-  //     y = e.clientY;
-  //     bottomHeight = container.getBoundingClientRect().height;
-
-  //     document.addEventListener('mousemove', mouseMoveHandler);
-  //     document.addEventListener('mouseup', mouseUpHandler);
-  //   };
-  //   const mouseMoveHandler = function (e) {
-  //     const dy = e.clientY - y;
-  //     container.style.height = `${bottomHeight - dy}px`;
-  //   };
-  //   const mouseUpHandler = function () {
-  //     document.removeEventListener('mousemove', mouseMoveHandler);
-  //     document.removeEventListener('mouseup', mouseUpHandler);
-  //   };
-  //   // Attach the handler
-  //   resizer.addEventListener('mousedown', mouseDownHandler);
-
-  //   const d3 = require('./d3');
-  //   const Math = require("math")
-  //   interface Graph { nodes: any[], links: any[] }
-    
-  //   const key = ZoteroPane.getSelectedCollection()?.key
-  //   container.querySelector("#graph g")?.remove()
-  //   const items = ZoteroPane.getSortedItems()
-  //   let graph: Graph = {
-  //     nodes: [],
-  //     links: []
-  //   }
-  //   items.forEach((item, id) => {
-  //     if (!item.firstCreator) { return }
-  //     graph.nodes.push({
-  //       id,
-  //       name: `${item.firstCreator}, ${item.getField("year")}`,
-  //       item
-  //     })
-  //     const relatedKeys = item.relatedItems
-  //     items
-  //       .forEach((_item, _id) => {
-  //         if (_id == id) { return }
-  //         if (relatedKeys.indexOf(_item.key) != -1) {
-  //           graph.links.push({
-  //             source: id,
-  //             target: _id
-  //           })
-  //         }
-  //       })
-  //   })
-  //   var width = 1000;
-  //   var height = 1000;
-  //   var label: Graph = {
-  //     nodes: [],
-  //     links: []
-  //   };
-
-  //   graph.nodes.forEach(function (d, i) {
-  //     label.nodes.push({ node: d });
-  //     label.nodes.push({ node: d });
-  //     label.links.push({
-  //       source: i * 2,
-  //       target: i * 2 + 1
-  //     });
-  //   });
-
-  //   var labelLayout = d3.forceSimulation(label.nodes)
-  //     .force("charge", d3.forceManyBody().strength(-50))
-  //     .force("link", d3.forceLink(label.links).distance(0).strength(2));
-
-  //   var graphLayout = d3.forceSimulation(graph.nodes)
-  //     .force("charge", d3.forceManyBody().strength(-3000))
-  //     .force("center", d3.forceCenter(width / 2, height / 2))
-  //     .force("x", d3.forceX(width / 2).strength(1))
-  //     .force("y", d3.forceY(height / 2).strength(1))
-  //     .force("link", d3.forceLink(graph.links).id(d => d.id).distance(50).strength(1))
-  //     .on("tick", ticked);
-
-  //   var adjlist: any = [];
-
-  //   graph.links.forEach(function (d) {
-  //     adjlist[d.source.index + "-" + d.target.index] = true;
-  //     adjlist[d.target.index + "-" + d.source.index] = true;
-  //   });
-
-  //   function neigh(a: any, b: any) {
-  //     return a == b || adjlist[a + "-" + b];
-  //   }
-
-
-  //   var svg = d3.select("#viz svg#graph").attr("width", width).attr("height", height);
-  //   var group = svg.append("g");
-
-  //   let zoom = d3.zoom()
-  //     .scaleExtent([0.25, 10])
-  //     .on('zoom', handleZoom);
-  //   svg.call(zoom);
-  //   function handleZoom() {
-  //     let t = 233
-  //     const oriTr = group.attr("transform")
-  //     if (!oriTr || !oriTr.includes("scale") ||
-  //       parseFloat(
-  //         oriTr.match(/scale\(([\.\d]+),/)[1]
-  //       ).toFixed(3) == d3.event.transform.k.toFixed(3)
-  //     ) {
-  //       t = 0
-  //     }
-  //     group
-  //       .transition()
-  //       .duration(t)
-  //       .attr("transform", d3.event.transform)
-  //   }
-  //   const color = {
-  //     node: {
-  //       default: "#5a5a5a",
-  //       active: "#7b6cd0"
-  //     },
-  //     link: {
-  //       default: "#aaa",
-  //       active: "#7b6cd0"
-  //     }
-  //   }
-
-  //   var link = group.append("g")
-  //     .attr("class", "links")
-  //     .selectAll("line")
-  //     .data(graph.links)
-  //     .enter()
-  //     .append("line")
-  //     .attr("stroke", color.link.default)
-  //     .attr("stroke-width", "1px")
-  //     .attr("opacity", 1)
-    
-  //   var node = group.append("g")
-  //     .attr("class", "nodes")
-  //     .selectAll("g")
-  //     .data(graph.nodes)
-  //     .enter()
-  //     .append("circle")
-  //     .attr("r", 8)
-  //     .attr("fill", color.node.default)
-  //     .attr("opacity", 1)
-  //     .attr("cursor", "pointer")
-
-  //   node.call(
-  //     d3.drag()
-  //       .on("start", dragstarted)
-  //       .on("drag", dragged)
-  //       .on("end", dragended)
-  //   );
-
-  //   var labelNode = group.append("g")
-  //     .attr("class", "labelNodes")
-  //     .selectAll("text")
-  //     .data(label.nodes)
-  //     .enter()
-  //     .append("text")
-  //     .text(function (d, i) {
-  //       return i % 2 == 0 ? "" : d.node.name;
-  //     })
-  //     .style("fill", "#555")
-  //     .style("font-family", "Arial")
-  //     .style("font-size", 12)
-  //     .style("pointer-events", "none");
-
-  //   // 事件
-  //   const t = 300
-  //   node
-  //     .on("mouseover", () => {
-  //       var index = d3.select(d3.event.target).datum().index;
-  //       labelNode
-  //         .transition()
-  //         .duration(t)
-  //         .style(
-  //           "opacity", function (o: any) {
-  //             return neigh(index, o.node.index) ? 1 : 0.4;
-  //           })
-  //       node
-  //         .transition()
-  //         .duration(t)
-  //         .style(
-  //           "opacity", function (o: any) {
-  //             return neigh(index, o.index) ? 1 : 0.4;
-  //           })
-  //         .style("fill", function (o: any) {
-  //           return index == o.index ? color.node.active : color.node.default;
-  //         })
-  //       link
-  //         .transition()
-  //         .duration(t)
-  //         .style(
-  //           "opacity", function (o: any) {
-  //             return o.source.index == index || o.target.index == index ? 1 : 0.4;
-  //           })
-  //         .style("stroke", function (o: any) {
-  //           return o.source.index == index || o.target.index == index ? color.link.active : color.link.default;
-  //         })
-  //     })
-  //     .on("mouseout", () => {
-  //       labelNode
-  //         .transition()
-  //         .duration(t)
-  //         .style("opacity", 1)
-  //       node
-  //         .transition()
-  //         .duration(t)
-  //         .style("opacity", 1)
-  //         .style("fill", color.node.default)
-  //       link
-  //         .transition()
-  //         .duration(t)
-  //         .style("opacity", 1)
-  //         .style("stroke", color.link.default)
-  //     })
-  //     .on("click", async (node: any) => {
-  //       await ZoteroPane.selectItem(node.item.getID())
-  //     })
-
-  //   function ticked() {
-
-  //     node.call(updateNode);
-  //     link.call(updateLink);
-
-  //     labelLayout.alphaTarget(0.3).restart();
-  //     labelNode.each(function (d, i) {
-  //       if (i % 2 == 0) {
-  //         d.x = d.node.x;
-  //         d.y = d.node.y;
-  //       } else {
-  //         // this.style("diaplay", "block")
-  //         //   .style("opacity", 1)
-  //         var b
-  //         try {
-  //           b = this.getBBox();
-  //         } catch {return}
-  //         var diffX = d.x - d.node.x;
-  //         var diffY = d.y - d.node.y;
-
-  //         var dist = Math.sqrt(diffX * diffX + diffY * diffY);
-
-  //         var shiftX = b.width * (diffX - dist) / (dist * 2);
-  //         shiftX = Math.max(-b.width, Math.min(0, shiftX));
-  //         var shiftY = 16;
-  //         this.setAttribute("transform", "translate(" + shiftX + "," + shiftY + ")");
-  //       }
-  //     });
-  //     labelNode.call(updateNode);
-
-  //   }
-
-  //   function fixna(x) {
-  //     if (isFinite(x)) return x;
-  //     return 0;
-  //   }
-    
-
-  //   function updateLink(link: any) {
-  //     link
-  //       .attr("x1", function (d) { return fixna(d.source.x); })
-  //       .attr("y1", function (d) { return fixna(d.source.y); })
-  //       .attr("x2", function (d) { return fixna(d.target.x); })
-  //       .attr("y2", function (d) { return fixna(d.target.y); });
-  //   }
-
-  //   function updateNode(node: any) {
-  //     node.attr("transform", function (d) {
-  //       return "translate(" + fixna(d.x) + "," + fixna(d.y) + ")";
-  //     });
-  //   }
-
-  //   function dragstarted(d) {
-  //     d3.event.sourceEvent.stopPropagation();
-  //     if (!d3.event.active) {
-  //       graphLayout.alphaTarget(0.3).restart();
-  //     }
-  //     d.fx = d.x;
-  //     d.fy = d.y;
-  //   }
-
-  //   function dragged(d) {
-  //     d.fx = d3.event.x;
-  //     d.fy = d3.event.y;
-  //   }
-
-  //   function dragended(d) {
-  //     if (!d3.event.active) graphLayout.alphaTarget(0);
-  //     d.fx = null;
-  //     d.fy = null;
-  //   }
-
-  //   const id = window.setInterval(async () => {
-  //     if (ZoteroPane.getSelectedCollection()?.key == key) { return }
-  //     window.clearInterval(id)
-  //     return await this.createForceGraph()
-  //   }, 1000)
-
-  // }
-
-  /**
-   * 关系图谱
    * Obsidian
    */
   public async createForceGraph() {
@@ -1881,6 +1549,7 @@ export default class Views {
             app.graph.onExpand()
             app.graph.onNavigated = () => {}
             window.addEventListener('message', function (event) {
+              if (!(app && app.graph && app.graph.renderer)) { return }
               switch (typeof event.data) {
                 case "string":
                   let id = event.data
@@ -1896,7 +1565,6 @@ export default class Views {
                   break
                 case "object":
                   let graph = event.data
-                  if (!(app && app.graph && app.graph.renderer)) { return }
                   app.graph.renderer.setData(graph)
                   app.graph.renderer.onNodeClick = (e, name, key) => {
                     console.log(name, key)
