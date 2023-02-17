@@ -128,6 +128,11 @@ cug
 
 等级是自动匹配的，但我只从easyscholar迁移了一部分（我认为常用的），如你对某个字段有分区需求可以提issue。
 
+### 评级
+> 模仿Endnote，评级只需要一步！
+
+![bandicam-2023-02-17-22-03-55-444](https://user-images.githubusercontent.com/51939531/219677090-a88a3d00-01cc-49f3-9d90-5dd1d92fe40f.gif)
+
 ### 标注
 
 > PDF标注颜色无限定义
