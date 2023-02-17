@@ -38,13 +38,19 @@ pref("extensions.zotero.__addonRef__.PublicationTagsColumn.margin", "0.2");
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.padding", "0.5");
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.opacity", "0.5");
 
-
-
-
 pref("extensions.zotero.__addonRef__.progressColumn.style", "bar");
 pref("extensions.zotero.__addonRef__.progressColumn.color", "#86C8BC");
 pref("extensions.zotero.__addonRef__.progressColumn.opacity", "0.7");
 pref("extensions.zotero.__addonRef__.progressColumn.circle", true);
+
+pref("extensions.zotero.__addonRef__.ratingColumn.mark", "★");
+pref("extensions.zotero.__addonRef__.ratingColumn.option", "•");
+pref("extensions.zotero.__addonRef__.ratingColumn.color", "#808080");
+pref("extensions.zotero.__addonRef__.ratingColumn.margin", "0.1");
+pref("extensions.zotero.__addonRef__.ratingColumn.size", "1");
+
+
+
 
 pref("extensions.zotero.__addonRef__.columnsViews", "[]");
 

@@ -51,10 +51,12 @@ async function onStartup() {
   await views.createProgressColumn()
   await views.createIFColumn()
   await views.createPublicationTagsColumn()
-  // // await views.createRatingColumn()
+  await views.createRatingColumn()
   let createForceGraph = views.createForceGraph()
   views.registerSwitchColumnsViewUI()
   await views.registerCommands()
+
+  await views.initItemSelectListener()
 
   try {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()

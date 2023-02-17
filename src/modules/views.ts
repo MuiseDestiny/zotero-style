@@ -786,33 +786,90 @@ export default class Views {
         includeBaseMapped: boolean,
         item: Zotero.Item
       ) => {
-        const publicationTitle = item.getField("publicationTitle")
-        if (!(publicationTitle && publicationTitle != "")) { return "-1" }
-        let sciif = ztoolkit.ExtraField.getExtraField(item, "sciif")
-        if (sciif) {
-          return sciif
-        }
-        const rating = ztoolkit.ExtraField.getExtraField(item, "Rating")
+        const rating = ztoolkit.ExtraField.getExtraField(item, "rate")
         return rating ? rating : "0"
       },
       {
         renderCellHook: (index: any, data: any, column: any) => {
+          let keys = ZoteroPane.getSelectedItems().map(i=>i.key)
+          const isSelected = keys.indexOf(ZoteroPane.getSortedItems()[index].key) != -1
+          const maxNum = 5
           const rating = Number(data)
-          const span = ztoolkit.UI.createElement(document, "button", {
+          const span = ztoolkit.UI.createElement(document, "span", {
             namespace: "html",
             styles: {
-              display: "inline-block",
-              height: "20px",
-              width: "100%",
-              zIndex: "999"
+              display: "block"
             }
           }) as HTMLSpanElement
-          span.addEventListener('mousedown', event => event.stopPropagation());
-          span.addEventListener('mouseup', event => console.log("OKKK"));
+          const mark = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.mark`) as string
+          const option = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.option`) as string
+          const size = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.size`) as string
+          const margin = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.margin`) as string
+          const color = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.color`) as string
+
+          for (let i = 0; i < maxNum; i++){
+            let text: string
+            if (i < rating) {
+              text = mark
+            } else {
+              text = isSelected ? option : ""
+            }
+            span.appendChild(
+              ztoolkit.UI.createElement(document, "span", {
+                classList: ["option"],
+                styles: {
+                  display: "inline-block",
+                  height: "1em",
+                  width: "1em",
+                  textAlgin: "center",
+                  color: color,
+                  margin: `0 ${margin}em`,
+                  fontSize: `${size}em`,
+                  textAlign: "center"
+                },
+                properties: {
+                  innerText: text
+                }
+              })
+            )
+          }
           return span
         },
       }
     );
+
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: "ratingColumn.mark",
+          name: "Mark",
+          type: "input",
+        },
+        {
+          prefKey: "ratingColumn.option",
+          name: "Option",
+          type: "input",
+        },
+        {
+          prefKey: "ratingColumn.color",
+          name: "Color",
+          type: "input",
+        },
+        {
+          prefKey: "ratingColumn.size",
+          name: "Size",
+          type: "range",
+          range: [1, 2, 0.01]
+        },
+        {
+          prefKey: "ratingColumn.margin",
+          name: "Margin",
+          type: "range",
+          range: [0, 1, 0.01]
+        }
+      ]
+    )
   }
 
   /**
@@ -1239,7 +1296,6 @@ export default class Views {
               Zotero.Prefs.set(`${config.addonRef}.${key}`, prefs[key])
             }
             ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
-            //@ts-ignore
             ztoolkit.ItemTree.refresh()
           }
           // 点击设置弹出对话框
@@ -1476,7 +1532,6 @@ export default class Views {
       await Zotero.Promise.delay(100)
     }
     const mainNode = document.querySelector("#item-tree-main-default")!
-    const enable = Zotero.Prefs.get(`${config.addonRef}.graphView.enable`)
     const resizer = ztoolkit.UI.createElement(document, "div", {
       id: "graph-view-resizer",
       styles: {
@@ -2792,6 +2847,9 @@ export default class Views {
     }])
   }
 
+  /**
+   * 修改PDF标注颜色
+   */
   public modifyAnnotationColors(reader: _ZoteroReaderInstance) {
     // @ts-ignore
     let win = reader._iframeWindow.wrappedJSObject;
@@ -2828,6 +2886,60 @@ export default class Views {
     win.eval(`window._annotationColors = ${annotationColors}`)
   }
 
+  /**
+   * 监测Item点击
+   */
+  public async initItemSelectListener() {
+    while (!document.querySelector("#zotero-items-tree .virtualized-table-body")) {
+      await Zotero.Promise.delay(10)
+    }
+    const table = document.querySelector("#zotero-items-tree .virtualized-table-body")
+    let lastKey: string
+    table?.addEventListener("click", async (event: any) => {
+      const node = event.target as HTMLDivElement;
+      const selectedSpan = [...node?.querySelectorAll("span.cell")!].find((span: any) => {
+        const rect = span.getBoundingClientRect()
+        return event.clientX > rect.x && event.clientX < rect.x + rect.width
+      })
+      /**
+       * 点击标签相关，打开侧边栏标签选项卡
+       */
+      if (
+        selectedSpan?.classList.contains("Tags")
+        || selectedSpan?.classList.contains("TextTags")
+      ) {
+        (document.querySelector("#zotero-editpane-tags-tab") as HTMLSpanElement).click()
+      }
+      // 评级，只有是准备状态才有效，比如`·`
+      if (selectedSpan?.classList.contains("Rating")) {
+        ztoolkit.log("评级", selectedSpan)
+        let items = ZoteroPane.getSelectedItems()
+        if (items.length == 1) {
+          let item = items[0]
+          if (lastKey == item.key) {
+            let options = [...selectedSpan.querySelectorAll("span.option")] as HTMLSpanElement[]
+            let index = options.findIndex((option: any) => {
+              const rect = option.getBoundingClientRect()
+              return event.clientX > rect.x && event.clientX < rect.x + rect.width
+            })
+            const rate = Number(ztoolkit.ExtraField.getExtraField(item, "rate"))
+            if (options[index].textContent == Zotero.Prefs.get(`${config.addonRef}.ratingColumn.mark`)) {
+              if (index < rate - 1) {
+                (index += 1)
+              }
+              await ztoolkit.ExtraField.setExtraField(item, "rate", String(index))
+            } else if (options[index].textContent == Zotero.Prefs.get(`${config.addonRef}.ratingColumn.option`)) {
+              await ztoolkit.ExtraField.setExtraField(item, "rate", String(index+1))
+            }
+          } else {
+            lastKey = item.key
+            return
+          }
+        }
+      }
+
+    })
+  }
   /**
    * 显示右下角消息
    * @param header 
