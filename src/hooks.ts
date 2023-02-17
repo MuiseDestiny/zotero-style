@@ -3,6 +3,7 @@ import { getString, initLocale } from "./modules/locale";
 import Views from "./modules/views"; 
 import Events from "./modules/events";
 import AddonItem from "./modules/item";
+import Record from "./modules/record";
 
 Zotero._AddonItemGlobal = Zotero._AddonItemGlobal || new AddonItem()
 const addonItem = Zotero._AddonItemGlobal
@@ -33,7 +34,12 @@ async function onStartup() {
   ztoolkit.UI.basicOptions.ui.enableElementRecord = false
   ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
 
-  if (!addonItem.item) { await addonItem.init()  }
+  // 测试
+  // Zotero[config.addonInstance].data.record = new Record()
+  // 测试
+
+  if (!addonItem.item) { await addonItem.init() }
+
   const events = new Events(addonItem)
   events.onInit()
   

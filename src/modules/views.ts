@@ -5,6 +5,7 @@ import { getString, initLocale } from "./locale";
 import { Command, Prompt } from "E:/Github/zotero-plugin-toolkit/dist/managers/prompt";
 import field2Info from "./easyscholar";
 import utils from "./utils";
+import Bubble from "./bubble";
 
 
 export default class Views {
@@ -367,9 +368,9 @@ export default class Views {
   }
 
   /**
- * 创建分区影响因子列
- * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
- */
+   * 创建分区影响因子列
+   * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
+   */
   public async createPublicationTagsColumn() {
     const key = "PublicationTags"
     await ztoolkit.ItemTree.register(
@@ -546,9 +547,17 @@ export default class Views {
   }
 
   /**
- * 创建分区影响因子列
- * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
- */
+   * 附件标签
+   * `PDF 2.3M` `HTML `
+   * 点击可以打开PDF或网页或其它
+   */
+  public async createAttachmentTagsColumn() {
+  }
+
+  /**
+   * 创建分区影响因子列
+   * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
+   */
   public async createIFColumn() {
     const key = "IF"
     await ztoolkit.ItemTree.register(
@@ -867,50 +876,68 @@ export default class Views {
             active: "#FF597B",
             default: "#97DECE"
           }
-          let optionNode = switchContainer.appendChild(
-            ztoolkit.UI.createElement(
-              document,
-              "span",
-              {
-                styles: {
-                  display: "inline-block",
-                  borderRadius: "1em",
-                  width: `${r}em`,
-                  height: `${r}em`,
-                  backgroundColor: ((currentIndex == i) || (currentIndex == -1 && isCurrent(columnsView))) ? color.active : color.default,
-                  transition: "background-color .23s linear",
-                  opacity: "0.7",
-                  cursor: "pointer",
-                  margin: " 0 .3em"
-                },
-                listeners: [
-                  {
-                    type: "mouseenter",
-                    listener: () => {
-                      window.clearTimeout(optionTimer)
-                      optionNode.style.opacity = "1"
-                      this.showProgressWindow(columnsView.name, columnsView.content, "default", -1)
-                    }
-                  },
-                  {
-                    type: "mouseleave",
-                    listener: () => {
-                      optionNode.style.opacity = "0.7"
-                      this.progressWindow.close()
-                    }
-                  },
-                  {
-                    type: "click",
-                    listener: () => {
-                      switchColumnsView(columnsView)
-                      optionNode.parentNode?.childNodes.forEach((e: any) => e.style.backgroundColor = color.default)
-                      optionNode.style.backgroundColor = color.active
+          let b1: Bubble, b2: Bubble, c1: number, c2: number
+          const optionNode = ztoolkit.UI.createElement(
+            document,
+            "span",
+            {
+              styles: {
+                display: "inline-block",
+                borderRadius: "1em",
+                width: `${r}em`,
+                height: `${r}em`,
+                backgroundColor: ((currentIndex == i) || (currentIndex == -1 && isCurrent(columnsView))) ? color.active : color.default,
+                transition: "background-color .23s linear",
+                opacity: "0.7",
+                cursor: "pointer",
+                margin: " 0 .3em"
+              },
+              listeners: [
+                {
+                  type: "mouseenter",
+                  listener: () => {
+                    b1 = new Bubble(optionNode, "bubble-option-name", columnsView.name, "top")
+                    if (columnsView.content == columnsView.name) {
+                      document.querySelector(".bubble-option-content")?.remove()
+                    } else {
+                      b2 = new Bubble(optionNode, "bubble-option-content", columnsView.content, "bottom")
                     }
                   }
-                ]
-              }
-            ) as HTMLSpanElement
-          )
+                },
+                {
+                  type: "mouseleave",
+                  listener: () => {
+                    const t = 230
+                    c1 = window.setTimeout(() => {
+                      b1.ele.style.opacity = "0"
+                      window.setTimeout(() => {
+                        b1.ele.remove()
+                      }, t)
+                    }, t)
+                    b1.ele.setAttribute("closeTimer", String(c1))
+                    if (b2) {
+                      c2 = window.setTimeout(() => {
+                        b2.ele.style.opacity = "0"
+                        window.setTimeout(() => {
+                          b2.ele.remove()
+                        }, t)
+                      }, t)
+                      b2.ele.setAttribute("closeTimer", String(c2)) 
+                    }
+                  }
+                },
+                {
+                  type: "click",
+                  listener: () => {
+                    switchColumnsView(columnsView)
+                    optionNode.parentNode?.childNodes.forEach((e: any) => e.style.backgroundColor = color.default)
+                    optionNode.style.backgroundColor = color.active
+                  }
+                }
+              ]
+            }
+          ) as HTMLSpanElement
+          switchContainer.appendChild(optionNode)
         }
       }
       switchContainer.style.opacity = "1"
@@ -1701,6 +1728,106 @@ export default class Views {
     }
     ztoolkit.Prompt.register([
       {
+        name: "高能进度条",
+        label: "Style",
+        when: () => {
+          // 有条目，且条目有阅读时间
+          let item = getItem()
+          if (!item) { return false }
+          let record = this.addonItem.get(item, "readingTime")
+          ztoolkit.log(record)
+          return record?.data && Object.keys(record.data).length > 0
+        },
+        /**
+         * 进度条UI，重置
+         */
+        callback: (prompt: Prompt) => {
+          const container = prompt.createCommandsContainer()
+
+          const item = getItem() as _ZoteroItem
+          prompt.inputNode.placeholder = item.getField("title")
+          const record = this.addonItem.get(item, "readingTime")
+          if (!record || !record.data || Object.keys(record.data).length == 0) {
+            prompt.showTip("这里一片荒芜~")
+            return
+          }
+
+          const box = ztoolkit.UI.createElement(document, "div", {
+            styles: {
+              display: "flex",
+              alignContent: "baseline",
+              justifyContent: "space-between",
+              borderRadius: "5px",
+              padding: "6px 12px",
+              marginRight: "12px",
+              marginTop: "2px",
+              marginBottom: "2px",
+              height: "2em",
+            }
+          })
+          let values: number[] = []
+          for (let i = 0; i < record.page; i++) {
+            values.push(parseFloat(record.data[i] as string) || 0)
+          }
+          const color = Zotero.Prefs.get(
+            `${config.addonRef}.titleColumn.color`
+          ) as string;
+          const opacity = Zotero.Prefs.get(
+            `${config.addonRef}.titleColumn.opacity`
+          ) as string
+          const span = this.progress.opacity(
+            values,
+            color,
+            opacity
+          );
+          let openToPage = async (page: number) => {
+            let pdfItem = await item.getBestAttachment();
+            if (!pdfItem) { return }
+            await Zotero.OpenPDF.openToPage(pdfItem, page)
+          };
+          [...span.querySelectorAll("span")].forEach((span: HTMLSpanElement, index: number) => {
+            span.style.cursor = "pointer"
+            let page = index + 1;
+            span.onclick = () => {
+              openToPage(page)
+            }
+            let b1: Bubble, b2: Bubble, c1: number, c2: number
+            span.onmouseenter = () => {
+              span.style.border = "2px solid white"
+
+              let sec = values[index]
+              let t
+              if (sec < 60) {
+                t = `${sec} s`
+              } else if (sec / 60) {
+                t = `${(sec / 60).toFixed(1)} m`
+              } else {
+                t = `${(sec / 60 / 60).toFixed(1)} h`
+              }
+              b2 = new Bubble(span, "bubble-time", `${t}`, "top")
+              b1 = new Bubble(span, "bubble-page", `${page}`, "bottom")
+            }
+            span.onmouseleave = () => {
+              span.style.border = ""
+              const t = 0
+              c1 = window.setTimeout(() => {
+                b1.ele.remove()
+              }, t)
+              c2 = window.setTimeout(() => {
+                b2.ele.remove()
+              }, t)
+              b1.ele.setAttribute("closeTimer", String(c1))
+              b2.ele.setAttribute("closeTimer", String(c2))
+            }
+
+          })
+          box.appendChild(span)
+          container.appendChild(box)
+
+
+        }
+      },
+      {
         name: "关系图谱",
         label: "Style",
         callback: async () => {
@@ -2020,7 +2147,6 @@ export default class Views {
             ['general.orange', '#f19837'],
             ['general.gray', '#aaaaaa']
           ];
-
           const svg = `<svg t="1675648090111" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2675" width="20" height="20" style="height: 100%;"><path d="M863.328262 481.340895l-317.344013 0.099772L545.984249 162.816826c0-17.664722-14.336138-32.00086-32.00086-32.00086s-31.99914 14.336138-31.99914 32.00086l0 318.400215-322.368714-0.17718c-0.032684 0-0.063647 0-0.096331 0-17.632039 0-31.935493 14.239806-32.00086 31.904529-0.096331 17.664722 14.208843 32.031824 31.871845 32.095471l322.59234 0.17718 0 319.167424c0 17.695686 14.336138 32.00086 31.99914 32.00086s32.00086-14.303454 32.00086-32.00086L545.982529 545.440667l317.087703-0.099772c0.063647 0 0.096331 0 0.127295 0 17.632039 0 31.935493-14.239806 32.00086-31.904529S880.960301 481.404542 863.328262 481.340895z" fill="#575B66" p-id="2676"></path></svg>`
           console.log(groups, defaultAnno)
           const inputStyles = {
@@ -2417,72 +2543,27 @@ export default class Views {
 
         }
       },
-      {
-        name: "查看阅读进度",
-        label: "Style",
-        when: () => {
-          // 有条目，且条目有阅读时间
-          let item = getItem()
-          if (!item) { return false }
-          let record = this.addonItem.get(item, "readingTime")
-          ztoolkit.log(record)
-          return record?.data && Object.keys(record.data).length > 0
-        },
-        callback: (prompt: Prompt) => {
-          let item = getItem() as _ZoteroItem
-
-          prompt.inputNode.placeholder = item.getField("title")
-          const record = this.addonItem.get(item, "readingTime")
-          if (!record || !record.data || Object.keys(record.data).length == 0) {
-            prompt.showTip("这里一片荒芜~")
-            return
-          }
-          let commands: Command[] = []
-          Object.keys(record.data).forEach(page => {
-            let sec = record.data[page]
-            let t
-            if (sec < 60) {
-              t = `${sec} 秒`
-            } else if (sec / 60) {
-              t = `${(sec / 60).toFixed(1)} 分`
-            } else {
-              t = `${(sec / 60 / 60).toFixed(1)} 时`
-            }
-            let openToPage = async (page: number) => {
-              let pdfItem = await item.getBestAttachment();
-              if (!pdfItem) { return }
-              await Zotero.OpenPDF.openToPage(pdfItem, page)
-            }
-            commands.push({
-              name: `第${Number(page) + 1}页`,
-              label: t,
-              callback: async () => { await openToPage(Number(page) + 1) }
-            })
-          })
-          prompt.showCommands(commands)
-        }
-      },
-      {
-        name: "重置阅读进度",
-        label: "Style",
-        when: () => {
-          // 有条目，且条目有阅读时间
-          let item = getItem()
-          if (!item) { return false }
-          let record = this.addonItem.get(item, "readingTime")
-          return record?.data && Object.keys(record.data).length > 0
-        },
-        callback: (prompt) => {
-          let item = getItem() as _ZoteroItem
-          prompt.inputNode.placeholder = item.getField("title")
-          try {
-            let record = this.addonItem.get(item, "readingTime")
-            record.data = {}
-            this.addonItem.set(item, "readingTime", record)
-          } catch { }
-          prompt.showTip("重置成功")
-        }
-      },
+      // {
+      //   name: "重置阅读进度",
+      //   label: "Style",
+      //   when: () => {
+      //     // 有条目，且条目有阅读时间
+      //     let item = getItem()
+      //     if (!item) { return false }
+      //     let record = this.addonItem.get(item, "readingTime")
+      //     return record?.data && Object.keys(record.data).length > 0
+      //   },
+      //   callback: (prompt) => {
+      //     let item = getItem() as _ZoteroItem
+      //     prompt.inputNode.placeholder = item.getField("title")
+      //     try {
+      //       let record = this.addonItem.get(item, "readingTime")
+      //       record.data = {}
+      //       this.addonItem.set(item, "readingTime", record)
+      //     } catch { }
+      //     prompt.showTip("重置成功")
+      //   }
+      // },
       {
         name: "设置为插件储存条目",
         when: () => {
