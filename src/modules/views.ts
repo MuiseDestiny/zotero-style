@@ -26,15 +26,21 @@ export default class Views {
   }
 
   public addStyle() {
-    ztoolkit.log("addStyle")
-    const style = ztoolkit.UI.createElement(document, "link", {
-      directAttributes: {
-        type: "text/css",
-        rel: "stylesheet",
-        href: `chrome://${config.addonRef}/content/style.css`,
+    document.querySelector("#odd-even-row-style")?.remove();
+    const styles = ztoolkit.UI.createElement(document, "style", {
+      id: "odd-even-row-style",
+      properties: {
+        innerHTML: `
+          [id^=item-tree-main-default-row]:nth-child(odd) {
+            background-color: ${Zotero.Prefs.get(`${config.addonRef}.titleColumn.odd`) as string};
+          }
+          [id^=item-tree-main-default-row]:nth-child(even) {
+            background-color: ${Zotero.Prefs.get(`${config.addonRef}.titleColumn.even`) as string};
+          }
+        `
       },
-    }) as HTMLLinkElement;
-    document.documentElement.appendChild(style);
+    });
+    document.documentElement.appendChild(styles);
   }
 
   /**
@@ -47,16 +53,11 @@ export default class Views {
       key,
       (index: number, data: string, column: any, original: Function) => {
         try {
-          let rowNode = document.querySelector(`#item-tree-main-default-row-${index}`) as HTMLDivElement
-          if (rowNode) {
-            if (index % 2 == 0) {
-              rowNode.style.backgroundColor = Zotero.Prefs.get(
-                `${config.addonRef}.titleColumn.even`
-              ) as string
-            } else {
-              rowNode.style.backgroundColor = Zotero.Prefs.get(
-                `${config.addonRef}.titleColumn.odd`
-              ) as string
+          if (index > 0) {
+            const rowNode = document.querySelector(`#item-tree-main-default-row-${index}`) as HTMLDivElement
+            const previousRow = document.querySelector(`#item-tree-main-default-row-${index - 1}`) as HTMLDivElement
+            if (rowNode && previousRow) {
+              previousRow.after(rowNode)
             }
           }
         } catch { }
@@ -1293,6 +1294,7 @@ export default class Views {
   ) {
     const sign = `zoterostyle-setting-${colKey}`
     if (ZoteroPane.itemsView[sign]) { return }
+    const that = this;
     ztoolkit.patch(
       ZoteroPane.itemsView,
       "_displayColumnPickerMenu",
@@ -1320,6 +1322,7 @@ export default class Views {
               ztoolkit.log(`${config.addonRef}.${key}`, prefs[key])
               Zotero.Prefs.set(`${config.addonRef}.${key}`, prefs[key])
             }
+            that.addStyle()
             ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
             ztoolkit.ItemTree.refresh()
           }
