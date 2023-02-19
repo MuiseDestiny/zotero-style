@@ -17,7 +17,7 @@
 
 下面这个视频会带你快速浏览Readme的剩下部分。
 
-【Zotero Style插件你值得拥有！关系图谱也有！-哔哩哔哩】 https://b23.tv/WB8Sra0
+<https://www.bilibili.com/video/BV1as4y1a7Gf>
 
 
 ## 字段
