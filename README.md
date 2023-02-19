@@ -259,9 +259,6 @@ Zotero有`关联文献`功能，那么可视化是必然的，也是刚需的，
 <summary>打赏/赞助</summary>
 
 * 如你没有经济来源，本插件免费开源，不鼓励不提倡赞助，点击页面右上角Star就是对我的鼓励
-* Star/打赏是对我的认可，也是继续开发的动力
-
-![image](https://user-images.githubusercontent.com/51939531/219556485-dd3b56db-90ba-4691-ae7a-a4c96689bab5.png)
 
 </details>
 
