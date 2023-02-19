@@ -19,6 +19,10 @@ pref("extensions.zotero.__addonRef__.textTagsColumn.padding", "0.5");
 pref("extensions.zotero.__addonRef__.titleColumn.color", "#FFC6D3");
 pref("extensions.zotero.__addonRef__.titleColumn.tags", false);
 pref("extensions.zotero.__addonRef__.titleColumn.opacity", "0.7");
+pref("extensions.zotero.__addonRef__.titleColumn.odd", "");
+pref("extensions.zotero.__addonRef__.titleColumn.even", "");
+
+
 
 pref("extensions.zotero.__addonRef__.IFColumn.field", "sciif");
 pref("extensions.zotero.__addonRef__.IFColumn.color", "#A8D1D1");
@@ -46,7 +50,7 @@ pref("extensions.zotero.__addonRef__.progressColumn.circle", true);
 pref("extensions.zotero.__addonRef__.ratingColumn.mark", "★");
 pref("extensions.zotero.__addonRef__.ratingColumn.option", "•");
 pref("extensions.zotero.__addonRef__.ratingColumn.color", "#808080");
-pref("extensions.zotero.__addonRef__.ratingColumn.margin", "0.1");
+pref("extensions.zotero.__addonRef__.ratingColumn.padding", "0.1");
 pref("extensions.zotero.__addonRef__.ratingColumn.size", "1");
 
 

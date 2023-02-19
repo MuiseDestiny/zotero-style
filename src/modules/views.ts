@@ -39,12 +39,27 @@ export default class Views {
 
   /**
    * 渲染标题进度条
+   * 标题是必定显示的所以奇数偶数显示逻辑写在这里
    */
   public async renderTitleProgress() {
     const key = "title"
     await ztoolkit.ItemTree.addRenderCellHook(
       key,
       (index: number, data: string, column: any, original: Function) => {
+        try {
+          let rowNode = document.querySelector(`#item-tree-main-default-row-${index}`) as HTMLDivElement
+          if (rowNode) {
+            if (index % 2 == 0) {
+              rowNode.style.backgroundColor = Zotero.Prefs.get(
+                `${config.addonRef}.titleColumn.even`
+              ) as string
+            } else {
+              rowNode.style.backgroundColor = Zotero.Prefs.get(
+                `${config.addonRef}.titleColumn.odd`
+              ) as string
+            }
+          }
+        } catch { }
         const cellSpan = original(index, data, column) as HTMLSpanElement;
         let titleSpan = cellSpan.querySelector(".cell-text") as HTMLSpanElement;
         const titleHTML = titleSpan.innerHTML
@@ -124,7 +139,17 @@ export default class Views {
           name: "Opacity",
           type: "range",
           range: [0, 1, 0.01],
-        }
+        },
+        {
+          prefKey: "titleColumn.odd",
+          name: "Odd Color",
+          type: "input",
+        },
+        {
+          prefKey: "titleColumn.even",
+          name: "Even Color",
+          type: "input",
+        },
       ]
     )
   }
@@ -794,7 +819,7 @@ export default class Views {
           let keys = ZoteroPane.getSelectedItems().map(i=>i.key)
           const isSelected = keys.indexOf(ZoteroPane.getSortedItems()[index].key) != -1
           const maxNum = 5
-          const rating = Number(data)
+          const rate = Number(data)
           const span = ztoolkit.UI.createElement(document, "span", {
             namespace: "html",
             styles: {
@@ -804,12 +829,12 @@ export default class Views {
           const mark = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.mark`) as string
           const option = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.option`) as string
           const size = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.size`) as string
-          const margin = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.margin`) as string
+          const padding = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.padding`) as string
           const color = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.color`) as string
 
           for (let i = 0; i < maxNum; i++){
             let text: string
-            if (i < rating) {
+            if (i < rate) {
               text = mark
             } else {
               text = isSelected ? option : ""
@@ -823,7 +848,7 @@ export default class Views {
                   width: "1em",
                   textAlgin: "center",
                   color: color,
-                  margin: `0 ${margin}em`,
+                  padding: `0 ${padding}em`,
                   fontSize: `${size}em`,
                   textAlign: "center"
                 },
@@ -863,8 +888,8 @@ export default class Views {
           range: [1, 2, 0.01]
         },
         {
-          prefKey: "ratingColumn.margin",
-          name: "Margin",
+          prefKey: "ratingColumn.padding",
+          name: "Padding",
           type: "range",
           range: [0, 1, 0.01]
         }
@@ -1496,6 +1521,13 @@ export default class Views {
                       listeners: [
                         {
                           type: "keyup",
+                          listener: function () {
+                            //@ts-ignore
+                            prefs[arg.prefKey] = this.value
+                          }
+                        },
+                        {
+                          type: "blur",
                           listener: function () {
                             //@ts-ignore
                             prefs[arg.prefKey] = this.value
@@ -2701,14 +2733,14 @@ export default class Views {
     // 注册搜索文库
     ztoolkit.Prompt.register([{
       id: "search",
-      callback: async (prompt: Prompt) => {
+      callback: async (prompt) => {
         // https://github.com/zotero/zotero/blob/7262465109c21919b56a7ab214f7c7a8e1e63909/chrome/content/zotero/integration/quickFormat.js#L589
         function getItemDescription(item: Zotero.Item) {
           var nodes = [];
           var str = "";
           var author, authorDate = "";
           if (item.firstCreator) { author = authorDate = item.firstCreator; }
-          var date = item.getField("date", true, true);
+          var date = item.getField("date", true, true) as string;
           if (date && (date = date.substr(0, 4)) !== "0000") {
             authorDate += " (" + parseInt(date) + ")";
           }
@@ -2754,35 +2786,56 @@ export default class Views {
           }
           str.length && (str += ".")
           return str
+        };
+        function filter(ids: number[]) {
+          ids = ids.filter(async (id) => {
+            const item = await Zotero.Items.getAsync(id)
+            return item.isRegularItem() && !item.isFeedItem
+          })
+          return ids
         }
-        prompt.showTip("Searching...")
         const text = prompt.inputNode.value;
-        console.log("text", text)
+        prompt.showTip("Searching...")
         const s = new Zotero.Search();
-        s.addCondition("quicksearch-titleCreatorYear", "contains", text)
+        s.addCondition("quicksearch-titleCreatorYear", "contains", text);
         s.addCondition("itemType", "isNot", "attachment");
         let ids = await s.search();
-        console.log(ids)
+        // prompt.exit will remove current container element.
         // @ts-ignore
-        prompt.exit()
+        prompt.exit();
         const container = prompt.createCommandsContainer();
-        container.classList.add("suggestions")
-        if (!ids.length) {
-          // 尝试增改变条件
+        container.classList.add("suggestions");
+        ids = filter(ids)
+        console.log(ids.length)
+        if (ids.length == 0) {
           const s = new Zotero.Search();
-          const operators = ['is', 'isNot', 'true',  'false', 'isInTheLast', 'isBefore', 'isAfter', 'contains', 'doesNotContain', 'beginsWith']
-          text.split(/\s*&&\s*/g).forEach(conditinString => {            
-            let conditions = conditinString.split(/\s+/g)
+          const operators = ['is', 'isNot', 'true', 'false', 'isInTheLast', 'isBefore', 'isAfter', 'contains', 'doesNotContain', 'beginsWith'];
+          let hasValidCondition = false
+          let joinMode: string = "all"
+          if (/\s*\|\|\s*/.test(text)) {
+            joinMode = "any"
+          }
+          text.split(/\s*(&&|\|\|)\s*/g).forEach((conditinString: string) => {
+            let conditions = conditinString.split(/\s+/g);
             if (conditions.length == 3 && operators.indexOf(conditions[1]) != -1) {
-              s.addCondition(...conditions)
+              hasValidCondition = true
+              s.addCondition("joinMode", joinMode);
+              s.addCondition(
+                conditions[0] as string,
+                conditions[1] as Zotero.Search.Operator,
+                conditions[2] as string
+              );
             }
           })
-          ids = await s.search();
-        } 
-        if (ids.length) {
+          if (hasValidCondition) {
+            ids = await s.search();
+          }
+        }
+        ids = filter(ids)
+        console.log(ids.length)
+        if (ids.length > 0) {
           ids.forEach((id: number) => {
             const item = Zotero.Items.get(id)
-            if (!item.isRegularItem()) { return }
             const title = item.getField("title")
             const ele = ztoolkit.UI.createElement(document, "div", {
               namespace: "html",
@@ -2890,56 +2943,91 @@ export default class Views {
    * 监测Item点击
    */
   public async initItemSelectListener() {
-    while (!document.querySelector("#zotero-items-tree .virtualized-table-body")) {
+    let getChildrenTarget = (event: any, nodes: any) => {
+      const target = [...nodes].find((span: any) => {
+        const rect = span.getBoundingClientRect()
+        return (
+          event.clientX >= rect.x &&
+          event.clientX <= rect.x + rect.width &&
+          event.clientY >= rect.y && 
+          event.clientY <= rect.y + rect.height
+        )
+      })
+      return target
+    }
+    const p = "#zotero-items-tree .virtualized-table-body"
+    while (!document.querySelector(p)) {
       await Zotero.Promise.delay(10)
     }
-    const table = document.querySelector("#zotero-items-tree .virtualized-table-body")
+    const table = document.querySelector(p)
     let lastKey: string
+    table?.addEventListener("mousemove", (event) => {
+      if (!(event.target as HTMLDivElement)!.classList.contains("selected")) { return }
+      let items = ZoteroPane.getSelectedItems()
+      if (items.length == 1) {
+        const item = items[0]
+        /**
+         * 在待选择节点上移动
+         */
+        const target = getChildrenTarget(event, (event.target! as HTMLDivElement).childNodes) as HTMLSpanElement
+        if (target?.classList.contains("Rating")) {
+          const optionNodes = [...target.querySelectorAll("span.option")] as HTMLScriptElement[]
+          let optionNode = getChildrenTarget(event, optionNodes)
+          let index = optionNodes.indexOf(optionNode)
+          let rate: number
+          if (index == -1) {
+            rate = Number(ztoolkit.ExtraField.getExtraField(item, "rate"))
+          } else {
+            rate = index + 1
+          }
+          const mark = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.mark`) as string
+          const option = Zotero.Prefs.get(`${config.addonRef}.ratingColumn.option`) as string
+          
+          for (let i = 0; i < optionNodes.length; i++){
+            if (i < rate) {
+              optionNodes[i].innerText = mark
+            } else {
+              optionNodes[i].innerText = option
+            }
+          }
+        }
+      }
+    })
     table?.addEventListener("click", async (event: any) => {
-      const node = event.target as HTMLDivElement;
-      const selectedSpan = [...node?.querySelectorAll("span.cell")!].find((span: any) => {
-        const rect = span.getBoundingClientRect()
-        return event.clientX > rect.x && event.clientX < rect.x + rect.width
-      })
+      const target = getChildrenTarget(event, (event.target! as HTMLDivElement).childNodes)
       /**
        * 点击标签相关，打开侧边栏标签选项卡
        */
       if (
-        selectedSpan?.classList.contains("Tags")
-        || selectedSpan?.classList.contains("TextTags")
+        target?.classList.contains("Tags") ||
+        target?.classList.contains("TextTags")
       ) {
         (document.querySelector("#zotero-editpane-tags-tab") as HTMLSpanElement).click()
       }
-      // 评级，只有是准备状态才有效，比如`·`
-      if (selectedSpan?.classList.contains("Rating")) {
-        ztoolkit.log("评级", selectedSpan)
-        let items = ZoteroPane.getSelectedItems()
-        if (items.length == 1) {
-          let item = items[0]
-          if (lastKey == item.key) {
-            let options = [...selectedSpan.querySelectorAll("span.option")] as HTMLSpanElement[]
-            let index = options.findIndex((option: any) => {
-              const rect = option.getBoundingClientRect()
-              return event.clientX > rect.x && event.clientX < rect.x + rect.width
-            })
-            const rate = Number(ztoolkit.ExtraField.getExtraField(item, "rate"))
-            if (options[index].textContent == Zotero.Prefs.get(`${config.addonRef}.ratingColumn.mark`)) {
-              if (index < rate - 1) {
-                (index += 1)
-              }
-              await ztoolkit.ExtraField.setExtraField(item, "rate", String(index))
-            } else if (options[index].textContent == Zotero.Prefs.get(`${config.addonRef}.ratingColumn.option`)) {
-              await ztoolkit.ExtraField.setExtraField(item, "rate", String(index+1))
-            }
+      /**
+       * 评级
+       */
+      let items = ZoteroPane.getSelectedItems()
+      if (items.length == 1) {
+        let item = items[0]
+        if (lastKey == item.key && target?.classList.contains("Rating")) {
+          const optionNodes = [...target.querySelectorAll("span.option")] as HTMLScriptElement[]
+          let optionNode = getChildrenTarget(event, optionNodes)
+          let index = optionNodes.indexOf(optionNode)
+          const rate = Number(ztoolkit.ExtraField.getExtraField(item, "rate") || "0")
+          if (index + 1 == rate) {
+            await ztoolkit.ExtraField.setExtraField(item, "rate", String(index))
           } else {
-            lastKey = item.key
-            return
+            await ztoolkit.ExtraField.setExtraField(item, "rate", String(index + 1))
           }
+        } else {
+          lastKey = item.key
         }
       }
 
     })
   }
+  
   /**
    * 显示右下角消息
    * @param header 
