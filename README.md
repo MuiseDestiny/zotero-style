@@ -250,4 +250,6 @@ Zotero有`关联文献`功能，那么可视化是必然的，也是刚需的，
 - 本插件参考`Zotero Tag`插件 - https://github.com/windingwind/zotero-tag
 - 本插件部分功能基于`Zotero PDF Translate`插件 - https://github.com/windingwind/zotero-pdf-translate
 - 本插件感谢[科研通](https://www.ablesci.com/)，[easyscholar](https://easyscholar.cc/console/query)等免费网站
+- 部分功能灵感来自[Endnote](https://buy.endnote.com/)
 - 本插件感谢提出宝贵意见的同学们
+
