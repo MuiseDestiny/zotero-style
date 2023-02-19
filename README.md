@@ -15,6 +15,11 @@
 
 ---
 
+下面这个视频会带你快速浏览Readme的剩下部分。
+
+<https://www.bilibili.com/video/BV1as4y1a7Gf>
+
+
 ## 字段
 
 新增了一些可视化字段，style最初只可视化了标题进度条，新版本将赋予style更广泛的含义
@@ -128,6 +133,11 @@ cug
 
 等级是自动匹配的，但我只从easyscholar迁移了一部分（我认为常用的），如你对某个字段有分区需求可以提issue。
 
+### 评级
+> 模仿Endnote，评级只需要一步！
+
+![bandicam-2023-02-17-22-03-55-444](https://user-images.githubusercontent.com/51939531/219677090-a88a3d00-01cc-49f3-9d90-5dd1d92fe40f.gif)
+
 ### 标注
 
 > PDF标注颜色无限定义
@@ -240,19 +250,7 @@ Zotero有`关联文献`功能，那么可视化是必然的，也是刚需的，
 - 本插件参考`Zotero Tag`插件 - https://github.com/windingwind/zotero-tag
 - 本插件部分功能基于`Zotero PDF Translate`插件 - https://github.com/windingwind/zotero-pdf-translate
 - 本插件感谢[科研通](https://www.ablesci.com/)，[easyscholar](https://easyscholar.cc/console/query)等免费网站
+- 部分功能灵感来自[Endnote](https://buy.endnote.com/)
+- 部分功能基于[Obsidian](https://help.obsidian.md/Obsidian/Index)
 - 本插件感谢提出宝贵意见的同学们
-
-因插件部分API尚未做出请求限制，如有对任何网站造成不良影响，可以联系我删除该功能。
-
-<details>
-
-<summary>打赏/赞助</summary>
-
-* 如你没有经济来源，本插件免费开源，不鼓励不提倡赞助，点击页面右上角Star就是对我的鼓励
-* Star/打赏是对我的认可，也是继续开发的动力
-
-![image](https://user-images.githubusercontent.com/51939531/219556485-dd3b56db-90ba-4691-ae7a-a4c96689bab5.png)
-
-</details>
-
 
