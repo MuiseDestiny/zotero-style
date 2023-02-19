@@ -14,6 +14,7 @@
 安装插件后会产生一个`Addon Item`条目用于数据储存，不要将其删除，如您有更好的数据储存可同步策略，可反馈[至此](https://github.com/MuiseDestiny/zotero-reference/issues/43)
 
 ---
+
 下面这个视频会带你快速浏览Readme的剩下部分。
 
 【Zotero Style插件你值得拥有！关系图谱也有！-哔哩哔哩】 https://b23.tv/WB8Sra0
