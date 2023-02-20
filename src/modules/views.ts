@@ -37,6 +37,20 @@ export default class Views {
           [id^=item-tree-main-default-row]:nth-child(even) {
             background-color: ${Zotero.Prefs.get(`${config.addonRef}.titleColumn.even`) as string};
           }
+          .tag-box .tag-swatch {
+            position: absolute;
+            display: inline-block;
+            height: .9em;
+            width: .9em;
+            border-radius: 100%;
+            font-size: 1em;
+          }
+          .tag-box {
+            display: inline-block;
+            position: relative;
+            height: 1em;
+            line-height: 1em;
+          }
         `
       },
     });
@@ -1546,7 +1560,7 @@ export default class Views {
             dialog({
               attributes: {
                 buttonlabelaccept: "Set",
-                title: colKey
+                title: colKey.charAt(0).toUpperCase() + colKey.slice(1)
               }, 
               element: element,
               hooks: { accept }
@@ -1800,6 +1814,279 @@ export default class Views {
    * 注册Prompt命令
    */
   public async registerCommands() {
+    // 注册搜索文库
+    ztoolkit.Prompt.register([{
+      id: "search",
+      callback: async (prompt) => {
+        // https://github.com/zotero/zotero/blob/7262465109c21919b56a7ab214f7c7a8e1e63909/chrome/content/zotero/integration/quickFormat.js#L589
+        function getItemDescription(item: Zotero.Item) {
+          var nodes = [];
+          var str = "";
+          var author, authorDate = "";
+          if (item.firstCreator) { author = authorDate = item.firstCreator; }
+          var date = item.getField("date", true, true) as string;
+          if (date && (date = date.substr(0, 4)) !== "0000") {
+            authorDate += " (" + parseInt(date) + ")";
+          }
+          authorDate = authorDate.trim();
+          if (authorDate) nodes.push(authorDate);
+
+          var publicationTitle = item.getField("publicationTitle", false, true);
+          if (publicationTitle) {
+            nodes.push(`<i>${publicationTitle}</i>`);
+          }
+          var volumeIssue = item.getField("volume");
+          var issue = item.getField("issue");
+          if (issue) volumeIssue += "(" + issue + ")";
+          if (volumeIssue) nodes.push(volumeIssue);
+
+          var publisherPlace = [], field;
+          if ((field = item.getField("publisher"))) publisherPlace.push(field);
+          if ((field = item.getField("place"))) publisherPlace.push(field);
+          if (publisherPlace.length) nodes.push(publisherPlace.join(": "));
+
+          var pages = item.getField("pages");
+          if (pages) nodes.push(pages);
+
+          if (!nodes.length) {
+            var url = item.getField("url");
+            if (url) nodes.push(url);
+          }
+
+          // compile everything together
+          for (var i = 0, n = nodes.length; i < n; i++) {
+            var node = nodes[i];
+
+            if (i != 0) str += ", ";
+
+            if (typeof node === "object") {
+              var label = document.createElement("label");
+              label.setAttribute("value", str);
+              label.setAttribute("crop", "end");
+              str = "";
+            } else {
+              str += node;
+            }
+          }
+          str.length && (str += ".")
+          return str
+        };
+        function filter(ids: number[]) {
+          ids = ids.filter(async (id) => {
+            const item = await Zotero.Items.getAsync(id)
+            return item.isRegularItem() && !item.isFeedItem
+          })
+          return ids
+        }
+        const text = prompt.inputNode.value;
+        prompt.showTip("Searching...")
+        const s = new Zotero.Search();
+        s.addCondition("quicksearch-titleCreatorYear", "contains", text);
+        s.addCondition("itemType", "isNot", "attachment");
+        let ids = await s.search();
+        // prompt.exit will remove current container element.
+        // @ts-ignore
+        prompt.exit();
+        const container = prompt.createCommandsContainer();
+        container.classList.add("suggestions");
+        ids = filter(ids)
+        console.log(ids.length)
+        if (ids.length == 0) {
+          const s = new Zotero.Search();
+          const operators = ['is', 'isNot', 'true', 'false', 'isInTheLast', 'isBefore', 'isAfter', 'contains', 'doesNotContain', 'beginsWith'];
+          let hasValidCondition = false
+          let joinMode: string = "all"
+          if (/\s*\|\|\s*/.test(text)) {
+            joinMode = "any"
+          }
+          text.split(/\s*(&&|\|\|)\s*/g).forEach((conditinString: string) => {
+            let conditions = conditinString.split(/\s+/g);
+            if (conditions.length == 3 && operators.indexOf(conditions[1]) != -1) {
+              hasValidCondition = true
+              s.addCondition("joinMode", joinMode);
+              s.addCondition(
+                conditions[0] as string,
+                conditions[1] as Zotero.Search.Operator,
+                conditions[2] as string
+              );
+            }
+          })
+          if (hasValidCondition) {
+            ids = await s.search();
+          }
+        }
+        ids = filter(ids)
+        console.log(ids.length)
+        if (ids.length > 0) {
+          ids.forEach((id: number) => {
+            const item = Zotero.Items.get(id)
+            const title = item.getField("title")
+            const ele = ztoolkit.UI.createElement(document, "div", {
+              namespace: "html",
+              classList: ["command"],
+              listeners: [
+                {
+                  type: "mousemove",
+                  listener: function () {
+                    // @ts-ignore
+                    prompt.selectItem(this)
+                  }
+                },
+                {
+                  type: "click",
+                  listener: () => {
+                    prompt.promptNode.style.display = "none"
+                    Zotero_Tabs.select('zotero-pane');
+                    ZoteroPane.selectItem(item.id);
+                  }
+                }
+              ],
+              styles: {
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "start",
+              },
+              children: [
+                {
+                  tag: "span",
+                  styles: {
+                    fontWeight: "bold",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+
+                  },
+                  properties: {
+                    innerText: title
+                  }
+                },
+                {
+                  tag: "span",
+                  styles: {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  },
+                  properties: {
+                    innerHTML: getItemDescription(item)
+                  }
+                }
+              ]
+            })
+            container.appendChild(ele)
+          })
+        } else {
+          // @ts-ignore
+          prompt.exit()
+          prompt.showTip("Not Found.")
+        }
+      }
+    }])
+    /**
+     * 逐句翻译对照
+     */
+    ztoolkit.Prompt.register([{
+      name: "逐句对照翻译",
+      label: "Translate",
+      when: () => {
+        const selection = ztoolkit.Reader.getSelectedText(
+          Zotero.Reader.getByTabID(Zotero_Tabs.selectedID)
+        );
+        ztoolkit.log(selection)
+        return selection.length > 0 && Zotero.PDFTranslate
+      },
+      callback: (prompt) => {
+        const selection = ztoolkit.Reader.getSelectedText(
+          Zotero.Reader.getByTabID(Zotero_Tabs.selectedID)
+        );
+        const container = prompt.createCommandsContainer() as HTMLDivElement
+        container.style = `
+          padding: .5em;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+        `
+        const queue = Zotero.PDFTranslate.data.translate.queue
+        const task = queue.find((i: any) => i.raw == selection) || queue.slice(-1)[0]
+        if (!task) {
+          prompt.showTip("Task is Null.")
+        }
+        const rawText = task.raw, resultText = task.result;
+        const props = {
+          styles: {
+            width: "49%",
+            height: "20em",
+            border: "1px solid #eee",
+            textAlign: "justify",
+            padding: ".5em",
+            fontSize: "1em",
+            lineHeight: "1.5em",
+            overflowY: "auto",
+          },
+        }
+        // TODO: 首选项自行配置，不同语言分隔符，比如英文点，中文句号，这里默认英文中文翻译
+        let addSentences = (node: HTMLElement, text: string, sep: string) => {
+          let sentences = text.match(new RegExp(`.+?${sep}\\s*`, "g"))! as string[]
+          console.log(sentences)
+          // 把错误断开的连接起来Fig. Table.等，只针对英文，其它分隔符以下代码将无效
+          let i = 0
+          while (i < sentences.length - 1) {
+            if (
+              // Fig. 5形式
+              /(table|fig|figure)\.\s*$/i.test(sentences[i]) ||
+              // 2.33形式
+              (/\d\.$/i.test(sentences[i]) && /^\d/i.test(sentences[i+1])) 
+            ) {
+              console.log(sentences[i], "-", sentences[i + 1])
+              sentences[i] = sentences[i] + sentences[i + 1]
+              sentences.splice(i+1, 1)
+            } else {
+              i += 1
+            }
+          }
+          sentences = sentences.filter(s => s.length > 0)
+          console.log(sentences)
+          for (let i = 0; i < sentences.length; i++) {
+            console.log(sentences[i])
+            node.appendChild(ztoolkit.UI.createElement(document, "span", {
+              id: `sentence-${i}`,
+              properties: {
+                innerHTML: sentences[i]
+              },
+              listeners: [
+                {
+                  type: "mousemove",
+                  listener: function () {
+                    const hightlightColor = "#fee972"
+                    // @ts-ignore
+                    const span = this as HTMLSpanElement
+                    const parentNode = span.parentNode as HTMLDivElement
+                    parentNode?.querySelectorAll("span").forEach(e => e.style.backgroundColor="")
+                    span.style.backgroundColor = hightlightColor
+                    const siblingNode = (parentNode?.previousSibling || parentNode?.nextSibling) as HTMLDivElement
+                    siblingNode?.querySelectorAll("span").forEach(e => e.style.backgroundColor = "");
+                    const twinSpan = siblingNode.querySelector(`span[id=sentence-${i}]`) as HTMLSpanElement
+                    twinSpan.style.backgroundColor = hightlightColor;
+                    // 滚轮滚动，让译文/原文在中间显示
+                    siblingNode.scrollTo(0, twinSpan.offsetTop - siblingNode.offsetHeight * .5);
+                  }
+                }
+              ]
+            }))
+          }
+        }
+        // 原文
+        const rawDiv = ztoolkit.UI.createElement(document, "div", {
+          ...props
+        })
+        addSentences(rawDiv, rawText, "[\\.;]")
+        const resultDiv = ztoolkit.UI.createElement(document, "div", {
+          ...props,
+        })
+        addSentences(resultDiv, resultText, "[。;；]")
+        container.append(rawDiv, resultDiv)
+      }
+    }])
     // Prompt
     // 旧版数据迁移
     let getItem = () => {
@@ -2668,6 +2955,7 @@ export default class Views {
         }
       }
     ])
+    return 
     // 所有快捷键
     let commands: Command[] = []
     let getLable = (keyOptions: any) => {
@@ -2733,174 +3021,7 @@ export default class Views {
     }
     // ztoolkit.Prompt.register(commands)
 
-    // 注册搜索文库
-    ztoolkit.Prompt.register([{
-      id: "search",
-      callback: async (prompt) => {
-        // https://github.com/zotero/zotero/blob/7262465109c21919b56a7ab214f7c7a8e1e63909/chrome/content/zotero/integration/quickFormat.js#L589
-        function getItemDescription(item: Zotero.Item) {
-          var nodes = [];
-          var str = "";
-          var author, authorDate = "";
-          if (item.firstCreator) { author = authorDate = item.firstCreator; }
-          var date = item.getField("date", true, true) as string;
-          if (date && (date = date.substr(0, 4)) !== "0000") {
-            authorDate += " (" + parseInt(date) + ")";
-          }
-          authorDate = authorDate.trim();
-          if (authorDate) nodes.push(authorDate);
 
-          var publicationTitle = item.getField("publicationTitle", false, true);
-          if (publicationTitle) {
-            nodes.push(`<i>${publicationTitle}</i>`);
-          }
-          var volumeIssue = item.getField("volume");
-          var issue = item.getField("issue");
-          if (issue) volumeIssue += "(" + issue + ")";
-          if (volumeIssue) nodes.push(volumeIssue);
-
-          var publisherPlace = [], field;
-          if ((field = item.getField("publisher"))) publisherPlace.push(field);
-          if ((field = item.getField("place"))) publisherPlace.push(field);
-          if (publisherPlace.length) nodes.push(publisherPlace.join(": "));
-
-          var pages = item.getField("pages");
-          if (pages) nodes.push(pages);
-
-          if (!nodes.length) {
-            var url = item.getField("url");
-            if (url) nodes.push(url);
-          }
-
-          // compile everything together
-          for (var i = 0, n = nodes.length; i < n; i++) {
-            var node = nodes[i];
-
-            if (i != 0) str += ", ";
-
-            if (typeof node === "object") {
-              var label = document.createElement("label");
-              label.setAttribute("value", str);
-              label.setAttribute("crop", "end");
-              str = "";
-            } else {
-              str += node;
-            }
-          }
-          str.length && (str += ".")
-          return str
-        };
-        function filter(ids: number[]) {
-          ids = ids.filter(async (id) => {
-            const item = await Zotero.Items.getAsync(id)
-            return item.isRegularItem() && !item.isFeedItem
-          })
-          return ids
-        }
-        const text = prompt.inputNode.value;
-        prompt.showTip("Searching...")
-        const s = new Zotero.Search();
-        s.addCondition("quicksearch-titleCreatorYear", "contains", text);
-        s.addCondition("itemType", "isNot", "attachment");
-        let ids = await s.search();
-        // prompt.exit will remove current container element.
-        // @ts-ignore
-        prompt.exit();
-        const container = prompt.createCommandsContainer();
-        container.classList.add("suggestions");
-        ids = filter(ids)
-        console.log(ids.length)
-        if (ids.length == 0) {
-          const s = new Zotero.Search();
-          const operators = ['is', 'isNot', 'true', 'false', 'isInTheLast', 'isBefore', 'isAfter', 'contains', 'doesNotContain', 'beginsWith'];
-          let hasValidCondition = false
-          let joinMode: string = "all"
-          if (/\s*\|\|\s*/.test(text)) {
-            joinMode = "any"
-          }
-          text.split(/\s*(&&|\|\|)\s*/g).forEach((conditinString: string) => {
-            let conditions = conditinString.split(/\s+/g);
-            if (conditions.length == 3 && operators.indexOf(conditions[1]) != -1) {
-              hasValidCondition = true
-              s.addCondition("joinMode", joinMode);
-              s.addCondition(
-                conditions[0] as string,
-                conditions[1] as Zotero.Search.Operator,
-                conditions[2] as string
-              );
-            }
-          })
-          if (hasValidCondition) {
-            ids = await s.search();
-          }
-        }
-        ids = filter(ids)
-        console.log(ids.length)
-        if (ids.length > 0) {
-          ids.forEach((id: number) => {
-            const item = Zotero.Items.get(id)
-            const title = item.getField("title")
-            const ele = ztoolkit.UI.createElement(document, "div", {
-              namespace: "html",
-              classList: ["command"],
-              listeners: [
-                {
-                  type: "mousemove",
-                  listener: function () {
-                    // @ts-ignore
-                    prompt.selectItem(this)
-                  }
-                },
-                {
-                  type: "click",
-                  listener: () => {
-                    prompt.promptNode.style.display = "none"
-                    Zotero_Tabs.select('zotero-pane');
-                    ZoteroPane.selectItem(item.id);
-                  }
-                }
-              ],
-              styles: {
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "start",
-              },
-              children: [
-                {
-                  tag: "span",
-                  styles: {
-                    fontWeight: "bold",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap"
-
-                  },
-                  properties: {
-                    innerText: title
-                  }
-                },
-                {
-                  tag: "span",
-                  styles: {
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap"
-                  },
-                  properties: {
-                    innerHTML: getItemDescription(item)
-                  }
-                }
-              ]
-            })
-            container.appendChild(ele)
-          })
-        } else {
-          // @ts-ignore
-          prompt.exit()
-          prompt.showTip("Not Found.")
-        }
-      }
-    }])
   }
 
   /**

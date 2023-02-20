@@ -1,6 +1,7 @@
 const log = console.log
 export default class AddonItem {
 	public item!: _ZoteroItem;
+	public title = "Addon Item"
 	public prefKey = "Zotero.AddonItem.key";
 	public cache: {[key: string]: any} = {};
 	constructor() {
@@ -26,7 +27,7 @@ export default class AddonItem {
 			}
 		}
 		let s = new Zotero.Search();
-		s.addCondition("title", "contains", "Addon Item");
+		s.addCondition("title", "contains", this.title);
 		var ids = await s.search();
 		let items = await Zotero.Items.getAsync(ids);
 		console.log(items)
@@ -37,7 +38,7 @@ export default class AddonItem {
 		} else {
 			// @ts-ignore
 			item = new Zotero.Item('computerProgram');
-			item.setField('title', 'Addon Item');
+			item.setField('title', this.title);
 			await item.saveTx()
 			log("From new")
 		}
@@ -128,20 +129,21 @@ export default class AddonItem {
 	public hiddenNotes() {
 		const excludeKey = this.item.key
 		const search = Zotero.Search.prototype.search;
+		const itemTitle = this.title
 		Zotero.Search.prototype.search = async function () {
 			let ids = await search.apply(this, arguments);
-			// log("hook ids", ids)
-			// return ids.filter((id: number) => {
-			// 	return Zotero.Items.get(id).parentKey != excludeKey
-			// })
 			// 只有在搜索结果是笔记时才过滤
 			if (
-				Zotero.Items.get(ids[0]).itemTypeID == 26
-				&& Zotero.Items.get(ids.slice(-1)[0]).itemTypeID == 26
+				Zotero.Items.get(ids[0]).itemTypeID == 26 &&
+				Zotero.Items.get(ids.slice(-1)[0]).itemTypeID == 26
 			) {
-				log("hook ids", ids)
+				log("hook ids", ids.length)
 				return ids.filter((id: number) => {
-					return Zotero.Items.get(id).parentKey != excludeKey
+					const parentID = Zotero.Items.get(id).parentID
+					if (!parentID) { return true }
+					const parentItem = Zotero.Items.get(parentID)
+					if (!parentItem) { return true }
+					return parentItem.key != excludeKey && parentItem.getField("title") != itemTitle
 				})
 			} else {
 				return ids
