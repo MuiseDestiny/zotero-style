@@ -1,5 +1,7 @@
 # Zotero Style
-> 为Zotero增添色彩！
+> 一个不知道干嘛用的插件
+
+<img src="addon/chrome/content/icons/favicon.png" width="50px" height="50px">
 
 [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-round&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
