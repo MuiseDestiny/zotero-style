@@ -39,7 +39,7 @@ export default class AddonItem {
 			// @ts-ignore
 			item = new Zotero.Item('computerProgram');
 			item.setField('title', this.title);
-			await item.saveTx()
+			await item.saveTx({ skipSelect : true})
 			log("From new")
 		}
 		Zotero.Prefs.set(this.prefKey, item.key)
@@ -58,7 +58,7 @@ export default class AddonItem {
 		let noteData = this.getNoteData(noteItem)
 		noteData[key] = data
 		noteItem.setNote(`${item.key}\n${JSON.stringify(noteData)}`)
-		await noteItem.saveTx()
+		await noteItem.saveTx({ skipSelect: true })
 	}
 
 	/**
