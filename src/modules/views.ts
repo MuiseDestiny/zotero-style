@@ -921,32 +921,34 @@ export default class Views {
       position: string;
       content: string;
       dataKeys: string[];
+      prefs?: any;
     }
     const prefKey = `${config.addonRef}.columnsViews`
 
     // functions
     let switchColumnsView = (columnView: ColumnsView) => {
-      const allColumns = ZoteroPane.itemsView._getColumns()
-
-      allColumns.forEach((column: any, index: number) => {
-        const needHidden = columnView.dataKeys.indexOf(column.dataKey) == -1
-        if (needHidden != !!column.hidden) {
-          const column = ZoteroPane.itemsView.tree._columns._columns[index];
-          column.hidden = !column.hidden;
-          window.setTimeout(() => {
-            let prefs = ZoteroPane.itemsView.tree._columns._getPrefs();
-            if (prefs[column.dataKey]) {
-              prefs[column.dataKey].hidden = column.hidden;
-            }
-            ZoteroPane.itemsView.tree._columns._storePrefs(prefs);
-          })
+      ztoolkit.log("columnView", columnView)
+      const allColumns = ZoteroPane.itemsView.tree._columns._columns
+      let prefs = ZoteroPane.itemsView.tree._columns._getPrefs();
+      allColumns.forEach((column: any) => {
+        let _column = (columnView.prefs ??= {})[column.dataKey] ||
+        {
+          hidden: columnView.dataKeys.indexOf(column.dataKey) == -1,
+          width: column.width,
+          ordinal: column.ordinal
         }
+        prefs[column.dataKey].hidden = column.hidden = _column.hidden;
+        if (!column.fixedWidth) {
+          prefs[column.dataKey].width = column.width = _column.width;
+        }
+        prefs[column.dataKey].ordinal = column.ordinal = _column.ordinal;
       })
-      ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
+      ZoteroPane.itemsView.tree._columns._storePrefs(prefs);
+      ztoolkit.ItemTree.refresh()
     }
     let getCurrentDataKeys = () => {
       const dataKeys = (
-        (ZoteroPane.itemsView._getColumns() as { hidden: boolean, dataKey: string }[])
+        (ZoteroPane.itemsView.tree._columns._columns as { hidden: boolean, dataKey: string }[])
           .filter(i => !i.hidden)
         .map(i => i.dataKey)
       )
@@ -1202,7 +1204,8 @@ export default class Views {
                       name,
                       position,
                       content: content || name,
-                      dataKeys: columnsView.dataKeys.length > 0 ? columnsView.dataKeys : getCurrentDataKeys()
+                      dataKeys: columnsView.dataKeys.length > 0 ? columnsView.dataKeys : getCurrentDataKeys(),
+                      prefs: ZoteroPane.itemsView.tree._columns._getPrefs()
                     })
                     columnsViews = sort(columnsViews)
                     Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
