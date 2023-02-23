@@ -53,8 +53,11 @@ This video below will take you quickly through the rest of this readme.
 
 ## Q&A
 
+```
 Q: Where is my tags?
 A: Two ways display your tags after assigning color and position: (1) you can open the column settings of title and click `Tags` and (2) you can show Tags column that is created by this addon.
+```
+
 ---
 
 ## 字段
