@@ -17,15 +17,15 @@ This video below will take you quickly through the rest of this readme.
 
 <https://www.bilibili.com/video/BV1as4y1a7Gf>
 
-## Usage
+## Columns
 
-> This plugin modifies some of Zotero's existing fields and adds some interesting ones, and I'll introduce them one by one.
+> This plugin modifies some of Zotero's existing columns and adds some interesting ones, and I'll introduce them one by one.
 
 ![bandicam-2023-02-23-21-34-45-536](https://user-images.githubusercontent.com/51939531/220922783-b7d78b5f-6cc3-4aff-8581-2e6ca341aec5.gif)
 
 ### Title
 
-> Reading progress can visually reflect the distribution of your reading time of each page for the PDF under this item, the darker the color the longer the reading time.
+> As the background of title, reading progress visually reflect the distribution of your reading time of each page for the PDF under a item, the darker the color the longer the reading time.
 
 ### Tags
 
@@ -33,12 +33,25 @@ This video below will take you quickly through the rest of this readme.
 
 ### Progress
 
-> It can visually represent the annotation of each page of the PDF corresponding to the item.
+> It can visually represent the annotation of each page of the PDF corresponding to a item.
 
 ### #Tags
 
-> It differs from Tags in that it renders the text directly. You can create a tag that starts with `#` to try it out.
+> It differs from tags column in that it renders the text directly. You can create a tag that starts with `#` to try it out.
 
+### Publication Tags
+
+> It is similar to #Tags, but its tags can generate automatically, which represent the rank of a publication.
+
+### Rating
+
+> When you select a item, item's rating convert to a wating state, such as 5 dots. Then you can click one dot finish your rating quickly.
+
+## View Group
+
+> This addon and other addons may expand Zotero's columns, but the screen size is limit. We often need to show/hide a column frequently, and View Group makes it easier and quicker.
+
+---
 
 ## 字段
 
