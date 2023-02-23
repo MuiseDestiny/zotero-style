@@ -49,8 +49,12 @@ This video below will take you quickly through the rest of this readme.
 
 ## View Group
 
-> This addon and other addons may expand Zotero's columns, but the screen size is limit. We often need to show/hide a column frequently, and View Group makes it easier and quicker.
+> This addon and other addons may expand Zotero's columns, but the screen size is limit. We often need to show/hide columns frequently, and View Group makes it easier and quicker.
 
+## Q&A
+
+Q: Where is my tags?
+A: Two ways display your tags after assigning color and position: (1) you can open the column settings of title and click `Tags` and (2) you can show Tags column that is created by this addon.
 ---
 
 ## 字段
