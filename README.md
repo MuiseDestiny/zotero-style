@@ -1,5 +1,5 @@
 # Zotero Style
-> 一个不知道干嘛用的插件
+> Zotero can look great.
 
 <img src="addon/chrome/content/icons/favicon.png" width="50px" height="50px">
 
@@ -9,17 +9,35 @@
 [![License](https://img.shields.io/github/license/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/blob/master/LICENSE)
 ![Downloads latest release](https://img.shields.io/github/downloads/MuiseDestiny/zotero-style/latest/total?color=yellow)
 
-诚恳地邀请你，在[这里](https://github.com/MuiseDestiny/zotero-style/issues/48)贴上你的配色，这对以后的主题切换很有帮助！
-
-如您需要数据迁移（使得新版本能够加载以前的进度），[见此](https://github.com/MuiseDestiny/zotero-style/issues/55)。
-
-安装插件后会产生一个`Addon Item`条目用于数据储存，不要将其删除，如您有更好的数据储存可同步策略，可反馈[至此](https://github.com/MuiseDestiny/zotero-reference/issues/43)
+You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-style/issues/48).
 
 ---
 
-下面这个视频会带你快速浏览Readme的剩下部分。
+This video below will take you quickly through the rest of this readme.
 
 <https://www.bilibili.com/video/BV1as4y1a7Gf>
+
+## Usage
+
+> This plugin modifies some of Zotero's existing fields and adds some interesting ones, and I'll introduce them one by one.
+
+![bandicam-2023-02-23-21-34-45-536](https://user-images.githubusercontent.com/51939531/220922783-b7d78b5f-6cc3-4aff-8581-2e6ca341aec5.gif)
+
+### Title
+
+> Reading progress can visually reflect the distribution of your reading time of each page for the PDF under this item, the darker the color the longer the reading time.
+
+### Tags
+
+> The tags that were originally displayed before the title are separated into this separate `Tags` column.
+
+### Progress
+
+> It can visually represent the annotation of each page of the PDF corresponding to the item.
+
+### #Tags
+
+> It differs from Tags in that it renders the text directly. You can create a tag that starts with `#` to try it out.
 
 
 ## 字段
