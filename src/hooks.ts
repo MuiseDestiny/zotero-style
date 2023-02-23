@@ -3,7 +3,6 @@ import { getString, initLocale } from "./modules/locale";
 import Views from "./modules/views"; 
 import Events from "./modules/events";
 import AddonItem from "./modules/item";
-import Record from "./modules/record";
 
 Zotero._AddonItemGlobal = Zotero._AddonItemGlobal || new AddonItem()
 const addonItem = Zotero._AddonItemGlobal
@@ -14,6 +13,10 @@ async function onStartup() {
   const notifierID = Zotero.Notifier.registerObserver(
     { notify: onNotify },
     ["tab"]
+  );
+  ztoolkit.ProgressWindow.setIconURI(
+    "default",
+    `chrome://${config.addonRef}/content/icons/favicon.png`
   );
   // Unregister callback when the window closes (important to avoid a memory leak)
   window.addEventListener(
@@ -29,15 +32,8 @@ async function onStartup() {
     Zotero.uiReadyPromise,
   ]);
   initLocale();
-
-
   ztoolkit.UI.basicOptions.ui.enableElementRecord = false
   ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
-
-  // 测试
-  // Zotero[config.addonInstance].data.record = new Record()
-  // 测试
-
   if (!addonItem.item) { await addonItem.init() }
 
   const events = new Events(addonItem)
@@ -45,6 +41,7 @@ async function onStartup() {
   
   const views = new Views(addonItem)
   Zotero.ZoteroStyle.data.views = views
+  
   await views.renderTitleProgress()
   await views.createTagsColumn()
   await views.createTextTagsColumn()

@@ -62,19 +62,22 @@ export default class Views {
    * 标题是必定显示的所以奇数偶数显示逻辑写在这里
    */
   public async renderTitleProgress() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.titleColumn.enable`) as boolean) { return }
     const key = "title"
     await ztoolkit.ItemTree.addRenderCellHook(
       key,
       (index: number, data: string, column: any, original: Function) => {
-        try {
-          if (index > 0) {
-            const rowNode = document.querySelector(`#item-tree-main-default-row-${index}`) as HTMLDivElement
-            const previousRow = document.querySelector(`#item-tree-main-default-row-${index - 1}`) as HTMLDivElement
-            if (rowNode && previousRow) {
-              previousRow.after(rowNode)
+        if (ZoteroPane.getSelectedItems().length == 0) {
+          try {
+            if (index > 0) {
+              const rowNode = document.querySelector(`#item-tree-main-default-row-${index}`) as HTMLDivElement
+              const previousRow = document.querySelector(`#item-tree-main-default-row-${index - 1}`) as HTMLDivElement
+              if (rowNode && previousRow) {
+                previousRow.after(rowNode)
+              }
             }
-          }
-        } catch { }
+          } catch { }
+        }
         const cellSpan = original(index, data, column) as HTMLSpanElement;
         let titleSpan = cellSpan.querySelector(".cell-text") as HTMLSpanElement;
         const titleHTML = titleSpan.innerHTML
@@ -173,6 +176,7 @@ export default class Views {
    * 把标签从标题分离为单独的列
    */
   public async createTagsColumn() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.tagsColumn.enable`) as boolean) { return } 
     // 用于分离多emoj，很魔鬼的bug
     const runes = require("runes")
     // 新增加的标签列，在调用Zotero.Tags，setColor时不会刷新
@@ -286,6 +290,7 @@ export default class Views {
    * #标签，只显#标注的示文字标签
    */
   public async createTextTagsColumn() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.textTagsColumn.enable`) as boolean) { return }
     const key = "Tags"
     await ztoolkit.ItemTree.register(
       "Text" + key,
@@ -412,6 +417,7 @@ export default class Views {
    * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
    */
   public async createPublicationTagsColumn() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.PublicationTagsColumn.enable`) as boolean) { return }
     const key = "PublicationTags"
     await ztoolkit.ItemTree.register(
       key,
@@ -599,6 +605,7 @@ export default class Views {
    * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
    */
   public async createIFColumn() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.IFColumn.enable`) as boolean) { return }
     const key = "IF"
     await ztoolkit.ItemTree.register(
       key,
@@ -710,6 +717,7 @@ export default class Views {
    * 创建进度列，用于展示标注分布
    */
   public async createProgressColumn() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.progressColumn.enable`) as boolean) { return }
     const key = "Progress"
     await ztoolkit.ItemTree.register(
       key,
@@ -816,6 +824,7 @@ export default class Views {
    * 模仿Endnote评级
    */
   public async createRatingColumn() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.ratingColumn.enable`) as boolean) { return }
     const key = "Rating"
     await ztoolkit.ItemTree.register(
       key,
@@ -916,6 +925,7 @@ export default class Views {
    * 顶栏显示视图切换圆点按钮
    */
   public registerSwitchColumnsViewUI() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.columnsViews.enable`) as boolean) { return }
     type ColumnsView = {
       name: string;
       position: string;
@@ -937,11 +947,11 @@ export default class Views {
           width: column.width,
           ordinal: column.ordinal
         }
-        prefs[column.dataKey].hidden = column.hidden = _column.hidden;
         if (!column.fixedWidth) {
           prefs[column.dataKey].width = column.width = _column.width;
         }
         prefs[column.dataKey].ordinal = column.ordinal = _column.ordinal;
+        prefs[column.dataKey].hidden = column.hidden = _column.hidden;
       })
       ZoteroPane.itemsView.tree._columns._storePrefs(prefs);
       ztoolkit.ItemTree.refresh()
@@ -1128,18 +1138,15 @@ export default class Views {
           let sort = (columnsViews: ColumnsView[]) => {
             return columnsViews.sort((a: ColumnsView, b: ColumnsView) => Number(a.position) - Number(b.position))
           }
-          let addView = (columnsView: ColumnsView) => {
+          let addUpdateView = (columnsView: ColumnsView, label: string = "Add") => {
             dialog({
-              attributes: {buttonlabelaccept: "Add", title: "New View"}, 
+              attributes: { buttonlabelaccept: label, title: "New View"}, 
               element: ztoolkit.UI.createElement(
                 document,
                 "vbox",
                 {
                   id: "container",
                   namespace: "xul",
-                  // attributes: {
-                  //   flex: "1"
-                  // },
                   children: [
                     {
                       tag: "label",
@@ -1199,13 +1206,30 @@ export default class Views {
                   let name = _document.querySelector("#view-name").value
                   let position = _document.querySelector("#view-position").value
                   let content = _document.querySelector("#view-content").value
+                  let entries2object = (keyValues: [key: string, value: any][]) => {
+                    let obj: any = {}
+                    for (let keyValue of keyValues) {
+                      obj[keyValue[0]] = keyValue[1]
+                    }
+                    return obj
+                  }
+                  const dataKeys = (
+                    columnsView.dataKeys.length > 0 && columnsView.dataKeys
+                  ) || getCurrentDataKeys();
+                  const prefs = (
+                    isCurrent(columnsView) &&
+                    entries2object(
+                      Object.values(ZoteroPane.itemsView.tree._columns._getPrefs())
+                        .filter((i: any) => dataKeys.indexOf(i.dataKey) != -1)
+                        .map((i: any)=>[i.dataKey, i])
+                    )) || columnsView.prefs
                   if (name) { 
                     columnsViews.push({
                       name,
                       position,
                       content: content || name,
-                      dataKeys: columnsView.dataKeys.length > 0 ? columnsView.dataKeys : getCurrentDataKeys(),
-                      prefs: ZoteroPane.itemsView.tree._columns._getPrefs()
+                      dataKeys,
+                      prefs
                     })
                     columnsViews = sort(columnsViews)
                     Zotero.Prefs.set(prefKey, JSON.stringify(columnsViews))
@@ -1213,7 +1237,7 @@ export default class Views {
                    }
                 },
               }
-            }, 350, 330)
+            }, 350, 300)
           }
           let addButton = () => {
             if (document.querySelector("#add-save-item")) { return }
@@ -1221,7 +1245,7 @@ export default class Views {
             saveMenuItem.setAttribute("label", getString("column.view.add"));
             saveMenuItem.setAttribute("id", "add-save-item")
             saveMenuItem.addEventListener("command", async () => {
-              addView({
+              addUpdateView({
                 name: "",
                 position: "",
                 content: "",
@@ -1279,7 +1303,7 @@ export default class Views {
                 columnsViews = columnsViews.filter(e => {
                   return !isSame(e.dataKeys, columnsView.dataKeys)
                 })
-                addView(columnsView)
+                addUpdateView(columnsView, "Update")
               }, 1000)
             })
             colViewItem.addEventListener("mouseup", (event) => {
@@ -1334,13 +1358,12 @@ export default class Views {
           menuitem.setAttribute("label", getString("column.Setting"))
           menupopup.appendChild(menuitem)
           let prefs: { [key: string]: string | boolean } = {}
-          let accept = (document: any) => {
+          let accept = (document: Document) => {
             for (let key in prefs) {
               ztoolkit.log(`${config.addonRef}.${key}`, prefs[key])
               Zotero.Prefs.set(`${config.addonRef}.${key}`, prefs[key])
             }
             that.addStyle()
-            ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
             ztoolkit.ItemTree.refresh()
           }
           // 点击设置弹出对话框
@@ -1580,6 +1603,7 @@ export default class Views {
    * Obsidian
    */
   public async createForceGraph() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.graphView.enable`) as boolean) { return }
     while (!document.querySelector("#item-tree-main-default")) {
       await Zotero.Promise.delay(100)
     }
@@ -1746,7 +1770,7 @@ export default class Views {
     }
     let theme = ""
     window.setInterval(async () => {
-      if (!Zotero.Prefs.get(`${config.addonRef}.graphView.enable`)) {
+      if (!Zotero.Prefs.get(`${config.addonRef}.graphView.show`)) {
         resizer.style.height = "0px";
         container.style.height = "0";
         return
@@ -2219,14 +2243,13 @@ export default class Views {
           if (!item) { return false }
           let record = this.addonItem.get(item, "readingTime")
           ztoolkit.log(record)
-          return record?.data && Object.keys(record.data).length > 0
+          return Zotero.Prefs.get(`${config.addonRef}.function.titleColumn.enable`) as boolean && record?.data && Object.keys(record.data).length > 0 
         },
         /**
          * 进度条UI，重置
          */
         callback: (prompt: Prompt) => {
           const container = prompt.createCommandsContainer()
-
           const item = getItem() as _ZoteroItem
           prompt.inputNode.placeholder = item.getField("title")
           const record = this.addonItem.get(item, "readingTime")
@@ -2313,8 +2336,11 @@ export default class Views {
       {
         name: "关系图谱",
         label: "Style",
+        when: () => {
+          return Zotero.Prefs.get(`${config.addonRef}.function.graphView.enable`) as boolean
+        },
         callback: async () => {
-          const key = `${config.addonRef}.graphView.enable`
+          const key = `${config.addonRef}.graphView.show`
           if (Zotero.Prefs.get(key)) {
             Zotero.Prefs.set(key, false)
           } else {
@@ -2608,6 +2634,9 @@ export default class Views {
          */
         name: "标注",
         label: "Style",
+        when: () => {
+          return Zotero.Prefs.get(`${config.addonRef}.function.annotationColors.enable`) as boolean
+        },
         callback: (prompt: Prompt) => {
           const container = prompt.createCommandsContainer()
           type Name = string;
@@ -3137,6 +3166,7 @@ export default class Views {
     // @ts-ignore
     let win = reader._iframeWindow.wrappedJSObject;
     var Zotero = ztoolkit.getGlobal("Zotero")
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.annotationColors.enable`) as boolean) { return }
     if (!win.document.querySelector(`script#${config.addonRef}`)) {
       let script = ztoolkit.UI.createElement(win.document, "script", {
         namespace: "html",
@@ -3190,7 +3220,7 @@ export default class Views {
       await Zotero.Promise.delay(10)
     }
     const table = document.querySelector(p)
-    let lastKey: string
+    let lastKey: string, lastItemType: string
     table?.addEventListener("mousemove", (event) => {
       if (!(event.target as HTMLDivElement)!.classList.contains("selected")) { return }
       let items = ZoteroPane.getSelectedItems()
@@ -3226,7 +3256,7 @@ export default class Views {
     table?.addEventListener("click", async (event: any) => {
       const target = getChildrenTarget(event, (event.target! as HTMLDivElement).childNodes)
       /**
-       * 点击标签相关，打开侧边栏标签选项卡
+       * 1 点击标签相关，打开侧边栏标签选项卡
        */
       if (
         target?.classList.contains("Tags") ||
@@ -3235,26 +3265,62 @@ export default class Views {
         (document.querySelector("#zotero-editpane-tags-tab") as HTMLSpanElement).click()
       }
       /**
-       * 评级
+       * 2 选中一个条目后再点击触发
        */
       let items = ZoteroPane.getSelectedItems()
       if (items.length == 1) {
-        let item = items[0]
-        if (lastKey == item.key && target?.classList.contains("Rating")) {
-          const optionNodes = [...target.querySelectorAll("span.option")] as HTMLScriptElement[]
-          let optionNode = getChildrenTarget(event, optionNodes)
-          let index = optionNodes.indexOf(optionNode)
-          const rate = Number(ztoolkit.ExtraField.getExtraField(item, "rate") || "0")
-          if (index + 1 == rate) {
-            await ztoolkit.ExtraField.setExtraField(item, "rate", String(index))
-          } else {
-            await ztoolkit.ExtraField.setExtraField(item, "rate", String(index + 1))
+        const item = items[0]
+        /**
+         * 2.1 评级
+         */
+        if (lastKey == item.key) {
+          if (target?.classList.contains("Rating")) {
+            const optionNodes = [...target.querySelectorAll("span.option")] as HTMLScriptElement[]
+            let optionNode = getChildrenTarget(event, optionNodes)
+            let index = optionNodes.indexOf(optionNode)
+            const rate = Number(ztoolkit.ExtraField.getExtraField(item, "rate") || "0")
+            if (index + 1 == rate) {
+              await ztoolkit.ExtraField.setExtraField(item, "rate", String(index))
+            } else {
+              await ztoolkit.ExtraField.setExtraField(item, "rate", String(index + 1))
+            }
+          }
+          /**
+           * 2.2 点击条目类型icon触发
+           */
+          if (target?.classList.contains("title")) {
+            let span = getChildrenTarget(event, target.childNodes)
+            if (span.classList.contains("cell-icon")) {
+              await ZoteroPane.itemsView.setFilter("tags", []);
+              const icon = span.style.backgroundImage.match(/url\("(.+)"\)/)[1]
+              if (lastItemType != item.itemType) {
+                new ztoolkit.ProgressWindow("Select", { closeOtherProgressWindows: true })
+                  .createLine({
+                    icon,
+                    text: item.itemType,
+                  }).show()
+                const items = ZoteroPane.getSortedItems()
+                items.forEach(async (item) => {
+                  const itemType = item.itemType
+                  !item.hasTag(itemType) && item.addTag(itemType, 0) && await item.saveTx()
+                })
+                
+                await ZoteroPane.itemsView.setFilter("tags", [item.itemType])
+                lastItemType = item.itemType
+              } else {
+                new ztoolkit.ProgressWindow("Exit", { closeOtherProgressWindows: true })
+                  .createLine({
+                    icon,
+                    text: item.itemType,
+                  }).show()
+                lastItemType = ""
+              }
+            }
           }
         } else {
           lastKey = item.key
         }
       }
-
     })
   }
   
