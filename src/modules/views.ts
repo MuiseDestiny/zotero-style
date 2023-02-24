@@ -10,16 +10,9 @@ import Bubble from "./bubble";
 
 export default class Views {
   private progress: Progress;
-  private progressWindow: any;
-  private progressWindowIcon: any;
   private addonItem: AddonItem;
   private cache: {[key: string]: any} = {};
   constructor(addonItem: AddonItem) {
-    this.progressWindowIcon = {
-      success: "chrome://zotero/skin/tick.png",
-      fail: "chrome://zotero/skin/cross.png",
-      default: `chrome://${config.addonRef}/content/icons/favicon.png`,
-    };
     this.addonItem = addonItem;
     this.progress = new Progress()
     this.addStyle()
@@ -3221,8 +3214,41 @@ export default class Views {
     while (!document.querySelector(p)) {
       await Zotero.Promise.delay(10)
     }
+    
     const table = document.querySelector(p)
-    let lastKey: string, lastItemType: string
+    let lastKey: string, lastItemType: string, selectedItemType: string = "", icon: string
+    ztoolkit.patch(
+      Zotero.CollectionTreeRow.prototype, "getItems", config.addonRef,
+      (original) =>
+        async function () {
+          // @ts-ignore
+          let items = await original.bind(this)();
+          if (selectedItemType.length) {
+            // 去除子条目
+            let _items = items.filter((item: Zotero.Item) => {
+              if (
+                item.parentID &&
+                items.find((_item: Zotero.Item) => item.parentID == _item.id)
+              ) { return false }
+              return item.itemType == selectedItemType
+            })
+            console.log(_items)
+            if (_items.length) {
+              return _items
+            } else {
+              // 自动退出
+              new ztoolkit.ProgressWindow("Exit", { closeOtherProgressWindows: true })
+                .createLine({
+                  icon,
+                  text: selectedItemType,
+                }).show()
+              lastItemType = selectedItemType = ""
+              ZoteroPane.itemsView.refreshAndMaintainSelection()
+            }
+          }
+          return items
+        }
+    )
     table?.addEventListener("mousemove", (event) => {
       if (!(event.target as HTMLDivElement)!.classList.contains("selected")) { return }
       let items = ZoteroPane.getSelectedItems()
@@ -3296,30 +3322,24 @@ export default class Views {
               span.classList.contains("cell-icon") &&
               Zotero.Prefs.get(`${config.addonRef}.function.itemTypeFilter.enable`) as boolean
             ) {
-              await ZoteroPane.itemsView.setFilter("tags", []);
-              const icon = span.style.backgroundImage.match(/url\("(.+)"\)/)[1]
-              if (lastItemType != item.itemType) {
+              icon = span.style.backgroundImage.match(/url\("(.+)"\)/)[1]
+              selectedItemType = item.itemType
+              if (lastItemType != selectedItemType) {
                 new ztoolkit.ProgressWindow("Select", { closeOtherProgressWindows: true })
                   .createLine({
                     icon,
-                    text: item.itemType,
+                    text: selectedItemType,
                   }).show()
-                const items = ZoteroPane.getSortedItems()
-                items.forEach(async (item) => {
-                  const itemType = item.itemType
-                  !item.hasTag(itemType) && item.addTag(itemType, 0) && await item.saveTx()
-                })
-                
-                await ZoteroPane.itemsView.setFilter("tags", [item.itemType])
-                lastItemType = item.itemType
+                lastItemType = selectedItemType
               } else {
                 new ztoolkit.ProgressWindow("Exit", { closeOtherProgressWindows: true })
                   .createLine({
                     icon,
-                    text: item.itemType,
+                    text: selectedItemType,
                   }).show()
-                lastItemType = ""
+                lastItemType = selectedItemType = ""
               }
+              await ZoteroPane.itemsView.refreshAndMaintainSelection()
             }
           }
         } else {
