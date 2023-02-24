@@ -209,7 +209,7 @@ Two ways display your tags after assigning color and position: (1) you can open 
 
 ## Acknowledgements
 
-- This addon thanks to the users who made valuable comments
+- This addon thanks to the users who made valuable [comments](https://github.com/MuiseDestiny/zotero-style/issues?q=label:enhancement)
 - [zotero-plugin-template](https://github.com/windingwind/zotero-plugin-template)
 - [zotero-plugin-toolkit](https://github.com/windingwind/zotero-plugin-toolkit)
 - [chartero](https://github.com/volatile-static/Chartero)
