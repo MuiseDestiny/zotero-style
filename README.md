@@ -174,7 +174,7 @@ cug
   
 ## Quick Filtering
 
-> By clicking on the logo representing the item type, you can complete the quick filtering of item types. And repeat the process above to exit filtering.
+> By clicking on the icon representing the item type, you can complete the quick filtering of item types. And repeat the process above to exit filtering. Note this filtering is valid for all collections. But it will exit automatically when you switch to the category filtered item is empty.
 
 ## Graph View
 
