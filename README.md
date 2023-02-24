@@ -29,7 +29,7 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 
 ### Progress
 
-> It can visually represent the annotation of each page of the PDF corresponding to a item.
+> It can visually represent the annotation word count of each page of the PDF corresponding to a item.
 
 ### #Tags
 
