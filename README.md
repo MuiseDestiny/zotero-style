@@ -1,7 +1,7 @@
 # Zotero Style
 > Zotero can look great.
 
-<img src="addon/chrome/content/icons/favicon.png" width="50px" height="50px">
+<img src="addon/chrome/content/icons/favicon.png" width="36px" height="36px">
 
 [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-round&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
@@ -12,10 +12,6 @@
 You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-style/issues/48).
 
 ---
-
-This video below will take you quickly through the rest of this readme.
-
-<https://www.bilibili.com/video/BV1as4y1a7Gf>
 
 ## Columns
 
@@ -198,6 +194,18 @@ cug
 Two ways display your tags after assigning color and position: (1) you can open the column settings of title and click `Tags` and (2) you can show Tags column that is created by this addon.
   
 </details>
+
+## Recommended Links
+
+- <https://www.bilibili.com/video/BV1as4y1a7Gf>
+- <https://www.bilibili.com/video/BV1BA411R7hb>
+- <https://www.bilibili.com/video/BV1PK411o7JN>
+- <https://www.bilibili.com/video/BV1Z44y1D7nP>
+- <http://xhslink.com/PnHlCn>
+- <http://xhslink.com/iUJlCn>
+- <http://xhslink.com/TPJlCn>
+- <http://xhslink.com/QSKlCn>
+- <http://xhslink.com/yoMlCn>
 
 ## Acknowledgements
 
