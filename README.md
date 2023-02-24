@@ -1,7 +1,7 @@
 # Zotero Style
-> 一个不知道干嘛用的插件
+> Zotero can look great.
 
-<img src="addon/chrome/content/icons/favicon.png" width="50px" height="50px">
+<img src="addon/chrome/content/icons/favicon.png" width="36px" height="36px">
 
 [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-round&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
@@ -9,81 +9,59 @@
 [![License](https://img.shields.io/github/license/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/blob/master/LICENSE)
 ![Downloads latest release](https://img.shields.io/github/downloads/MuiseDestiny/zotero-style/latest/total?color=yellow)
 
-诚恳地邀请你，在[这里](https://github.com/MuiseDestiny/zotero-style/issues/48)贴上你的配色，这对以后的主题切换很有帮助！
-
-如您需要数据迁移（使得新版本能够加载以前的进度），[见此](https://github.com/MuiseDestiny/zotero-style/issues/55)。
-
-安装插件后会产生一个`Addon Item`条目用于数据储存，不要将其删除，如您有更好的数据储存可同步策略，可反馈[至此](https://github.com/MuiseDestiny/zotero-reference/issues/43)
+You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-style/issues/48).
 
 ---
 
-下面这个视频会带你快速浏览Readme的剩下部分。
+## Columns
 
-<https://www.bilibili.com/video/BV1as4y1a7Gf>
+> This plugin modifies some of Zotero's existing columns and adds some interesting ones, and I'll introduce them one by one.
 
+![bandicam-2023-02-23-21-34-45-536](https://user-images.githubusercontent.com/51939531/220922783-b7d78b5f-6cc3-4aff-8581-2e6ca341aec5.gif)
 
-## 字段
+### Title
 
-新增了一些可视化字段，style最初只可视化了标题进度条，新版本将赋予style更广泛的含义
+> As the background of title, reading progress visually reflect the distribution of your reading time of each page for the PDF under a item, the darker the color the longer the reading time.
 
-在此感谢[@windingwind](https://github.com/MuiseDestiny/zotero-plugin-toolkit)开发的工具箱，有了工具箱style的一些奇思妙想才得以实现
+### Tags
 
-![image](https://user-images.githubusercontent.com/51939531/211244957-cc6f293f-ba83-4325-bca0-47b10f461ee3.png)
+> The tags that were originally displayed before the title are separated into this separate `Tags` column.
 
-![image](https://user-images.githubusercontent.com/51939531/212248506-5d89dabb-1f48-4bd7-8c95-32b0d25aab46.png)
+### Progress
 
-![image](https://user-images.githubusercontent.com/51939531/212546513-161c554f-64da-4aa7-a66a-0e84cde26dd5.png)
+> It can visually represent the annotation word count of each page of the PDF corresponding to a item.
 
-![f51e6220a859e8fd6a42d0b1878c4ae](https://user-images.githubusercontent.com/51939531/212248788-643e086a-a5b3-427d-abd2-7dd7fdfd4646.png)
+### #Tags
 
-![image](https://user-images.githubusercontent.com/51939531/213071592-5657c470-f663-42ed-be31-235302ac1709.png)
-
-![image](https://user-images.githubusercontent.com/51939531/217996561-0bb705b2-252f-4dff-b91f-2ed7a1702c2a.png)
-
-
-### 标题-阅读进度条
-
-PDF每一页阅读时间，颜色越深代表时间越久
-
-支持设置`颜色`和`透明度`，下面是默认值
-```ts
-zoterostyle.titleColumn.color = "#FFC6D3"
-zoterostyle.titleColumn.opacity = "0.7"
-```
-
-### 标签
-
-安装插件后，默认将`标题`前面的标签分离为新的一列。这里的标签经过优化，使得emoj（字符）和圆形（html span）对齐。
-
-支持设置`对齐方式`和`标签间距`，下面是默认值
-```ts
-zoterostyle.tagsColumn.align: "left" | "right" = "left"
-zoterostyle.tagsColumn.margin = "0.35"
-```
-
-### #标签
-
-经常在`其它/Extra`做一些标注的同学可以试试这个#标签，以后`其它/Extra`会被各种插件使用，用于存储数据，所以在#标签下做备注相对安全。
-![image](https://user-images.githubusercontent.com/51939531/216234246-f60a2f8b-4134-4144-a7bf-95436c253d39.png)
-
-你可以设置`Prefix`来满足不同需求，输入示例：
-|Prefix|含义|
-|--|--|
-|#|显示所有以#开头的标签，但会去掉#前缀|
-|~~/|除了以/开头的标签外，其他所有标签都显示|
-| | 显示所有标签 |
-
-### 期刊标签
-> easyscholar API，easyscholar风格，当然你也可以自定义颜色
-
-设置见https://github.com/MuiseDestiny/zotero-style/releases/tag/2.1.3
+> It differs from tags column in that it renders the text directly. You can create a tag that starts with `#` to try it out.
 
 <details>
-
-<summary>支持字段</summary>
   
- > 摘自easyscholar扩展源码
+<summary>Column Settings</summary>
 
+ 
+ **Prefix**
+  
+|Prefix|Meaning|
+|--|--|
+| # | Show all tags that start with `#`, but will remove the `#` prefix. |
+|~~/ | All tags except those beginning with `/` are displayed |
+| | Show all tags. |
+  
+</details>
+
+
+### Publication Tags
+
+> It is similar to #Tags, but its tags can generate automatically, which represent the rank of a publication.
+
+<details>
+  
+<summary>Column Settings</summary>
+
+ 
+ **Fileds**
+  
 ```ts
 ajg
 fms
@@ -127,19 +105,10 @@ swjtu
 zhintro
 cug
 ```
-
-</details>
-
-
-
-<details>
-
-<summary>字段释义</summary>
-
-> 摘自[这里](https://easyscholar.cc/document/detail#%E6%95%B0%E6%8D%AE%E6%9D%A5%E6%BA%90)，下述和它不一致，以它为准
+ 
   
 |字段|释义|
-  |---|---|
+|---|---|
 |CCF| 《中国计算机学会推荐国际学术会议和期刊、中文科技期刊目录-2019、计算领域高质量科技期刊分级目录》，数据集从高到低分为：A(T1), B(T2), C(T3)。|
 |SWUFE|:《西南财经大学学术期刊目录2018》，数据集从高到低分为：A+, A, B, C。|
 |CUFE|《中央财经大学期刊目录（2019版）》，数据集从高到低分为：AAA, AA, A。|
@@ -178,135 +147,76 @@ cug
 | Yangtze|《长江大学自然科学高质量期刊（中国期刊）分级目录（2021版）.pdf》数据集从高到低分为T1, T2, T3。|
 | ZJU|《浙江大学国内学术期刊分级目录指南·2020版.pdf》数据集从高到低分为国内一级学术期刊，国内一级核心期刊。|
   
+</details>
+
+### Rating
+
+> When you select a item, item's rating convert to a wating state, such as five points. Then you can click one point to finish your rating quickly.
+
+## View Group
+
+> This addon and other addons may expand Zotero's columns, but the screen size is limit. We often need to show/hide columns frequently, and View Group makes it easier and quicker.
+
+<details>
+  
+<summary>Usage</summary>
+  
+![View Group](https://user-images.githubusercontent.com/51939531/221079177-0d73beed-d63f-4935-a380-f09667d0800c.png)
+
+| Operation | Target | Do |
+| --- | --- | --- |
+| left click | a view | switch to this view |
+| Long press | a view | update its data |
+| right click | a view | delete it | 
+| left clcik | `Add View` button | save current view |
+
+</details> 
+  
+## Graph View
+
+> An Obsidian's `inreractive graph` rendered by Obsidian's source code. It can show item's related items visually. And you can locate the Zotero item from the graph node (`click`), and locate the graph node from Zotero item (`ctrl+click`).
+
+ <details>
+  
+<summary>Demonstration</summary>
+   
+![Graph View](https://user-images.githubusercontent.com/51939531/221080186-05187a08-c237-43ec-8728-9bc603f0eb4f.gif)
   
 </details>
 
 
+## Frequently Asked Questions
 
+<details>
+ 
+<summary>Where is my tags?</summary>
 
-![image](https://user-images.githubusercontent.com/51939531/218376871-016f4810-87a1-45bd-83f5-672d88e8171f.png)
+Two ways display your tags after assigning color and position: (1) you can open the column settings of title and click `Tags` and (2) you can show Tags column that is created by this addon.
+  
+</details>
 
+## Recommended Links
 
-等级是自动匹配的，但我只从easyscholar迁移了一部分（我认为常用的），如你对某个字段有分区需求可以提issue。
+- <https://www.bilibili.com/video/BV1as4y1a7Gf>
+- <https://www.bilibili.com/video/BV1BA411R7hb>
+- <https://www.bilibili.com/video/BV1PK411o7JN>
+- <https://www.bilibili.com/video/BV1Z44y1D7nP>
+- <http://xhslink.com/PnHlCn>
+- <http://xhslink.com/iUJlCn>
+- <http://xhslink.com/TPJlCn>
+- <http://xhslink.com/QSKlCn>
+- <http://xhslink.com/yoMlCn>
 
-### 评级
-> 模仿Endnote，评级只需要一步！
+## Acknowledgements
 
-![bandicam-2023-02-17-22-03-55-444](https://user-images.githubusercontent.com/51939531/219677090-a88a3d00-01cc-49f3-9d90-5dd1d92fe40f.gif)
-
-### 标注
-
-> PDF标注颜色无限定义
-
-![image](https://user-images.githubusercontent.com/51939531/216866921-1dfff7ea-28c9-46ac-993a-334b3fe415f4.png)
-
-![image](https://user-images.githubusercontent.com/51939531/216866821-acd1836e-53ac-4511-bf75-fa91286ea582.png)
-![image](https://user-images.githubusercontent.com/51939531/216866990-63f1c72f-ac5c-4605-94bb-b821189ffeb0.png)
-![image](https://user-images.githubusercontent.com/51939531/216867176-b1d19074-c47d-4a54-924d-b3f5dadfc61f.png)
-
-
-### 影响因子
-
-从`easyscholar API`获取影响因子，只显示影响因子（中文还没做），并做可视化
-
-TODO
-- [ ] 优化中文期刊显示
-- [ ] 显示影响因子数值和分区
-
-支持设置`颜色`和`透明度`，下面是默认值
-```ts
-zoterostyle.IFColumn.color = "#A8D1D1"
-zoterostyle.IFColumn.opacity = "0.7"
-```
-
-### 进度
-
-`进度`当前记录的是阅读PDF各页面标注分布，2.0.0体现每一页标注的文字数量，比如黄色高亮。
-
-进度有两种样式/风格（style），一种是平滑曲线（line），一种是柱状图（bar）
-| line | bar |
-|  ----  | ----  |
-| ![image](https://user-images.githubusercontent.com/51939531/212294042-cec93a51-94fb-444c-b919-90ecdad90818.png) | ![image](https://user-images.githubusercontent.com/51939531/212294194-0cb93185-94d6-4252-8fa7-b79829b6c77f.png) |
-
-line有一种柔和的美感，bar有一种凌乱的美感
-
-当页数过多，平滑曲线一般也就不平滑了，线看起来不是很美观，所以引入柱状图。
-
-你可以右键单击`进度`，点击`列设置`进行设置
-
-
-支持设置`渲染图样式`、`颜色`、`透明度`和是否显示曲线转折处`圆圈`，下面是默认值
-```ts
-zoterostyle.progressColumn.style: "line" | "bar" = "bar"
-zoterostyle.progressColumn.color = "#86C8BC"
-zoterostyle.progressColumn.opacity = "0.7"
-zoterostyle.progressColumn.circle = true
-```
-
-## 关系图谱
-> 完全借助Obsidian源代码进行渲染，它为你的Zotero面板提供一个全新的视图，并与Zotero本身表格视图产生互动
-
-在[这里](https://forum.obsidian.md/tag/graph-view)，很多用户对Obsidian的关系图谱功能提了许多意见，这是一个强大的功能。
-现在以及未来一段时间，这个功能不会向着`炫酷`的方面开发，而是实用。以我个人之力，无法1:1完全复原你在Obsidian上的使用体验，它只是一个**辅助**。
-
-Zotero有`关联文献`功能，那么可视化是必然的，也是刚需的，它可以帮助我们文献库有一个整体的把握，也在促进你多多对文献进行关联。
-
-我先后试过好几种方案，目前绘制关系图谱的工具分两种，一种渲染在canvas上（pixi库，Obsidian目前方案），一种是svg（d3库，Obsidian早期方案）。在性能上canvas是最好的，svg面对大量数据会很卡。
-
-![关系图谱](https://user-images.githubusercontent.com/51939531/215948838-ed88f7b4-dab7-4ae4-8d80-b1ed1f8e3c74.gif)
-
-在`关系图谱`中点击一个节点，会快速定位到该文献。点击任意文献，按住`Ctrl`，会快速定位到`关系图谱`中的节点。
-
-为什么用`ctrl`触发？ctrl本身就是`Zotero`的快捷键，用于展示当前选中文献在哪个文件夹/collection下，会黄色高亮显示，所以这个交互逻辑，ctrl是十分合理的。
-
-当然，你不喜欢这个功能可以`Shift+P`将其关闭。
-
-建议配合[zotero-pdf-preview](https://github.com/windingwind/zotero-pdf-preview)
-
-![image](https://user-images.githubusercontent.com/51939531/214523710-80967ec7-6ef5-45e0-85c8-1f5c6a1536aa.png)
-
-已适配`Zotero Night`夜间模式
-![image](https://user-images.githubusercontent.com/51939531/216801169-85a941f2-df40-4036-a436-7ef81748e75e.png)
-
-
-## 视图组功能 
-
-![视图组](https://user-images.githubusercontent.com/51939531/215951572-d30c030d-1376-45fd-adbf-fbb3d7426469.gif)
-
-借助这个功能，你可以从`Zotero`众多字段中任意组合出你经常浏览的视图。
-
-**增删改**
-> 如果你当前视图没被保存，不在视图组中，就会出现`新增视图`按钮
-
-![image](https://user-images.githubusercontent.com/51939531/212250960-6771679a-5cc0-430d-96c1-dbf8f24b255b.png)
-
-| 操作 | 对象 | 执行 |
-| --- | --- | --- |
-| 左击 | 视图组下某一视图 | 切换到该视图 |
-| 长按 | 视图组下某一视图 | 更新该视图信息 |
-| 右击 | 视图组下某一视图 | 删除该视图 | 
-| 左击 | 视图组下`新增视图`按钮 | 保存当前渲染视图 |
-
-
-## 设置
-`Style`插件为你新增的所有列，都可以右键列名（点击不同列对应不同列设置），点击`列设置/column settings`进行更改`颜色/color`、`透明度/opacity`等style，我觉得这样比去首选项快，所以本插件无首选项设置界面。
-
-![image](https://user-images.githubusercontent.com/51939531/212301913-302ceb00-56ec-4d5c-b17e-0f31a81881ef.png)
-
-![image](https://user-images.githubusercontent.com/51939531/212302668-1d8cdb5d-b2b3-4100-873e-18724cbd6041.png)
-
-## 数据存储
-![image](https://user-images.githubusercontent.com/51939531/212578908-59d5c850-f321-401e-b97b-2e252e87a609.png)
-这个条目下的一个笔记对应Zotero一篇文献的阅读进度数据。
-
-## 致谢
-- 本插件基于插件模板开发 - https://github.com/windingwind/zotero-plugin-template
-- 本插件基于Zotero工具箱开发 - https://github.com/windingwind/zotero-plugin-toolkit
-- 本插件部分代码参考`Chartero` - https://github.com/volatile-static/Chartero
-- 本插件参考`Zotero Tag`插件 - https://github.com/windingwind/zotero-tag
-- 本插件部分功能基于`Zotero PDF Translate`插件 - https://github.com/windingwind/zotero-pdf-translate
-- 本插件感谢[科研通](https://www.ablesci.com/)，[easyscholar](https://easyscholar.cc/console/query)等免费网站
-- 部分功能灵感来自[Endnote](https://buy.endnote.com/)
-- 部分功能基于[Obsidian](https://help.obsidian.md/Obsidian/Index)
-- 本插件感谢提出宝贵意见的同学们
+- This addon thanks to the users who made valuable comments
+- [zotero-plugin-template](https://github.com/windingwind/zotero-plugin-template)
+- [zotero-plugin-toolkit](https://github.com/windingwind/zotero-plugin-toolkit)
+- [chartero](https://github.com/volatile-static/Chartero)
+- [zotero-tag](https://github.com/windingwind/zotero-tag)
+- [zotero-pdf-translate](https://github.com/windingwind/zotero-pdf-translate)
+- [ablesci](https://www.ablesci.com/)
+- [easyscholar](https://easyscholar.cc/console/query)
+- [endnote](https://buy.endnote.com/)
+- [obsidian](https://help.obsidian.md/Obsidian/Index)
 
