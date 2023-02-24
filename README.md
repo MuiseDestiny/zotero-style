@@ -172,6 +172,10 @@ cug
 
 </details> 
   
+## Quick Filtering
+
+> By clicking on the logo representing the item type, you can complete the quick filtering of item types. And repeat the process above to exit filtering.
+
 ## Graph View
 
 > An Obsidian's `inreractive graph` rendered by Obsidian's source code. It can show item's related items visually. And you can locate the Zotero item from the graph node (`click`), and locate the graph node from Zotero item (`ctrl+click`).
