@@ -151,7 +151,7 @@ cug
 
 ### Rating
 
-> When you select a item, item's rating convert to a wating state, such as 5 dots. Then you can click one dot finish your rating quickly.
+> When you select a item, item's rating convert to a wating state, such as five points. Then you can click one point to finish your rating quickly.
 
 ## View Group
 
