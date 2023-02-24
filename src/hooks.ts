@@ -49,7 +49,7 @@ async function onStartup() {
   await views.createIFColumn()
   await views.createPublicationTagsColumn()
   await views.createRatingColumn()
-  let createForceGraph = views.createForceGraph()
+  let createForceGraph = views.createGraphView()
   views.registerSwitchColumnsViewUI()
   await views.registerCommands()
 

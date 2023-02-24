@@ -1602,7 +1602,7 @@ export default class Views {
    * 关系图谱
    * Obsidian
    */
-  public async createForceGraph() {
+  public async createGraphView() {
     if (!Zotero.Prefs.get(`${config.addonRef}.function.graphView.enable`) as boolean) { return }
     while (!document.querySelector("#item-tree-main-default")) {
       await Zotero.Promise.delay(100)
@@ -1712,6 +1712,7 @@ export default class Views {
                   let id = event.data
                   canvas = document.querySelector("canvas")
                   node = app.graph.renderer.nodes.find(e=>e.id==id)
+                  if (!node) { return }
                   f = window.devicePixelRatio
                   scale = 3
                   let X = (f * canvas.width/2 - node.x*scale), Y = (f * canvas.height/2 - node.y*scale)
@@ -1737,13 +1738,14 @@ export default class Views {
       })
       
       doc.querySelector("head")?.appendChild(script)
-      doc.querySelector(".graph-view-container.mod-expanded")!.style = `
+      doc.querySelector(".graph-view-container.mod-expanded")?.setAttribute("style", `
         width: 100vw;
         height: 100vh;
         border-radius: 0;
         border: none;
         padding: 0 !important;
-      `
+        margin: 0px !important;
+      `)
       window.addEventListener("message", (event) => {
         let key = event.data
         ZoteroPane.selectItem(key)
@@ -3270,10 +3272,10 @@ export default class Views {
       let items = ZoteroPane.getSelectedItems()
       if (items.length == 1) {
         const item = items[0]
-        /**
-         * 2.1 评级
-         */
         if (lastKey == item.key) {
+          /**
+           * 2.1 评级
+           */
           if (target?.classList.contains("Rating")) {
             const optionNodes = [...target.querySelectorAll("span.option")] as HTMLScriptElement[]
             let optionNode = getChildrenTarget(event, optionNodes)
@@ -3290,7 +3292,10 @@ export default class Views {
            */
           if (target?.classList.contains("title")) {
             let span = getChildrenTarget(event, target.childNodes)
-            if (span.classList.contains("cell-icon")) {
+            if (
+              span.classList.contains("cell-icon") &&
+              Zotero.Prefs.get(`${config.addonRef}.function.itemTypeFilter.enable`) as boolean
+            ) {
               await ZoteroPane.itemsView.setFilter("tags", []);
               const icon = span.style.backgroundImage.match(/url\("(.+)"\)/)[1]
               if (lastItemType != item.itemType) {
@@ -3322,39 +3327,6 @@ export default class Views {
         }
       }
     })
-  }
-  
-  /**
-   * 显示右下角消息
-   * @param header 
-   * @param context 
-   * @param type 
-   * @param t 
-   * @param maxLength 
-   * @returns 
-   */
-  public showProgressWindow(
-    header: string,
-    context: string,
-    type: string = "default",
-    t: number = 5000,
-    maxLength: number = 100
-  ) {
-    if (this.progressWindow) {
-      this.progressWindow.close();
-    }
-    let progressWindow = new Zotero.ProgressWindow({ closeOnClick: true });
-    this.progressWindow = progressWindow
-    progressWindow.changeHeadline(header);
-    progressWindow.progress = new progressWindow.ItemProgress(
-      this.progressWindowIcon[type],
-      (maxLength > 0 && context.length > maxLength) ? context.slice(0, maxLength) + "..." : context
-    );
-    progressWindow.show();
-    if (t > 0) {
-      progressWindow.startCloseTimer(t);
-    }
-    return progressWindow
   }
 }
 
