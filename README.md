@@ -23,13 +23,13 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 
 > As the background of title, reading progress visually reflect the distribution of your reading time of each page for the PDF under a item, the darker the color the longer the reading time.
 
-### Tags
-
-> The tags that were originally displayed before the title are separated into this separate `Tags` column.
-
 ### Progress
 
 > It can visually represent the annotation word count of each page of the PDF corresponding to a item.
+
+### Tags
+
+> The tags that were originally displayed before the title are separated into this separate `Tags` column.
 
 ### #Tags
 
@@ -172,6 +172,20 @@ cug
 
 </details> 
   
+## Nested Tags
+
+> Nested tags can recategorize your Zotero items. It could replace Zotero's collection to some extent.
+
+<details> 
+
+> You can switch between the nested tags view provided by the plugin and the tags view provided by Zotero itself with ease. 
+
+<summary>Demonstration</summary>
+
+![image](https://user-images.githubusercontent.com/51939531/221401148-353fc971-6808-4483-9672-7ea243829518.png)
+
+</details> 
+
 ## Quick Filtering
 
 > By clicking on the icon representing the item type, you can complete the quick filtering of item types. And repeat the process above to exit filtering. Note this filtering is valid for all collections. But it will exit automatically when you switch to the category filtered item is empty.
