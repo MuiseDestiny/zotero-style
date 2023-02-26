@@ -178,7 +178,7 @@ cug
 
 <details> 
 
-> You can switch between the nested tags view provided by the plugin and the tags view provided by Zotero itself with ease. 
+You can switch between the nested tags view provided by the plugin and the tags view provided by Zotero itself with ease. 
 
 <summary>Demonstration</summary>
 
