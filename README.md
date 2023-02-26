@@ -182,7 +182,10 @@ You can switch between the nested tags view provided by the plugin and the tags 
 
 <summary>Demonstration</summary>
 
-![image](https://user-images.githubusercontent.com/51939531/221401148-353fc971-6808-4483-9672-7ea243829518.png)
+| Nested Tags | Zotero Tags |
+|--|--|
+|![image](https://user-images.githubusercontent.com/51939531/221401675-fa062110-ab03-4ce8-b528-81f054edf2d1.png)| ![image](https://user-images.githubusercontent.com/51939531/221401658-058cd270-9d7c-4046-adbf-c936f6e7458a.png)|
+
 
 </details> 
 
