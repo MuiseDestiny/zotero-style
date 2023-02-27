@@ -186,7 +186,13 @@ You can switch between the nested tags view provided by the plugin and the tags 
 |--|--|
 |![image](https://user-images.githubusercontent.com/51939531/221401675-fa062110-ab03-4ce8-b528-81f054edf2d1.png)| ![image](https://user-images.githubusercontent.com/51939531/221401658-058cd270-9d7c-4046-adbf-c936f6e7458a.png)|
 
+| Operation | Target | Do |
+| -- | -- | -- |
+| left click | control icon | ![image](https://user-images.githubusercontent.com/51939531/221461592-72200db4-099c-474f-9364-f73c7499a294.png) |
+| left click | tag item | ![image](https://user-images.githubusercontent.com/51939531/221461934-2e309e92-9ad8-4a57-9df9-cdfcf898c3cb.png) |
+| right click | tag item | ![image](https://user-images.githubusercontent.com/51939531/221461489-7bfdfd39-1663-4898-8619-c0f1a304dcf7.png) |
 
+  
 </details> 
 
 ## Quick Filtering
