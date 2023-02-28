@@ -1,4 +1,3 @@
-const log = console.log
 export default class AddonItem {
 	public item!: _ZoteroItem;
 	public title = "Addon Item"
@@ -12,16 +11,16 @@ export default class AddonItem {
 	 * @returns 
 	 */
 	public async init() {
-		log("******\n\n")
-		log("AddonItem init is called")
+		ztoolkit.log("******\n\n")
+		ztoolkit.log("AddonItem init is called")
 		let item: _ZoteroItem;
 		let addonItemKey = Zotero.Prefs.get(this.prefKey)
 		if (addonItemKey) {
 			item = await Zotero.Items.getByLibraryAndKeyAsync(1, addonItemKey)
 			if (item) {
 				this.item = item
-				log("From prefKey")
-				log("\n\n******")
+				ztoolkit.log("From prefKey")
+				ztoolkit.log("\n\n******")
 				this.hiddenNotes()
 				return
 			}
@@ -30,22 +29,22 @@ export default class AddonItem {
 		s.addCondition("title", "contains", this.title);
 		var ids = await s.search();
 		let items = await Zotero.Items.getAsync(ids);
-		console.log(items)
+		ztoolkit.log(items)
 		if (ids.length) {
 			// exist
 			item = items[0]
-			log("From local")
+			ztoolkit.log("From local")
 		} else {
 			// @ts-ignore
 			item = new Zotero.Item('computerProgram');
 			item.setField('title', this.title);
 			await item.saveTx({ skipSelect : true})
-			log("From new")
+			ztoolkit.log("From new")
 		}
 		Zotero.Prefs.set(this.prefKey, item.key)
 		this.item = item
 		this.hiddenNotes()
-		log("\n\n******")
+		ztoolkit.log("\n\n******")
 	}
 
 	/**
@@ -137,7 +136,7 @@ export default class AddonItem {
 				Zotero.Items.get(ids[0]).itemTypeID == 26 &&
 				Zotero.Items.get(ids.slice(-1)[0]).itemTypeID == 26
 			) {
-				log("hook ids", ids.length)
+				ztoolkit.log("hook ids", ids.length)
 				return ids.filter((id: number) => {
 					const parentID = Zotero.Items.get(id).parentID
 					if (!parentID) { return true }

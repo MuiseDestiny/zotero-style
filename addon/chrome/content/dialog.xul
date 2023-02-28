@@ -5,9 +5,10 @@
 
 <dialog xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	buttons="cancel,accept"
-	onload="Dialog.init()"
-	ondialogaccept="Dialog.accept()"
-	ondialogcancel="Dialog.cancel()"
+	onload="window.Dialog.init()"
+	ondialogaccept="window.Dialog.accept()"
+	ondialogcancel="window.Dialog.cancel()"
+	style="background-color: #fff;"
 >
 	<script src="include.js"/>
 	<script src="dialog.js"/>

@@ -42,6 +42,7 @@ async function onStartup() {
   const views = new Views(addonItem)
   Zotero.ZoteroStyle.data.views = views
   
+  await views.initTags()
   await views.renderTitleProgress()
   await views.createTagsColumn()
   await views.createTextTagsColumn()
@@ -82,13 +83,13 @@ async function onNotify(
   extraData: { [key: string]: any }
 ) {
   // You can add your code to the corresponding notify type
-  console.log("notify", event, type, ids, extraData);
+  ztoolkit.log("notify", event, type, ids, extraData);
   if (
     event == "select" &&
     type == "tab" &&
     extraData[ids[0]].type == "reader"
   ) {
-    console.log("select reader tab")
+    ztoolkit.log("select reader tab")
     let reader = await ztoolkit.Reader.getReader();
     // 重置等待更新
     addonItem.set(

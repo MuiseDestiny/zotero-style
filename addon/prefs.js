@@ -22,6 +22,8 @@ pref("extensions.zotero.__addonRef__.titleColumn.tags", false);
 pref("extensions.zotero.__addonRef__.titleColumn.opacity", "0.7");
 pref("extensions.zotero.__addonRef__.titleColumn.odd", "");
 pref("extensions.zotero.__addonRef__.titleColumn.even", "");
+pref("extensions.zotero.__addonRef__.titleColumn.selected", "");
+
 
 
 pref("extensions.zotero.__addonRef__.function.IFColumn.enable", true);
@@ -65,6 +67,8 @@ pref("extensions.zotero.__addonRef__.annotationColors", '[["general.yellow","#ff
 pref("extensions.zotero.__addonRef__.annotationColorsGroups", '[["Untitled",[["general.yellow","#ffd400"],["general.red","#ff6666"],["general.green","#5fb236"],["general.blue","#2ea8e5"],["general.purple","#a28ae5"],["general.magenta","#e56eee"],["general.orange","#f19837"],["general.gray","#aaaaaa"]]]]');
 
 pref("extensions.zotero.__addonRef__.function.itemTypeFilter.enable", true);
+
+pref("extensions.zotero.__addonRef__.nestedTags.sortord", "0");
 
 
 

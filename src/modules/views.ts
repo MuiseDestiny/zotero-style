@@ -6,29 +6,71 @@ import { Command, Prompt } from "E:/Github/zotero-plugin-toolkit/dist/managers/p
 import field2Info from "./easyscholar";
 import utils from "./utils";
 import Bubble from "./bubble";
+import { Tags } from "./tags";
 
 
 export default class Views {
   private progress: Progress;
   private addonItem: AddonItem;
-  private cache: {[key: string]: any} = {};
+  private cache: { [key: string]: any } = {};
+  private filterFunctions: ((items: Zotero.Item[]) => Zotero.Item[])[] = [];
   constructor(addonItem: AddonItem) {
     this.addonItem = addonItem;
     this.progress = new Progress()
     this.addStyle()
+    const filterFunctions = this.filterFunctions
+    ztoolkit.patch(
+      Zotero.CollectionTreeRow.prototype, "getItems", config.addonRef,
+      (original) =>
+        async function () {
+          // @ts-ignore
+          let items = await original.bind(this)();
+          const originalLength = items.length
+          for (let i = 0; i < filterFunctions.length; i++){
+            items = filterFunctions[i](items)
+          }
+          // 等加载结束后尝试打开，只负责打开，不折叠
+          window.setTimeout(() => {
+            if (originalLength > items.length) {
+              const filterItems = ZoteroPane.getSortedItems()
+              for (let i = 0; i < filterItems.length; i++) {
+                let _item = filterItems[i]
+                if (
+                  _item.isRegularItem() &&
+                  !items.find((item: Zotero.Item) => item.id == _item.id) &&
+                  !ZoteroPane.itemsView.isContainerOpen(i)
+                ) {
+                  ZoteroPane.itemsView.toggleOpenState(i)
+                }
+              }
+            }
+          })
+          return items
+        }
+    )
   }
 
   public addStyle() {
     document.querySelector("#odd-even-row-style")?.remove();
+    const oddColor = Zotero.Prefs.get(`${config.addonRef}.titleColumn.odd`) as string
+    const evenColor = Zotero.Prefs.get(`${config.addonRef}.titleColumn.even`) as string
+    const selectedColor = Zotero.Prefs.get(`${config.addonRef}.titleColumn.selected`) as string
+
     const styles = ztoolkit.UI.createElement(document, "style", {
       id: "odd-even-row-style",
       properties: {
         innerHTML: `
           [id^=item-tree-main-default-row]:nth-child(odd) {
-            background-color: ${Zotero.Prefs.get(`${config.addonRef}.titleColumn.odd`) as string} !important;
+            background-color: ${oddColor} !important;
           }
           [id^=item-tree-main-default-row]:nth-child(even) {
-            background-color: ${Zotero.Prefs.get(`${config.addonRef}.titleColumn.even`) as string} !important;
+            background-color: ${evenColor} !important;
+          }
+          #zotero-items-tree .virtualized-table .row.selected, #zotero-items-tree .virtualized-table .row:active {
+            ${selectedColor && selectedColor.length ? `background-color: ${selectedColor} !important` : ""}
+          }
+          #zotero-items-tree .virtualized-table .row:hover {
+            ${selectedColor && selectedColor.length ? `background-color: ${selectedColor} !important` : ""}
           }
           .tag-box .tag-swatch {
             position: absolute;
@@ -71,7 +113,12 @@ export default class Views {
             }
           } catch { }
         }
+        
         const cellSpan = original(index, data, column) as HTMLSpanElement;
+        // 图标替换
+        // try {
+        this.replaceCellIcon(ZoteroPane.getSortedItems()[index], cellSpan)
+        // } catch { }
         let titleSpan = cellSpan.querySelector(".cell-text") as HTMLSpanElement;
         const titleHTML = titleSpan.innerHTML
         titleSpan.innerHTML = ""
@@ -161,10 +208,50 @@ export default class Views {
           name: "Even Color",
           type: "input",
         },
+        {
+          prefKey: "titleColumn.selected",
+          name: "Selected Color",
+          type: "input",
+        },
       ]
     )
   }
 
+  private replaceCellIcon(item: Zotero.Item, cellSpan: HTMLSpanElement) {
+    const iconSpan = cellSpan.querySelector(".cell-icon") as HTMLSpanElement
+    let res = item.attachmentPath?.match(/\.(\w+)$/)
+    if (!res || res.length != 2) { return }
+    switch (res[1]) {
+      case "jpeg":
+      case "png":
+      case "jpg":
+      case "gif":
+        iconSpan.style.backgroundImage = `url(chrome://${config.addonRef}/content/icons/picture.png)`
+        break
+      case "zip":
+      case "gz":
+      case "tar":
+        iconSpan.style.backgroundImage = `url(chrome://${config.addonRef}/content/icons/zip.png)`
+        break
+      case "doc":
+      case "docx":
+      case "docm":
+        iconSpan.style.backgroundImage = `url(chrome://${config.addonRef}/content/icons/word.png)`
+        break
+      case "pptx":
+      case "ppt":
+      case "pptm":
+        iconSpan.style.backgroundImage = `url(chrome://${config.addonRef}/content/icons/ppt.png)`
+        break
+      case "xls":
+      case "xlsx":
+      case "xltx":
+        iconSpan.style.backgroundImage = `url(chrome://${config.addonRef}/content/icons/excel.png)`
+        break
+      default:
+        break
+    }
+  }
   /**
    * 把标签从标题分离为单独的列
    */
@@ -225,7 +312,7 @@ export default class Views {
           try {
             tags = JSON.parse(data)
           } catch {
-            console.log(data)
+            ztoolkit.log(data)
             return tagSpans
           }
           const align = Zotero.Prefs.get(
@@ -452,7 +539,7 @@ export default class Views {
           }).join(".")
           return s + " \n" + JSON.stringify(data)
         } catch (e) {
-          console.log(e)
+          ztoolkit.log(e)
           return ""
         }
       },
@@ -1429,7 +1516,7 @@ export default class Views {
               )
               // 控制
               let prefValue = Zotero.Prefs.get(`${config.addonRef}.${arg.prefKey}`)
-              console.log(`${config.addonRef}.${arg.prefKey}`, prefValue )
+              ztoolkit.log(`${config.addonRef}.${arg.prefKey}`, prefValue )
               let id = arg.prefKey.replace(/\./g, "-")
               let vbox = element.querySelector("#control") as XUL.Box
               const width = "90%"
@@ -1718,7 +1805,7 @@ export default class Views {
                   let graph = event.data
                   app.graph.renderer.setData(graph)
                   app.graph.renderer.onNodeClick = (e, name, key) => {
-                    console.log(name, key)
+                    ztoolkit.log(name, key)
                     window.postMessage(key, "*")
                   }
                   break
@@ -1744,7 +1831,7 @@ export default class Views {
         ZoteroPane.selectItem(key)
       })
       frame.contentWindow!.addEventListener("message", (event) => {
-        console.log(event.data)
+        ztoolkit.log(event.data)
         let key = event.data
         if (typeof key == "number") {
           ZoteroPane.selectItem(key)
@@ -1911,7 +1998,7 @@ export default class Views {
         const container = prompt.createCommandsContainer();
         container.classList.add("suggestions");
         ids = filter(ids)
-        console.log(ids.length)
+        ztoolkit.log(ids.length)
         if (ids.length == 0) {
           const s = new Zotero.Search();
           const operators = ['is', 'isNot', 'true', 'false', 'isInTheLast', 'isBefore', 'isAfter', 'contains', 'doesNotContain', 'beginsWith'];
@@ -1921,14 +2008,14 @@ export default class Views {
             joinMode = "any"
           }
           text.split(/\s*(&&|\|\|)\s*/g).forEach((conditinString: string) => {
-            let conditions = conditinString.split(/\s+/g);
-            if (conditions.length == 3 && operators.indexOf(conditions[1]) != -1) {
+            let conditions = conditinString.trim().match(/([^\s]+?)\s+([^\s]+?)\s+(.+)/)!;
+            if (conditions.length == 4 && operators.indexOf(conditions[2]) != -1) {
               hasValidCondition = true
               s.addCondition("joinMode", joinMode);
               s.addCondition(
-                conditions[0] as string,
-                conditions[1] as Zotero.Search.Operator,
-                conditions[2] as string
+                conditions[1],
+                conditions[2],
+                conditions[3]
               );
             }
           })
@@ -1937,7 +2024,7 @@ export default class Views {
           }
         }
         ids = filter(ids)
-        console.log(ids.length)
+        ztoolkit.log(ids.length)
         if (ids.length > 0) {
           ids.forEach((id: number) => {
             const item = Zotero.Items.get(id)
@@ -2003,216 +2090,212 @@ export default class Views {
         }
       }
     }])
-    /**
-     * 逐句翻译对照
-     */
-    let getSelection = () => {
-      return ztoolkit.Reader.getSelectedText(
-        Zotero.Reader.getByTabID(Zotero_Tabs.selectedID)
-      );
-    }
-    ztoolkit.Prompt.register([{
-      name: "Translate Sentences",
-      label: config.addonInstance,
-      when: () => {
-        const selection = getSelection();
-        const sl = Zotero.Prefs.get("ZoteroPDFTranslate.sourceLanguage") as string
-        const tl = Zotero.Prefs.get("ZoteroPDFTranslate.targetLanguage") as string
-        return selection.length > 0 && Zotero?.PDFTranslate && sl.startsWith("en") && tl.startsWith("zh")
-      },
-      callback: async (prompt) => {
-        const selection = getSelection();
-        const queue = Zotero.PDFTranslate.data.translate.queue
-        let task = queue.find((task: any) => task.raw == selection && task.result.length > 0)
-        task = null
-        if (!task) {
-          prompt.showTip("Loading...")
-          task = await Zotero.PDFTranslate.api.translate(selection)
-          Zotero.PDFTranslate.data.translate.queue.push(task)
-          // @ts-ignore
-          prompt.exit()
-        }
-        prompt.inputNode.placeholder = task.service
-        const rawText = task.raw, resultText = task.result;
+    //   return ztoolkit.Reader.getSelectedText(
+    //     Zotero.Reader.getByTabID(Zotero_Tabs.selectedID)
+    //   );
+    // }
+    // ztoolkit.Prompt.register([{
+    //   name: "Translate Sentences",
+    //   label: config.addonInstance,
+    //   when: () => {
+    //     const selection = getSelection();
+    //     const sl = Zotero.Prefs.get("ZoteroPDFTranslate.sourceLanguage") as string
+    //     const tl = Zotero.Prefs.get("ZoteroPDFTranslate.targetLanguage") as string
+    //     return selection.length > 0 && Zotero?.PDFTranslate && sl.startsWith("en") && tl.startsWith("zh")
+    //   },
+    //   callback: async (prompt) => {
+    //     const selection = getSelection();
+    //     const queue = Zotero.PDFTranslate.data.translate.queue
+    //     let task = queue.find((task: any) => task.raw == selection && task.result.length > 0)
+    //     task = null
+    //     if (!task) {
+    //       prompt.showTip("Loading...")
+    //       task = await Zotero.PDFTranslate.api.translate(selection)
+    //       Zotero.PDFTranslate.data.translate.queue.push(task)
+    //       // @ts-ignore
+    //       prompt.exit()
+    //     }
+    //     prompt.inputNode.placeholder = task.service
+    //     const rawText = task.raw, resultText = task.result;
 
-        let addSentences = (node: HTMLElement, text: string, dividers: string[]) => {
-          let i = 0
-          let sentences: string[] = []
-          let sentence = ""
-          // https://www.npmjs.com/package/sentence-extractor?activeTab=explore
-          const abbrs = ["a.m.", "p.m.", "etc.", "vol.", "inc.", "jr.", "dr.", "tex.", "co.", "prof.", "rev.", "revd.", "hon.", "v.s.", "ie.",
-            "eg.", "e.g.", "et al.", "st.", "ph.d.", "capt.", "mr.", "mrs.", "ms."]
-          let getWord = (i: number) => {
-            let before, after;
-            before = text.slice(0, i).match(/[\.a-zA-Z]+$/)
-            after = text.slice(i + 1).match(/^[\.a-zA-Z]+/)
-            let word = ([before, ["."], after].filter(i => i) as string[][])
-              .map((i: string[]) => i[0]).join("")
-            return word
-          }
-          let isAbbr = (i: number) => {
-            const word = getWord(i)
-            return abbrs.find((abbr: string) => {
-              return word.toLowerCase() == abbr.toLowerCase()
-            })
-          }
-          let isNumber = (i: number) => {
-            return i - 1 >= 0 && /\d/.test(text[i - 1]) && i + 1 < text.length && /\d/.test(text[i + 1])
-          }
-          let isPotentialAbbr = (i: number) => {
-            const word = getWord(i)
-            let parts = word.split(".").filter(i => i)
-            return parts.length > 2 && parts.every(part => part.length <= 2)
-          }
-          while (i < text.length) {
-            let char = text[i]
-            sentence += char
-            if (dividers.indexOf(char) != -1) {
-              if (char == ".") {
-                if (isAbbr(i) || isNumber(i) || isPotentialAbbr(i)) {
-                  i += 1
-                  continue
-                }
-              }
-              const blank = " "
-              i += 1
-              while (text[i] == blank) {
-                sentence += blank
-                i += 1
-              }
-              sentences.push(sentence)
-              sentence = ""
-              continue
-            }
-            i += 1
-          }
-          for (let i = 0; i < sentences.length; i++) {
-            ztoolkit.UI.appendElement(
-              {
-                tag: "span",
-                id: `sentence-${i}`,
-                properties: {
-                  innerText: sentences[i]
-                },
-                styles: {
-                  borderRadius: "3px"
-                },
-                listeners: [
-                  {
-                    type: "mousemove",
-                    listener: function () {
-                      const highlightColor = "#fee972"
-                      // @ts-ignore
-                      const span = this as HTMLSpanElement
-                      const parentNode = span.parentNode as HTMLDivElement
-                      parentNode?.querySelectorAll("span").forEach(e => e.style.backgroundColor = "")
-                      span.style.backgroundColor = highlightColor
-                      const siblingNode = (parentNode?.previousSibling?.previousSibling || parentNode?.nextSibling?.nextSibling) as HTMLDivElement
-                      siblingNode?.querySelectorAll("span").forEach(e => e.style.backgroundColor = "");
-                      const twinSpan = siblingNode.querySelector(`span[id=sentence-${i}]`) as HTMLSpanElement
-                      twinSpan.style.backgroundColor = highlightColor;
-                      if (direction == "column" && siblingNode.classList.contains("result")) {
-                        siblingNode.scrollTo(0, twinSpan.offsetTop - siblingNode.offsetHeight * .5 - parentNode.offsetHeight);
-                      } else {
-                        siblingNode.scrollTo(0, twinSpan.offsetTop - siblingNode.offsetHeight * .5);
-                      }
-                    }
-                  }
-                ]
-              },
-              node
-            )
-          }
-        }
-        const container = prompt.createCommandsContainer() as HTMLDivElement
-        // TODO: prefs: direction
-        const directions = ["row", "column"]
-        const direction = directions[1]
-        container.setAttribute("style", `
-          display: flex;
-          flex-direction: ${direction};
-          padding: .5em 1em;
-          margin-left: 0px;
-          width: 100%;
-          height: 25em;
-        `)
-        const props = {
-          styles: {
-            height: "100%",
-            width: "100%",
-            minWidth: "10em",
-            minHeight: "5em",
-            border: "1px solid #eee",
-            textAlign: "justify",
-            padding: ".5em",
-            fontSize: "1em",
-            lineHeight: "1.5em",
-            overflowY: "auto"
-          },
-        }
-        const rawDiv = ztoolkit.UI.createElement(document, "div", {
-          ...props,
-          classList: ["raw"]
-        })
+    //     let addSentences = (node: HTMLElement, text: string, dividers: string[]) => {
+    //       let i = 0
+    //       let sentences: string[] = []
+    //       let sentence = ""
+    //       // https://www.npmjs.com/package/sentence-extractor?activeTab=explore
+    //       const abbrs = ["a.m.", "p.m.", "etc.", "vol.", "inc.", "jr.", "dr.", "tex.", "co.", "prof.", "rev.", "revd.", "hon.", "v.s.", "ie.",
+    //         "eg.", "e.g.", "et al.", "st.", "ph.d.", "capt.", "mr.", "mrs.", "ms."]
+    //       let getWord = (i: number) => {
+    //         let before, after;
+    //         before = text.slice(0, i).match(/[\.a-zA-Z]+$/)
+    //         after = text.slice(i + 1).match(/^[\.a-zA-Z]+/)
+    //         let word = ([before, ["."], after].filter(i => i) as string[][])
+    //           .map((i: string[]) => i[0]).join("")
+    //         return word
+    //       }
+    //       let isAbbr = (i: number) => {
+    //         const word = getWord(i)
+    //         return abbrs.find((abbr: string) => {
+    //           return word.toLowerCase() == abbr.toLowerCase()
+    //         })
+    //       }
+    //       let isNumber = (i: number) => {
+    //         return i - 1 >= 0 && /\d/.test(text[i - 1]) && i + 1 < text.length && /\d/.test(text[i + 1])
+    //       }
+    //       let isPotentialAbbr = (i: number) => {
+    //         const word = getWord(i)
+    //         let parts = word.split(".").filter(i => i)
+    //         return parts.length > 2 && parts.every(part => part.length <= 2)
+    //       }
+    //       while (i < text.length) {
+    //         let char = text[i]
+    //         sentence += char
+    //         if (dividers.indexOf(char) != -1) {
+    //           if (char == ".") {
+    //             if (isAbbr(i) || isNumber(i) || isPotentialAbbr(i)) {
+    //               i += 1
+    //               continue
+    //             }
+    //           }
+    //           const blank = " "
+    //           i += 1
+    //           while (text[i] == blank) {
+    //             sentence += blank
+    //             i += 1
+    //           }
+    //           sentences.push(sentence)
+    //           sentence = ""
+    //           continue
+    //         }
+    //         i += 1
+    //       }
+    //       for (let i = 0; i < sentences.length; i++) {
+    //         ztoolkit.UI.appendElement(
+    //           {
+    //             tag: "span",
+    //             id: `sentence-${i}`,
+    //             properties: {
+    //               innerText: sentences[i]
+    //             },
+    //             styles: {
+    //               borderRadius: "3px"
+    //             },
+    //             listeners: [
+    //               {
+    //                 type: "mousemove",
+    //                 listener: function () {
+    //                   const highlightColor = "#fee972"
+    //                   // @ts-ignore
+    //                   const span = this as HTMLSpanElement
+    //                   const parentNode = span.parentNode as HTMLDivElement
+    //                   parentNode?.querySelectorAll("span").forEach(e => e.style.backgroundColor = "")
+    //                   span.style.backgroundColor = highlightColor
+    //                   const siblingNode = (parentNode?.previousSibling?.previousSibling || parentNode?.nextSibling?.nextSibling) as HTMLDivElement
+    //                   siblingNode?.querySelectorAll("span").forEach(e => e.style.backgroundColor = "");
+    //                   const twinSpan = siblingNode.querySelector(`span[id=sentence-${i}]`) as HTMLSpanElement
+    //                   twinSpan.style.backgroundColor = highlightColor;
+    //                   if (direction == "column" && siblingNode.classList.contains("result")) {
+    //                     siblingNode.scrollTo(0, twinSpan.offsetTop - siblingNode.offsetHeight * .5 - parentNode.offsetHeight);
+    //                   } else {
+    //                     siblingNode.scrollTo(0, twinSpan.offsetTop - siblingNode.offsetHeight * .5);
+    //                   }
+    //                 }
+    //               }
+    //             ]
+    //           },
+    //           node
+    //         )
+    //       }
+    //     }
+    //     const container = prompt.createCommandsContainer() as HTMLDivElement
+    //     // TODO: prefs: direction
+    //     const directions = ["row", "column"]
+    //     const direction = directions[1]
+    //     container.setAttribute("style", `
+    //       display: flex;
+    //       flex-direction: ${direction};
+    //       padding: .5em 1em;
+    //       margin-left: 0px;
+    //       width: 100%;
+    //       height: 25em;
+    //     `)
+    //     const props = {
+    //       styles: {
+    //         height: "100%",
+    //         width: "100%",
+    //         minWidth: "10em",
+    //         minHeight: "5em",
+    //         border: "1px solid #eee",
+    //         textAlign: "justify",
+    //         padding: ".5em",
+    //         fontSize: "1em",
+    //         lineHeight: "1.5em",
+    //         overflowY: "auto"
+    //       },
+    //     }
+    //     const rawDiv = ztoolkit.UI.createElement(document, "div", {
+    //       ...props,
+    //       classList: ["raw"]
+    //     })
 
-        addSentences(rawDiv, rawText, [".", ";", "?", "!"])
-        const resultDiv = ztoolkit.UI.createElement(document, "div", {
-          ...props,
-          classList: ["result"]
-        })
-        addSentences(resultDiv, resultText, [";", "?", "!", "！", "；", "。", "？"])
-        const size = 5
-        const resizer = ztoolkit.UI.createElement(document, "div", {
-          styles: {
-            height: (direction == "row" ? "100%" : `${size}px`),
-            width: (direction == "column" ? "100%" : `${size}px`),
-            backgroundColor: "#f0f0f0",
-            cursor: direction == "column" ? "ns-resize" : "ew-resize",
-          },
-        })
-        // 可调
-        let y = 0, x = 0;
-        let h = 0, w = 0;
-        const rect = container.getBoundingClientRect();
-        const H = rect.height;
-        const W = rect.width;
-        const mouseDownHandler = function (e: MouseEvent) {
-          // hide
-          [rawDiv, resultDiv].forEach(div => {
-            div.querySelectorAll("span").forEach((e: HTMLSpanElement) => e.style.display = "none")
-          })
-          y = e.clientY;
-          x = e.clientX;
-          const rect = resultDiv.getBoundingClientRect()
-          h = rect.height;
-          w = rect.width;
-          document.addEventListener('mousemove', mouseMoveHandler);
-          document.addEventListener('mouseup', mouseUpHandler);
-        };
-        const mouseMoveHandler = function (e: MouseEvent) {
-          const dy = e.clientY - y;
-          const dx = e.clientX - x;
-          if (direction == "column") {
-            resultDiv.style.height = `${h - dy}px`;
-            rawDiv.style.height = `${H - (h - dy) - size}px`;
-          }
-          if (direction == "row") {
-            resultDiv.style.width = `${w - dx}px`;
-            rawDiv.style.width = `${W - (w - dx) - size}px`;
-          }
-        };
-        const mouseUpHandler = function () {
-          // show
-          [rawDiv, resultDiv].forEach(div => {
-            div.querySelectorAll("span").forEach((e: HTMLSpanElement) => e.style.display = "")
-          })
-          document.removeEventListener('mousemove', mouseMoveHandler);
-          document.removeEventListener('mouseup', mouseUpHandler);
-        };
-        resizer.addEventListener('mousedown', mouseDownHandler);
-        container.append(rawDiv, resizer, resultDiv)
-      }
-    }])
+    //     addSentences(rawDiv, rawText, [".", ";", "?", "!"])
+    //     const resultDiv = ztoolkit.UI.createElement(document, "div", {
+    //       ...props,
+    //       classList: ["result"]
+    //     })
+    //     addSentences(resultDiv, resultText, [";", "?", "!", "！", "；", "。", "？"])
+    //     const size = 5
+    //     const resizer = ztoolkit.UI.createElement(document, "div", {
+    //       styles: {
+    //         height: (direction == "row" ? "100%" : `${size}px`),
+    //         width: (direction == "column" ? "100%" : `${size}px`),
+    //         backgroundColor: "#f0f0f0",
+    //         cursor: direction == "column" ? "ns-resize" : "ew-resize",
+    //       },
+    //     })
+    //     // 可调
+    //     let y = 0, x = 0;
+    //     let h = 0, w = 0;
+    //     const rect = container.getBoundingClientRect();
+    //     const H = rect.height;
+    //     const W = rect.width;
+    //     const mouseDownHandler = function (e: MouseEvent) {
+    //       // hide
+    //       [rawDiv, resultDiv].forEach(div => {
+    //         div.querySelectorAll("span").forEach((e: HTMLSpanElement) => e.style.display = "none")
+    //       })
+    //       y = e.clientY;
+    //       x = e.clientX;
+    //       const rect = resultDiv.getBoundingClientRect()
+    //       h = rect.height;
+    //       w = rect.width;
+    //       document.addEventListener('mousemove', mouseMoveHandler);
+    //       document.addEventListener('mouseup', mouseUpHandler);
+    //     };
+    //     const mouseMoveHandler = function (e: MouseEvent) {
+    //       const dy = e.clientY - y;
+    //       const dx = e.clientX - x;
+    //       if (direction == "column") {
+    //         resultDiv.style.height = `${h - dy}px`;
+    //         rawDiv.style.height = `${H - (h - dy) - size}px`;
+    //       }
+    //       if (direction == "row") {
+    //         resultDiv.style.width = `${w - dx}px`;
+    //         rawDiv.style.width = `${W - (w - dx) - size}px`;
+    //       }
+    //     };
+    //     const mouseUpHandler = function () {
+    //       // show
+    //       [rawDiv, resultDiv].forEach(div => {
+    //         div.querySelectorAll("span").forEach((e: HTMLSpanElement) => e.style.display = "")
+    //       })
+    //       document.removeEventListener('mousemove', mouseMoveHandler);
+    //       document.removeEventListener('mouseup', mouseUpHandler);
+    //     };
+    //     resizer.addEventListener('mousedown', mouseDownHandler);
+    //     container.append(rawDiv, resizer, resultDiv)
+    //   }
+    // }])
     // 旧版数据迁移
     let getItem = () => {
       let readingItem = Zotero.Items.get(
@@ -2446,7 +2529,7 @@ export default class Views {
 
           let item = getItem() as _ZoteroItem
           const publicationTitle = item.getField("publicationTitle")
-          console.log(publicationTitle)
+          ztoolkit.log(publicationTitle)
           let res = await Zotero.HTTP.request(
             "GET",
             `https://www.ablesci.com/journal/index?keywords=${publicationTitle.replace(/\s+/g, "+")}`,
@@ -2655,7 +2738,7 @@ export default class Views {
             ['general.gray', '#aaaaaa']
           ];
           const svg = `<svg t="1675648090111" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2675" width="20" height="20" style="height: 100%;"><path d="M863.328262 481.340895l-317.344013 0.099772L545.984249 162.816826c0-17.664722-14.336138-32.00086-32.00086-32.00086s-31.99914 14.336138-31.99914 32.00086l0 318.400215-322.368714-0.17718c-0.032684 0-0.063647 0-0.096331 0-17.632039 0-31.935493 14.239806-32.00086 31.904529-0.096331 17.664722 14.208843 32.031824 31.871845 32.095471l322.59234 0.17718 0 319.167424c0 17.695686 14.336138 32.00086 31.99914 32.00086s32.00086-14.303454 32.00086-32.00086L545.982529 545.440667l317.087703-0.099772c0.063647 0 0.096331 0 0.127295 0 17.632039 0 31.935493-14.239806 32.00086-31.904529S880.960301 481.404542 863.328262 481.340895z" fill="#575B66" p-id="2676"></path></svg>`
-          console.log(groups, defaultAnno)
+          ztoolkit.log(groups, defaultAnno)
           const inputStyles = {
             height: "22.4px",
             border: "1px solid #eee",
@@ -2886,7 +2969,7 @@ export default class Views {
             let annotations: Annotation[] = group[1]
             const container = prompt.createCommandsContainer()
             const isUsed = JSON.stringify(annotations) == Zotero.Prefs.get(`${config.addonRef}.annotationColors`)
-            console.log(isUsed)
+            ztoolkit.log(isUsed)
             /**
              * 根据anno创建ele
              * @param anno [标注名称, 标注颜色]
@@ -2959,7 +3042,7 @@ export default class Views {
                                 let name = anno[0] = (ele.querySelector("#name") as HTMLInputElement).value
                                 isUsed && saveAnnotations(annotations)
                                 updateGroups()
-                                console.log(name)
+                                ztoolkit.log(name)
                               }
                             }
                           ]
@@ -2987,7 +3070,7 @@ export default class Views {
                               type: "change",
                               listener: () => {
                                 let color = anno[1] = (ele.querySelector("#color") as HTMLInputElement).value
-                                console.log(color)
+                                ztoolkit.log(color)
                                 isUsed && saveAnnotations(annotations)
                                 ele.querySelector("#circle")!.style.backgroundColor = color
                                 updateGroups()
@@ -3200,6 +3283,7 @@ export default class Views {
   public async initItemSelectListener() {
     let getChildrenTarget = (event: any, nodes: any) => {
       const target = [...nodes].find((span: any) => {
+        if (!span || !span.getBoundingClientRect) { return false }
         const rect = span.getBoundingClientRect()
         return (
           event.clientX >= rect.x &&
@@ -3217,38 +3301,63 @@ export default class Views {
     
     const table = document.querySelector(p)
     let lastKey: string, lastItemType: string, selectedItemType: string = "", icon: string
-    ztoolkit.patch(
-      Zotero.CollectionTreeRow.prototype, "getItems", config.addonRef,
-      (original) =>
-        async function () {
-          // @ts-ignore
-          let items = await original.bind(this)();
-          if (selectedItemType.length) {
-            // 去除子条目
-            let _items = items.filter((item: Zotero.Item) => {
-              if (
-                item.parentID &&
-                items.find((_item: Zotero.Item) => item.parentID == _item.id)
-              ) { return false }
-              return item.itemType == selectedItemType
-            })
-            console.log(_items)
-            if (_items.length) {
-              return _items
-            } else {
-              // 自动退出
-              new ztoolkit.ProgressWindow("Exit", { closeOtherProgressWindows: true })
-                .createLine({
-                  icon,
-                  text: selectedItemType,
-                }).show()
-              lastItemType = selectedItemType = ""
-              ZoteroPane.itemsView.refreshAndMaintainSelection()
-            }
-          }
-          return items
+    this.filterFunctions.push((items: Zotero.Item[]) => {
+      if (selectedItemType.length) {
+        // 去除子条目
+        let _items = items.filter((item: Zotero.Item) => {
+          if (
+            item.parentID &&
+            items.find((_item: Zotero.Item) => item.parentID == _item.id)
+          ) { return false }
+          return item.itemType == selectedItemType
+        })
+        if (_items.length) {
+          return _items
+        } else {
+          // 自动退出
+          new ztoolkit.ProgressWindow("Exit", { closeOtherProgressWindows: true })
+            .createLine({
+              icon,
+              text: selectedItemType,
+            }).show()
+          lastItemType = selectedItemType = ""
+          ZoteroPane.itemsView.refreshAndMaintainSelection()
         }
-    )
+      }
+      return items
+    })
+    // ztoolkit.patch(
+    //   Zotero.CollectionTreeRow.prototype, "getItems", config.addonRef,
+    //   (original) =>
+    //     async function () {
+    //       // @ts-ignore
+    //       let items = await original.bind(this)();
+    //       if (selectedItemType.length) {
+    //         // 去除子条目
+    //         let _items = items.filter((item: Zotero.Item) => {
+    //           if (
+    //             item.parentID &&
+    //             items.find((_item: Zotero.Item) => item.parentID == _item.id)
+    //           ) { return false }
+    //           return item.itemType == selectedItemType
+    //         })
+    //         ztoolkit.log(_items)
+    //         if (_items.length) {
+    //           return _items
+    //         } else {
+    //           // 自动退出
+    //           new ztoolkit.ProgressWindow("Exit", { closeOtherProgressWindows: true })
+    //             .createLine({
+    //               icon,
+    //               text: selectedItemType,
+    //             }).show()
+    //           lastItemType = selectedItemType = ""
+    //           ZoteroPane.itemsView.refreshAndMaintainSelection()
+    //         }
+    //       }
+    //       return items
+    //     }
+    // )
     table?.addEventListener("mousemove", (event) => {
       if (!(event.target as HTMLDivElement)!.classList.contains("selected")) { return }
       let items = ZoteroPane.getSelectedItems()
@@ -3347,6 +3456,96 @@ export default class Views {
         }
       }
     })
+  }
+
+  public async initTags() {
+    const tagsUI = new Tags();
+    
+    ztoolkit.patch(
+      ZoteroPane.tagSelector,
+      "render",
+      config.addonRef,
+      (original) => 
+        () => {
+          const res = original.apply(ZoteroPane.tagSelector)
+          window.setTimeout(async () => {
+            if (!((document.querySelector(".nested-tags-box") as HTMLDivElement)?.style.display == "none")) {
+              await tagsUI.init();
+            }
+          }) 
+          return res
+        }
+    )
+    window.setTimeout(async () => {
+      await tagsUI.init();
+    }, 5000)
+
+    let getTagStart = () => {
+      const key = Object.keys(tagsUI.state).find((key: any) => tagsUI.state[key].select) as string
+      if (!key) { return }
+      let [plainTag, index] = JSON.parse(key)
+      const tagStart = plainTag.split("/").slice(0, index + 1).join("/")
+      return tagStart
+    }
+    this.filterFunctions.push((items: Zotero.Item[]) => {
+      const tagStart = getTagStart()
+      if (!tagStart) { return items }
+      return items.filter((item: Zotero.Item) => {
+        return (
+          // 条目本身包含此标签
+          (item.isRegularItem() && item.getTags().find((tag: { tag: string }) => tag.tag.startsWith(tagStart))) ||
+          (item.isAttachment()) && item.attachmentContentType == "application/pdf" && item.getAnnotations().some(annoItem => {
+            return annoItem.getTags().some(tag => tag.tag.startsWith(tagStart))
+          })
+        )
+      })
+    })
+
+    // await Zotero.OpenPDF.openToPage(ZoteroPane.getSelectedItems()[0],  2, "CJWKZXCB")
+    // Zotero.Reader.open(item.id, location
+    ztoolkit.patch(
+      Zotero.Reader,
+      "open",
+      config.addonRef,
+      (original) =>
+        async (id: number, location: { pageIndex: number, annotationKey: string }) => {
+          if (!location) {
+            const tagStart = getTagStart()
+            if (tagStart) { 
+              const attItem = Zotero.Items.get(id) as Zotero.Item;
+              const annoItem = attItem.getAnnotations()
+                .find(annoItem => {
+                  return annoItem.getTags().find(tag => tag.tag.startsWith(tagStart));
+                })
+              if (annoItem) {
+                location = {
+                  pageIndex: Number(annoItem.annotationPageLabel) - 1,
+                  annotationKey: annoItem.key as string
+                }
+              }
+             }
+          }
+          window.setTimeout(async () => {
+            // 随着缩放它会一直闪烁，这个bug一直没修复
+            const win = (
+              (await ztoolkit.Reader.getReader() as _ZoteroReaderInstance)._iframeWindow as any
+            ).wrappedJSObject
+            ztoolkit.UI.appendElement({
+              tag: "style",
+              ignoreIfExists: true,
+              properties: {
+                innerHTML: `
+                  .layer-blink .rect {
+                    background-color: transparent !important;
+                    border: 2px solid deeppink;
+                  }
+                `
+              },
+            }, win.document.documentElement as any);
+          }, 0)
+          return original.call(Zotero.Reader, id, location)
+        }
+    )
   }
 }
 

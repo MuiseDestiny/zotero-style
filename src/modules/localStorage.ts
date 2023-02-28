@@ -10,7 +10,6 @@ class LocalStorage {
     const temp = Zotero.getTempDirectory();
     // @ts-ignore
     this.filename = window.OS.Path.join(temp.path.replace(temp.leafName, ""), `${name}.json`);
-    console.log(this.filename)
     window.setTimeout(async () => {
       await this.init()
     })
