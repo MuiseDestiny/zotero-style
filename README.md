@@ -192,6 +192,13 @@ You can switch between the nested tags view provided by the plugin and the tags 
 | left click | tag item | ![image](https://user-images.githubusercontent.com/51939531/221461934-2e309e92-9ad8-4a57-9df9-cdfcf898c3cb.png) |
 | right click | tag item | ![image](https://user-images.githubusercontent.com/51939531/221461489-7bfdfd39-1663-4898-8619-c0f1a304dcf7.png) |
 
+
+**Delete Tag**
+
+> The deletion has prompt, is irreversible, and should be cautious.
+
+![image](https://user-images.githubusercontent.com/51939531/221780559-06d97a2c-6741-4ff2-ad39-d35e10de8865.png)
+
   
 </details> 
 
