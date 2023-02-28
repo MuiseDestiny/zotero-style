@@ -197,7 +197,7 @@ You can switch between the nested tags view provided by the plugin and the tags 
 
 > The deletion has prompt, is irreversible, and should be cautious.
 
-![image](https://user-images.githubusercontent.com/51939531/221780559-06d97a2c-6741-4ff2-ad39-d35e10de8865.png)
+![image](https://user-images.githubusercontent.com/51939531/221781981-8faa86f9-2985-459c-a944-c03a1561113c.png)
 
   
 </details> 
