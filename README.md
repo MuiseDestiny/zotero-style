@@ -23,13 +23,13 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 
 > As the background of title, reading progress visually reflect the distribution of your reading time of each page for the PDF under a item, the darker the color the longer the reading time.
 
-### Tags
-
-> The tags that were originally displayed before the title are separated into this separate `Tags` column.
-
 ### Progress
 
 > It can visually represent the annotation word count of each page of the PDF corresponding to a item.
+
+### Tags
+
+> The tags that were originally displayed before the title are separated into this separate `Tags` column.
 
 ### #Tags
 
@@ -172,6 +172,33 @@ cug
 
 </details> 
   
+## Nested Tags
+
+> Nested tags can recategorize your Zotero items. It could replace Zotero's collection to some extent.
+
+<details> 
+
+You can switch between the nested tags view provided by the plugin and the tags view provided by Zotero itself with ease. 
+
+<summary>Demonstration</summary>
+
+| Nested Tags | Zotero Tags |
+|--|--|
+|![image](https://user-images.githubusercontent.com/51939531/221401675-fa062110-ab03-4ce8-b528-81f054edf2d1.png)| ![image](https://user-images.githubusercontent.com/51939531/221401658-058cd270-9d7c-4046-adbf-c936f6e7458a.png)|
+
+| Operation | Target | Do |
+| -- | -- | -- |
+| left click | control icon | ![image](https://user-images.githubusercontent.com/51939531/221461592-72200db4-099c-474f-9364-f73c7499a294.png) |
+| left click | tag item | ![image](https://user-images.githubusercontent.com/51939531/221461934-2e309e92-9ad8-4a57-9df9-cdfcf898c3cb.png) |
+| right click | tag item | ![image](https://user-images.githubusercontent.com/51939531/221461489-7bfdfd39-1663-4898-8619-c0f1a304dcf7.png) |
+
+  
+</details> 
+
+## Quick Filtering
+
+> By clicking on the icon representing the item type, you can complete the quick filtering of item types. And repeat the process above to exit filtering. Note this filtering is valid for all collections. But it will exit automatically when you switch to the category filtered item is empty.
+
 ## Graph View
 
 > An Obsidian's `inreractive graph` rendered by Obsidian's source code. It can show item's related items visually. And you can locate the Zotero item from the graph node (`click`), and locate the graph node from Zotero item (`ctrl+click`).
