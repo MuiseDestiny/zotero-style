@@ -30,21 +30,21 @@ export default class Views {
             items = filterFunctions[i](items)
           }
           // 等加载结束后尝试打开，只负责打开，不折叠
-          window.setTimeout(() => {
+          window.setTimeout(async () => {
             if (originalLength > items.length) {
               const filterItems = ZoteroPane.getSortedItems()
-              for (let i = 0; i < filterItems.length; i++) {
+              for (let i = filterItems.length - 1; i >= 0; i--) {
                 let _item = filterItems[i]
                 if (
                   _item.isRegularItem() &&
                   !items.find((item: Zotero.Item) => item.id == _item.id) &&
                   !ZoteroPane.itemsView.isContainerOpen(i)
                 ) {
-                  ZoteroPane.itemsView.toggleOpenState(i)
+                  await ZoteroPane.itemsView.toggleOpenState(i)
                 }
               }
             }
-          })
+          }, 0)
           return items
         }
     )
@@ -1805,7 +1805,7 @@ export default class Views {
                   let graph = event.data
                   app.graph.renderer.setData(graph)
                   app.graph.renderer.onNodeClick = (e, name, key) => {
-                    ztoolkit.log(name, key)
+                    console.log(name, key)
                     window.postMessage(key, "*")
                   }
                   break
@@ -3321,43 +3321,11 @@ export default class Views {
               text: selectedItemType,
             }).show()
           lastItemType = selectedItemType = ""
-          ZoteroPane.itemsView.refreshAndMaintainSelection()
+          // ZoteroPane.itemsView.refreshAndMaintainSelection()
         }
       }
       return items
     })
-    // ztoolkit.patch(
-    //   Zotero.CollectionTreeRow.prototype, "getItems", config.addonRef,
-    //   (original) =>
-    //     async function () {
-    //       // @ts-ignore
-    //       let items = await original.bind(this)();
-    //       if (selectedItemType.length) {
-    //         // 去除子条目
-    //         let _items = items.filter((item: Zotero.Item) => {
-    //           if (
-    //             item.parentID &&
-    //             items.find((_item: Zotero.Item) => item.parentID == _item.id)
-    //           ) { return false }
-    //           return item.itemType == selectedItemType
-    //         })
-    //         ztoolkit.log(_items)
-    //         if (_items.length) {
-    //           return _items
-    //         } else {
-    //           // 自动退出
-    //           new ztoolkit.ProgressWindow("Exit", { closeOtherProgressWindows: true })
-    //             .createLine({
-    //               icon,
-    //               text: selectedItemType,
-    //             }).show()
-    //           lastItemType = selectedItemType = ""
-    //           ZoteroPane.itemsView.refreshAndMaintainSelection()
-    //         }
-    //       }
-    //       return items
-    //     }
-    // )
     table?.addEventListener("mousemove", (event) => {
       if (!(event.target as HTMLDivElement)!.classList.contains("selected")) { return }
       let items = ZoteroPane.getSelectedItems()
@@ -3459,8 +3427,7 @@ export default class Views {
   }
 
   public async initTags() {
-    const tagsUI = new Tags();
-    
+    const tagsUI  = new Tags();
     ztoolkit.patch(
       ZoteroPane.tagSelector,
       "render",
@@ -3480,15 +3447,8 @@ export default class Views {
       await tagsUI.init();
     }, 5000)
 
-    let getTagStart = () => {
-      const key = Object.keys(tagsUI.state).find((key: any) => tagsUI.state[key].select) as string
-      if (!key) { return }
-      let [plainTag, index] = JSON.parse(key)
-      const tagStart = plainTag.split("/").slice(0, index + 1).join("/")
-      return tagStart
-    }
     this.filterFunctions.push((items: Zotero.Item[]) => {
-      const tagStart = getTagStart()
+      const tagStart = tagsUI.getTagStart()
       if (!tagStart) { return items }
       return items.filter((item: Zotero.Item) => {
         return (
@@ -3510,7 +3470,7 @@ export default class Views {
       (original) =>
         async (id: number, location: { pageIndex: number, annotationKey: string }) => {
           if (!location) {
-            const tagStart = getTagStart()
+            const tagStart = tagsUI.getTagStart()
             if (tagStart) { 
               const attItem = Zotero.Items.get(id) as Zotero.Item;
               const annoItem = attItem.getAnnotations()

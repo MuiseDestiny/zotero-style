@@ -25,8 +25,8 @@ export class Tags {
     sorted: [
       "Tag (A-Z)",
       "Tag (Z-A)",
-      "Frequency (high-low)",
-      "Frequency (low-high)"
+      "Frequency (0-9)",
+      "Frequency (9-0)",
     ]
   }
   private plainTags: string[] = [];
@@ -153,9 +153,14 @@ export class Tags {
         plainTags = plainTags.concat(item.getTags().map(i => i.tag))
       })
     // TODO: 提供设置，可以不以#开头
+    const prefix = Zotero.Prefs.get(`${config.addonRef}.textTagsColumn.prefix`) as string
     plainTags = plainTags
       .filter((tag: string) => {
-        return tag.startsWith("#")
+        if (prefix.startsWith("~~")) {
+          return !tag.startsWith(prefix.slice(2))
+        } else {
+          return tag.startsWith(prefix)
+        }
       })
     return plainTags
   }
@@ -180,6 +185,14 @@ export class Tags {
       }
     }
     return nestedTags
+  }
+
+  public getTagStart = () => {
+    const key = Object.keys(this.state).find((key: any) => this.state[key].select) as string
+    if (!key) { return }
+    let [plainTag, index] = JSON.parse(key)
+    const tagStart = plainTag.split("/").slice(0, index + 1).join("/")
+    return tagStart
   }
 
   /**
@@ -264,7 +277,7 @@ export class Tags {
                   menuItems.push(menuItem)
                 }
                 const menuNode = this.createMenuNode(
-                  { x, y, width: 170, height: 130 },
+                  { x, y, width: 130, height: 130 },
                   menuItems, [1]
                 )
                 menuNode.querySelectorAll(".menu-item-name").forEach((e: any, i: number) => {
@@ -307,7 +320,7 @@ export class Tags {
                 } else {
                   // 隐藏
                   nestedTagsContainer.style.display = "none";
-                  tagSelector.style!.display = ""
+                  tagSelector.style!.display = "";
                   node.parentNode?.childNodes.forEach((e: any) => {
                     if (e != node) {
                       e.style.opacity = "0"
@@ -335,15 +348,23 @@ export class Tags {
               type: "click",
               listener: function () {
                 let _isAllCollapse = isAllCollapse
-                let toggle = (node: HTMLElement) => {
-                  node.querySelectorAll(".item .collapse").forEach((e: any) => {
+                let toggle = async (node: HTMLElement) => {
+                  let nodes = [...node.querySelectorAll(".item .collapse")]
+                  if (!_isAllCollapse) {
+                    nodes = nodes.reverse()
+                  }
+                  for (let i = 0; i < nodes.length; i++) {
+                    const e = nodes[i] as any
                     if ((that.state[e.key] ??= {}).collapse == _isAllCollapse) {
                       e.click()
-                      window.setTimeout(() => {
-                        toggle(e.tree)
-                      }, 10)
+                      await Zotero.Promise.delay(10)
+                      if (_isAllCollapse) {
+                        window.setTimeout(() => {
+                          toggle(e.tree)
+                        }, 10)
+                      }
                     }
-                  })
+                  }
                 }
                 toggle(box)
                 isAllCollapse = !isAllCollapse
@@ -626,7 +647,7 @@ export class Tags {
                                     window,
                                     "Tag",
                                     matchedTags.length > 1 ?
-                                      `${orignalTagName} matches ${matchedTags.length} tags, Remove them?`
+                                      `${orignalTagName} matches ${matchedTags.length} tags. Remove them?`
                                       :
                                       `Remove ${orignalTagName}?`
                                     ,
@@ -751,10 +772,10 @@ export class Tags {
         sortedTags = Object.keys(children).sort().reverse()
         break
       case 2:
-        sortedTags = Object.keys(children).sort((tag1, tag2) => children[tag2].number - children[tag1].number)
-        break
+          sortedTags = Object.keys(children).sort((tag1, tag2) => children[tag1].number - children[tag2].number)
+          break
       case 3:
-        sortedTags = Object.keys(children).sort((tag1, tag2) => children[tag1].number - children[tag2].number)
+        sortedTags = Object.keys(children).sort((tag1, tag2) => children[tag2].number - children[tag1].number)
         break
       default:
         sortedTags = Object.keys(children)

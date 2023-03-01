@@ -26,6 +26,7 @@ async function onStartup() {
     },
     false
   );
+  
   await Promise.all([
     Zotero.initializationPromise,
     Zotero.unlockPromise,
