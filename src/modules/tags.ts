@@ -222,7 +222,7 @@ export class Tags {
         width: "calc(100% - 10px)",
         padding: "5px",
         height: "auto",
-        overflowX: "hidden",
+        overflowX: "",
         overflowY: "auto"
       }
     }, this.nestedTagsContainer) as HTMLDivElement;
@@ -718,7 +718,7 @@ export class Tags {
               listener: () => {
                 // 从obsidian源码找到的过度
                 const duration = 100
-                const transition = `all ${duration}ms cubic-bezier(0.02, 0.01, 0.47, 1) 0s`
+                const transition = `height ${duration}ms cubic-bezier(0.02, 0.01, 0.47, 1) 0s`
                 this.state[key].collapse = !this.state[key].collapse
                 collapseNode!.style!.transform = this.state[key].collapse ? "rotate(-90deg)" : ""
                 tree.style.overflow = "hidden";
@@ -726,9 +726,11 @@ export class Tags {
                 if (this.state[key].collapse) {
                   // 折叠
                   tree.style.height = window.getComputedStyle(tree).height;
+                  // console.log("from", tree.style.height)
+                  tree.style.transition = transition;
                   window.setTimeout(() => {
-                    tree.style.transition = transition;
                     tree.style.height = "0px"
+                    // console.log("to", tree.style.height)
                   })
                   window.setTimeout(() => {
                     tree.querySelectorAll("*").forEach(e => e.remove())
@@ -740,14 +742,17 @@ export class Tags {
                   this.render(...args)
                   const height = window.getComputedStyle(tree).height
                   tree.style.height = "0px"
+                  // console.log("from", tree.style.height)
+                  tree.style.transition = transition;
                   window.setTimeout(() => {
-                    tree.style.transition = transition;
                     tree.style.height = height
+                    // console.log("to", tree.style.height)
                   })
                 }
                 window.setTimeout(() => {
                   tree.style.height = ""
                   tree.style.overflow = "";
+                  tree.style.transition = "";
                 }, duration)
               }
             }

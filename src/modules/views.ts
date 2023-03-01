@@ -3461,14 +3461,14 @@ export default class Views {
       })
     })
 
-    // await Zotero.OpenPDF.openToPage(ZoteroPane.getSelectedItems()[0],  2, "CJWKZXCB")
     // Zotero.Reader.open(item.id, location
     ztoolkit.patch(
       Zotero.Reader,
       "open",
       config.addonRef,
       (original) =>
-        async (id: number, location: { pageIndex: number, annotationKey: string }) => {
+        async (id: number, location: { pageIndex: number, annotationKey: string }, ...other: any) => {
+          console.log("open", location, other)
           if (!location) {
             const tagStart = tagsUI.getTagStart()
             if (tagStart) { 
@@ -3485,6 +3485,7 @@ export default class Views {
               }
              }
           }
+          console.log("then", location)
           window.setTimeout(async () => {
             // 随着缩放它会一直闪烁，这个bug一直没修复
             const win = (
@@ -3503,7 +3504,7 @@ export default class Views {
               },
             }, win.document.documentElement as any);
           }, 0)
-          return original.call(Zotero.Reader, id, location)
+          return original.call(Zotero.Reader, id, location, ...other)
         }
     )
   }
