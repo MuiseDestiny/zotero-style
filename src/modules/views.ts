@@ -383,7 +383,7 @@ export default class Views {
       ) => {
         let coloredTags = item.getColoredTags()
         let tags = item.getTags().filter(tag => coloredTags.map((tag: any) => tag.tag).indexOf(tag.tag) == -1)
-        tags = [...coloredTags, ...tags]
+        tags = [...coloredTags, ...tags.sort()]
         return tags.length > 0 ? JSON.stringify(tags) : "";
       },
       {
@@ -433,19 +433,24 @@ export default class Views {
           } catch {
             return tagSpans
           }
-          const prefix = Zotero.Prefs.get(`${config.addonRef}.text${key}Column.prefix`) as string
+          // const prefix = Zotero.Prefs.get(`${config.addonRef}.text${key}Column.prefix`) as string
           tags.forEach(tagObj => {
-            let startIndex: number
+            // let startIndex: number
             let tag = tagObj.tag, color = tagObj.color
-            if (prefix.startsWith("~~")) {
-              if (tag.startsWith(prefix.slice(2))) { return }
-              startIndex = 0
-            } else {
-              if (prefix != "" && !tag.startsWith(prefix)) { return }
-              startIndex = prefix.length
+            // if (prefix.startsWith("~~")) {
+            //   if (tag.startsWith(prefix.slice(2))) { return }
+            //   startIndex = 0
+            // } else {
+            //   if (prefix != "" && !tag.startsWith(prefix)) { return }
+            //   startIndex = prefix.length
+            // }
+            // let tagSpan = getTagSpan(tag.slice(startIndex), color)
+            // tagSpans.appendChild(tagSpan)
+            tag = Tags.getTagMatch(tag)
+            if (tag) {
+              let tagSpan = getTagSpan(tag, color)
+              tagSpans.appendChild(tagSpan)
             }
-            let tagSpan = getTagSpan(tag.slice(startIndex), color)
-            tagSpans.appendChild(tagSpan)
           })
           return tagSpans;
         },
@@ -455,8 +460,8 @@ export default class Views {
       "Text" + key,
       [
         {
-          prefKey: `textTagsColumn.prefix`,
-          name: "Prefix",
+          prefKey: `textTagsColumn.match`,
+          name: "Match",
           type: "input"
         },
         {
@@ -3468,7 +3473,6 @@ export default class Views {
       config.addonRef,
       (original) =>
         async (id: number, location: { pageIndex: number, annotationKey: string }, ...other: any) => {
-          console.log("open", location, other)
           if (!location) {
             const tagStart = tagsUI.getTagStart()
             if (tagStart) { 
@@ -3485,7 +3489,6 @@ export default class Views {
               }
              }
           }
-          console.log("then", location)
           window.setTimeout(async () => {
             // 随着缩放它会一直闪烁，这个bug一直没修复
             const win = (
@@ -3505,6 +3508,85 @@ export default class Views {
             }, win.document.documentElement as any);
           }, 0)
           return original.call(Zotero.Reader, id, location, ...other)
+        }
+    )
+  }
+
+  public async addNumberToCollectionTree() {
+    ztoolkit.patch(
+      ZoteroPane.collectionsView,
+      "renderItem",
+      config.addonRef,
+      (original) =>
+        (index: number, selection: object, oldDiv: HTMLDivElement, columns: any[]) => {
+          const div = original.call(ZoteroPane.collectionsView, index, selection, oldDiv, columns)
+          const ref = ZoteroPane.collectionsView.getRow(index).ref!
+          const key = JSON.stringify(ref.key || ref) + "collection-add-number"
+          if (index > 0) {
+            window.setTimeout(async () => {
+              let getCollectionAllItemNumber = async (c: any) => {
+                let s = (await c.getChildItems()).length
+                if (c.hasChildCollections()) {
+                  let cs = c.getChildCollections()
+                  for (let i = 0; i < cs.length; i++) {
+                    s += await getCollectionAllItemNumber(cs[i])
+                  }
+                }
+                return s
+              }
+              let setText = (text: string | undefined, force: boolean = false) => {
+                if (text && ((!force && text != this.cache[key]) || force)) {
+                  this.cache[key] = text;
+                  const primary = div.querySelector(".primary")
+                  const numberNode = primary.querySelector(".number")
+                  if (numberNode) {
+                    numberNode.innerHTML = text
+                  } else {
+                    ztoolkit.UI.appendElement({
+                      tag: "span",
+                      classList: [config.addonRef],
+                      styles: {
+                        display: "inline-block",
+                        flex: "1"
+                      }
+                    }, primary)
+                    ztoolkit.UI.appendElement({
+                      tag: "span",
+                      classList: [config.addonRef, "number"],
+                      styles: {
+                        marginRight: "6px",
+                      },
+                      properties: {
+                        innerHTML: text
+                      }
+                    }, primary)
+                  }
+                }
+              }
+
+              // 缓存读取
+              if (key in this.cache) {
+                setText(this.cache[key], true)
+              }
+
+              // 悄悄更新
+              let text: string | undefined = undefined
+              if (ref._ObjectType == "Collection") { 
+                let collection = ref;
+                const childItemNumber = (await collection.getChildItems()).length
+                text = childItemNumber
+                const offspringItemNumber = await getCollectionAllItemNumber(collection)
+                if (childItemNumber != offspringItemNumber) {
+                  text = `<span style="opacity: 0.5; margin-right: 6px;">${childItemNumber}</span>${offspringItemNumber}`
+                }
+              }
+              else if (ref?._ObjectType == "Search") {
+                text = (await ref.search()).length
+              }
+              setText(text as string)
+            })
+          }
+          return div
         }
     )
   }

@@ -56,6 +56,7 @@ async function onStartup() {
   await views.registerCommands()
 
   await views.initItemSelectListener()
+  await views.addNumberToCollectionTree()
 
   try {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()

@@ -10,6 +10,7 @@ pref("extensions.zotero.__addonRef__.tagsColumn.align", "left");
 
 pref("extensions.zotero.__addonRef__.function.textTagsColumn.enable", true);
 pref("extensions.zotero.__addonRef__.textTagsColumn.prefix", "#");
+pref("extensions.zotero.__addonRef__.textTagsColumn.match", "/^#(?:.+/)*(.+)/");
 pref("extensions.zotero.__addonRef__.textTagsColumn.opacity", "0.5");
 pref("extensions.zotero.__addonRef__.textTagsColumn.backgroundColor", "#fadec9");
 pref("extensions.zotero.__addonRef__.textTagsColumn.textColor", "black");

@@ -153,14 +153,15 @@ export class Tags {
         plainTags = plainTags.concat(item.getTags().map(i => i.tag))
       })
     // TODO: 提供设置，可以不以#开头
-    const prefix = Zotero.Prefs.get(`${config.addonRef}.textTagsColumn.prefix`) as string
+    // const prefix = Zotero.Prefs.get(`${config.addonRef}.textTagsColumn.prefix`) as string
     plainTags = plainTags
       .filter((tag: string) => {
-        if (prefix.startsWith("~~")) {
-          return !tag.startsWith(prefix.slice(2))
-        } else {
-          return tag.startsWith(prefix)
-        }
+        // if (prefix.startsWith("~~")) {
+        //   return !tag.startsWith(prefix.slice(2))
+        // } else {
+        //   return tag.startsWith(prefix)
+        // }
+        return Tags.getTagMatch(tag)
       })
     return plainTags
   }
@@ -187,12 +188,43 @@ export class Tags {
     return nestedTags
   }
 
+  /**
+   * 用于获取标签的开头
+   * 从[plainTag, index]解析，记录在this.state里
+   * @returns 
+   */
   public getTagStart = () => {
     const key = Object.keys(this.state).find((key: any) => this.state[key].select) as string
     if (!key) { return }
     let [plainTag, index] = JSON.parse(key)
     const tagStart = plainTag.split("/").slice(0, index + 1).join("/")
     return tagStart
+  }
+
+  /**
+   * 用于#标签获取映射后的标签名，也用于嵌套标签视图的标签验证
+   * @param tag 要匹配的标签名称
+   * @returns 如果和正则匹配，返回括号里的内容，不匹配则返回空
+   */
+  static getTagMatch(tag: string) {
+    // 监测是否为正则表达式
+    const rawString = Zotero.Prefs.get(`${config.addonRef}.textTagsColumn.match`) as string
+    const res = rawString.match(/\/(.+)\/(\w*)/)
+    let regex: RegExp;
+    // 是正则表达式
+    if (res) {
+      regex = new RegExp(res[1], res[2])
+    }
+    // 不以xxx开头
+    else if (rawString.startsWith("~~")) {
+      regex = new RegExp(`^([^${rawString.slice(2)}].+)`)
+    }
+    // 以xxx开头
+    else {
+      regex = new RegExp(`^${rawString}(.+)`)
+    }
+    const matched = tag.match(regex)
+    return (matched && matched.slice(1).join("")) || ""
   }
 
   /**
