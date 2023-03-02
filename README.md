@@ -46,7 +46,7 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 |--|--|
 | # | Show all tags that start with `#`, but will remove the `#` prefix. |
 |~~/ | All tags except those beginning with `/` are displayed |
-| | Show all tags. |
+| /^#(.+)/ | Use the entered regular expression to match the tag, and `(.+)` is the actual displayed tag content. Multiple `(.+)` will be automatically joined. |
   
 </details>
 
