@@ -111,6 +111,20 @@ async function main() {
     })
     .catch(() => process.exit(1));
 
+  await esbuild
+    .build({
+      entryPoints: ["addon/prefs.js"],
+      define: {
+        __env__: `"${process.env.NODE_ENV}"`,
+      },
+      bundle: true,
+      outfile: path.join(buildDir, "addon/prefs.js"),
+      // Don't turn minify on
+      // minify: true,
+      target: "firefox60"
+    })
+    .catch(() => process.exit(1));
+  
   console.log("[Build] Run esbuild OK");
 
   const replaceFrom = [

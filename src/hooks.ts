@@ -43,7 +43,9 @@ async function onStartup() {
   const views = new Views(addonItem)
   Zotero.ZoteroStyle.data.views = views
   
-  await views.initTags()
+  
+  views.initTags()
+  views.createGraphView()
   await views.renderTitleProgress()
   await views.createTagsColumn()
   await views.createTextTagsColumn()
@@ -51,7 +53,6 @@ async function onStartup() {
   await views.createIFColumn()
   await views.createPublicationTagsColumn()
   await views.createRatingColumn()
-  let createForceGraph = views.createGraphView()
   views.registerSwitchColumnsViewUI()
   await views.registerCommands()
 
@@ -62,9 +63,6 @@ async function onStartup() {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
     ztoolkit.ItemTree.refresh()
   } catch { }
-
-
-  await createForceGraph;
 }
 
 function onShutdown(): void {

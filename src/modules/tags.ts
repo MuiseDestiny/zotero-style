@@ -91,6 +91,22 @@ export class Tags {
             align-items: center;
             background-color: #ffffff;
           }
+          window[theme="dark"] #zotero-tag-selector {
+            background-color: #2c323e !important;
+          }
+          window[theme="dark"] .nested-tags-control-icon:hover, window[theme="dark"] .item:hover, window[theme="dark"] .menu-box .menu-item:hover{
+            background-color: #4c566a !important;
+          }
+          window[theme="dark"] .menu-box {
+            background-color: #3b4252 !important;
+            color: #fff;
+          }
+          window[theme="dark"] #zotero-tag-selector svg {
+            color: #eee !important;
+          }
+          #zotero-tag-selector .tag-selector-list  {
+            height: auto !important;
+          }
         `
       },
     });
@@ -207,24 +223,27 @@ export class Tags {
    * @returns 如果和正则匹配，返回括号里的内容，不匹配则返回空
    */
   static getTagMatch(tag: string) {
-    // 监测是否为正则表达式
-    const rawString = Zotero.Prefs.get(`${config.addonRef}.textTagsColumn.match`) as string
-    const res = rawString.match(/\/(.+)\/(\w*)/)
-    let regex: RegExp;
-    // 是正则表达式
-    if (res) {
-      regex = new RegExp(res[1], res[2])
+    try {
+      const rawString = Zotero.Prefs.get(`${config.addonRef}.textTagsColumn.match`) as string
+      const res = rawString.match(/\/(.+)\/(\w*)/)
+      let regex: RegExp;
+      // 是正则表达式
+      if (res) {
+        regex = new RegExp(res[1], res[2])
+      }
+      // 不以xxx开头
+      else if (rawString.startsWith("~~")) {
+        regex = new RegExp(`^([^${rawString.slice(2)}].+)`)
+      }
+      // 以xxx开头
+      else {
+        regex = new RegExp(`^${rawString}(.+)`)
+      }
+      const arr = tag.match(regex)
+      return (arr && arr.slice(1).join("")) || ""
+    } catch {
+      return tag
     }
-    // 不以xxx开头
-    else if (rawString.startsWith("~~")) {
-      regex = new RegExp(`^([^${rawString.slice(2)}].+)`)
-    }
-    // 以xxx开头
-    else {
-      regex = new RegExp(`^${rawString}(.+)`)
-    }
-    const matched = tag.match(regex)
-    return (matched && matched.slice(1).join("")) || ""
   }
 
   /**
@@ -262,8 +281,8 @@ export class Tags {
     const tagSelector = this.container.querySelector(".tag-selector")! as HTMLDivElement
     this.render(box, this.nestedTags)
     let icons = {
-      // sort: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-sort-asc"><path d="M11 11h4"></path><path d="M11 15h7"></path><path d="M11 19h10"></path><path d="M9 7 6 4 3 7"></path><path d="M6 6v14"></path></svg>`,
-      sort: `<svg t="1677467963596" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1444" width="18" height="18"><path d="M278.2 74c-12.5-12.5-32.8-12.5-45.3 0L65.1 241.8c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L225 172.5v756.1c0 17.7 14.3 32 32 32s32-14.3 32-32V175.3l113.3 113.3c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L278.2 74zM951.6 738.1c-12.5-12.5-32.8-12.5-45.3 0L791.7 852.7V96.6c0-17.7-14.3-32-32-32s-32 14.3-32 32v753.3L614.3 736.6c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l169.4 169.4c12.5 12.5 32.8 12.5 45.3 0l167.9-167.9c12.5-12.6 12.5-32.8 0-45.3z" fill="#2c2c2c" p-id="1445"></path></svg>`,
+      sort: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-sort-asc"><path d="M11 11h4"></path><path d="M11 15h7"></path><path d="M11 19h10"></path><path d="M9 7 6 4 3 7"></path><path d="M6 6v14"></path></svg>`,
+      // sort: `<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-folder-tree"><path d="M278.2 74c-12.5-12.5-32.8-12.5-45.3 0L65.1 241.8c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L225 172.5v756.1c0 17.7 14.3 32 32 32s32-14.3 32-32V175.3l113.3 113.3c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L278.2 74zM951.6 738.1c-12.5-12.5-32.8-12.5-45.3 0L791.7 852.7V96.6c0-17.7-14.3-32-32-32s-32 14.3-32 32v753.3L614.3 736.6c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l169.4 169.4c12.5 12.5 32.8 12.5 45.3 0l167.9-167.9c12.5-12.6 12.5-32.8 0-45.3z"></path></svg>`,
       nest: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-folder-tree"><path d="M13 10h7a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"></path><path d="M13 21h7a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.88a1 1 0 0 1-.9-.55l-.44-.9a1 1 0 0 0-.9-.55H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"></path><path d="M3 3v2c0 1.1.9 2 2 2h3"></path><path d="M3 3v13c0 1.1.9 2 2 2h3"></path></svg>`,
       collapse: {
         true: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-chevrons-up-down"><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg>`,
@@ -430,6 +449,7 @@ export class Tags {
     document.addEventListener("mousedown", removeNode)
     let menuNode = ztoolkit.UI.appendElement({
       tag: "div",
+      classList: ["menu-box"],
       styles: {
         position: "fixed",
         left: `${rect.x}px`,
@@ -493,7 +513,7 @@ export class Tags {
                 height: "0",
                 margin: "6px -6px",
                 borderTop: ".5px solid #e0e0e0",
-                borderBottom: ".5px solid #e0e0e0"
+                borderBottom: ".5px solid #e0e0e0",
               }
             })
           }

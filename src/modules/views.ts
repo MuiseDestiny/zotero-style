@@ -433,19 +433,8 @@ export default class Views {
           } catch {
             return tagSpans
           }
-          // const prefix = Zotero.Prefs.get(`${config.addonRef}.text${key}Column.prefix`) as string
           tags.forEach(tagObj => {
-            // let startIndex: number
             let tag = tagObj.tag, color = tagObj.color
-            // if (prefix.startsWith("~~")) {
-            //   if (tag.startsWith(prefix.slice(2))) { return }
-            //   startIndex = 0
-            // } else {
-            //   if (prefix != "" && !tag.startsWith(prefix)) { return }
-            //   startIndex = prefix.length
-            // }
-            // let tagSpan = getTagSpan(tag.slice(startIndex), color)
-            // tagSpans.appendChild(tagSpan)
             tag = Tags.getTagMatch(tag)
             if (tag) {
               let tagSpan = getTagSpan(tag, color)
@@ -1711,7 +1700,7 @@ export default class Views {
         position: "relative",
       }
     }) as HTMLDivElement
-    const frame = ztoolkit.UI.createElement(document, "iframe", "html") as HTMLIFrameElement
+    const frame = ztoolkit.UI.createElement(document, "iframe") as HTMLIFrameElement
     frame.style.border = "none"
     frame.style.height = "100%"
     frame.style.width = "100%"
@@ -3432,7 +3421,11 @@ export default class Views {
   }
 
   public async initTags() {
-    const tagsUI  = new Tags();
+    // 等待加载
+    while (!ZoteroPane.tagSelector) {
+      await Zotero.Promise.delay(100)
+    }
+    const tagsUI = new Tags();
     ztoolkit.patch(
       ZoteroPane.tagSelector,
       "render",
