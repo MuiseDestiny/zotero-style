@@ -62,6 +62,8 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
  
  **Fileds**
   
+  You can choose fields to display by editing `Fields` field in Column Settings. Check the table below for field definitions.
+
 ```ts
 ajg
 fms
@@ -147,6 +149,70 @@ cug
 | Yangtze|《长江大学自然科学高质量期刊（中国期刊）分级目录（2021版）.pdf》数据集从高到低分为T1, T2, T3。|
 | ZJU|《浙江大学国内学术期刊分级目录指南·2020版.pdf》数据集从高到低分为国内一级学术期刊，国内一级核心期刊。|
   
+  **Map**
+  
+  You can customise tags by editing `Map` field in Column Settings, using string or regex to replace tags to your desired format.
+  You can refer to [this link](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_Expressions) or any other tutorials for regex syntax.
+
+  Most of tags comprises of two parts: field name and value, separated by a space. Some tags are field only.
+  **NB**: you will need to alter field name and value respectively:
+
+  Here are some examples:
+
+  SCI:
+
+```ini
+SCI=, 
+/SCIIF/=IF, 
+```
+
+  EI:
+
+```ini
+EI检索=EI, 
+```
+
+  Decrease decimal:
+
+```ini
+/^(\d+)\.(\d{1})\d*$/=$1.$2, 
+```
+
+  Chinese 中文检索：
+
+```ini
+北大中文核心=北核, 
+```
+
+  Chinese Academy of Sciences (CAS) warnings 中科院预警：
+
+```ini
+SCIWARN=🚫, 
+```
+
+  CAS quartiles 中科院分区升级版:
+
+```ini
+/医学(\d+)区/=医$1, 
+/生物学(\d+)区/=生$1, 
+/农林科学(\d+)区/=农$1, 
+/环境科学与生态学(\d+)区/=环$1, 
+/化学(\d+)区/=化$1, 
+/工程技术(\d+)区/=工$1, 
+/数学(\d+)区/=数$1, 
+/物理与天体物理(\d+)区/=物$1, 
+/地球科学(\d+)区/=地$1, 
+/材料科学(\d+)区/=材$1, 
+/计算机科学(\d+)区/=计$1, 
+/经济学(\d+)区/=经$1, 
+/法学(\d+)区/=法$1, 
+/管理学(\d+)区/=管$1, 
+/心理学(\d+)区/=心$1, 
+/人文科学(\d+)区/=人$1, 
+/教育学(\d+)区/=教$1, 
+/综合性期刊(\d+)区/=综$1, 
+```
+
 </details>
 
 ### Rating
