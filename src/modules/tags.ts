@@ -169,14 +169,8 @@ export class Tags {
         plainTags = plainTags.concat(item.getTags().map(i => i.tag))
       })
     // TODO: 提供设置，可以不以#开头
-    // const prefix = Zotero.Prefs.get(`${config.addonRef}.textTagsColumn.prefix`) as string
     plainTags = plainTags
       .filter((tag: string) => {
-        // if (prefix.startsWith("~~")) {
-        //   return !tag.startsWith(prefix.slice(2))
-        // } else {
-        //   return tag.startsWith(prefix)
-        // }
         return Tags.getTagMatch(tag)
       })
     return plainTags

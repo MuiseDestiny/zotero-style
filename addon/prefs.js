@@ -42,6 +42,7 @@ pref("extensions.zotero.__addonRef__.PublicationTagsColumn.defaultColor", "#86da
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.textColor", 'black');
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.sortBy", 'sci, -sciif');
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.map", "北大中文核心=北核, SCIIF=IF, SCIIF(5)=IF(5)");
+
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.margin", "0.2");
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.padding", "0.5");
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.opacity", "0.5");
@@ -68,6 +69,8 @@ pref("extensions.zotero.__addonRef__.annotationColors", '[["general.yellow","#ff
 pref("extensions.zotero.__addonRef__.annotationColorsGroups", '[["Untitled",[["general.yellow","#ffd400"],["general.red","#ff6666"],["general.green","#5fb236"],["general.blue","#2ea8e5"],["general.purple","#a28ae5"],["general.magenta","#e56eee"],["general.orange","#f19837"],["general.gray","#aaaaaa"]]]]');
 
 pref("extensions.zotero.__addonRef__.function.itemTypeFilter.enable", true);
+pref("extensions.zotero.__addonRef__.function.addNumberToCollectionTree.enable", true);
+pref("extensions.zotero.__addonRef__.function.Tags.enable", true);
 
 pref("extensions.zotero.__addonRef__.nestedTags.sortord", "0");
 

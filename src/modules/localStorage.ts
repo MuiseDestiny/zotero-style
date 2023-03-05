@@ -1,4 +1,3 @@
-
 import { config } from "../../package.json";
 
 class LocalStorage {

@@ -383,7 +383,7 @@ export default class Views {
       ) => {
         let coloredTags = item.getColoredTags()
         let tags = item.getTags().filter(tag => coloredTags.map((tag: any) => tag.tag).indexOf(tag.tag) == -1)
-        tags = [...coloredTags, ...tags.sort()]
+        tags = [...coloredTags, ...tags.sort((a, b) => a.tag > b.tag ? 1 : -1)]
         return tags.length > 0 ? JSON.stringify(tags) : "";
       },
       {
@@ -562,13 +562,39 @@ export default class Views {
             let fields: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.fields`) as string
             fields = fields.split(/,\s*/g).filter((i: string) => data[i])
             let mapString: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.map`) as string
-            const textMap = new Map()
-            mapString.split(/,\s*/g).filter((s: string) => s.indexOf("=") != -1).forEach((s: string) => {
-              let [k, v] = s.split("=").map((s: string) => s.trim())
-              k && textMap.set(k, v)
+            let mapArr: [RegExp | string, string][] = mapString.split(/[,;]\s*/g).filter((s: string)=>s.trim().length).map((ss: string) => {
+              let [s1, s2] = ss.split("=")
+              // 如果s1是正则转化为正则
+              const res = s1.match(/\/(.+)\/(\w*)/)
+              if (res) {
+                return [
+                  new RegExp(res[1], res[2]),
+                  s2
+                ]
+              } else {
+                return [
+                  s1,
+                  s2
+                ]
+              }
             })
-            let getMapString = (k: string) => {
-              return textMap.get(k) ?? k
+            let getMapString = (s: string) => {
+              try {
+                for (let i = 0; i < mapArr.length; i++){
+                  if (typeof mapArr[i][0] == "string") {
+                    if (mapArr[i][0] == s) {
+                      s = mapArr[i][1]
+                    }
+                  } else if ((mapArr[i][0] as RegExp).test(s)) {
+                    s = s.replace(mapArr[i][0], mapArr[i][1])
+                    break
+                  }
+                }
+                return s
+              } catch (e) {
+                console.log(e)
+                return s
+              }
             }
             for (let i = 0; i < fields.length; i++) {
               let field = fields[i]
@@ -819,10 +845,10 @@ export default class Views {
           }) as HTMLSpanElement
           
           let item = ZoteroPane.itemsView.getRow(index).ref
-          let page: number
+          let page: number = 0;
           try {
             page = Number(this.addonItem.get(item, "readingTime").page)
-          } catch { return span }
+          } catch { }
           let record: Record = { page, data: {} }
           let pdfItem
           const cacheKey = `${item.key}-getBestAttachment`
@@ -834,6 +860,8 @@ export default class Views {
             const charNum = (anno._annotationText || anno._annotationComment || "").length
             try {
               let pageIndex = Number(JSON.parse(anno._annotationPosition).pageIndex)
+              const _page = pageIndex + 1
+              page = _page > page ? _page : page
               if (pageIndex in record.data == false) {
                 record.data[pageIndex] = charNum
               } else {
@@ -842,6 +870,7 @@ export default class Views {
               }
             } catch { }
           })
+          record.page = page
           let values = []
           for (let i = 0; i < record.page; i++) {
             values.push(parseFloat(record.data[i] as string) || 0)
@@ -3421,6 +3450,7 @@ export default class Views {
   }
 
   public async initTags() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.Tags.enable`) as boolean) { return }
     // 等待加载
     while (!ZoteroPane.tagSelector) {
       await Zotero.Promise.delay(100)
@@ -3483,7 +3513,8 @@ export default class Views {
              }
           }
           window.setTimeout(async () => {
-            // 随着缩放它会一直闪烁，这个bug一直没修复
+            // 随着缩放它会一直闪烁，这个bug，Zotero官方一直没修复
+            // 所以将它替换为border形式，即使不消失也不会太影响观感
             const win = (
               (await ztoolkit.Reader.getReader() as _ZoteroReaderInstance)._iframeWindow as any
             ).wrappedJSObject
@@ -3506,6 +3537,7 @@ export default class Views {
   }
 
   public async addNumberToCollectionTree() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.addNumberToCollectionTree.enable`) as boolean) { return }
     ztoolkit.patch(
       ZoteroPane.collectionsView,
       "renderItem",

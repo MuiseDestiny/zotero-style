@@ -43,22 +43,23 @@ async function onStartup() {
   const views = new Views(addonItem)
   Zotero.ZoteroStyle.data.views = views
   
-  
-  views.initTags()
-  views.createGraphView()
-  await views.renderTitleProgress()
-  await views.createTagsColumn()
-  await views.createTextTagsColumn()
-  await views.createProgressColumn()
-  await views.createIFColumn()
-  await views.createPublicationTagsColumn()
-  await views.createRatingColumn()
-  views.registerSwitchColumnsViewUI()
-  await views.registerCommands()
+  const tasks = [
+    views.initTags(),
+    views.createGraphView(),
+    views.renderTitleProgress(),
+    views.createTagsColumn(),
+    views.createTextTagsColumn(),
+    views.createProgressColumn(),
+    views.createIFColumn(),
+    views.createPublicationTagsColumn(),
+    views.createRatingColumn(),
+    views.registerCommands(),
+    views.initItemSelectListener(),
+    views.addNumberToCollectionTree(),
+  ]
 
-  await views.initItemSelectListener()
-  await views.addNumberToCollectionTree()
-
+  await Promise.all(tasks);
+  await views.registerSwitchColumnsViewUI();
   try {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
     ztoolkit.ItemTree.refresh()
@@ -70,8 +71,6 @@ function onShutdown(): void {
   ztoolkit.unregisterAll()
   ztoolkit.UI.unregisterAll()
   ztoolkit.ItemTree.unregisterAll()
-
-  // Remove addon object
   addon.data.alive = false;
   delete Zotero.ZoteroStyle;
 }

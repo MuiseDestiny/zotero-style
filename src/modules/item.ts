@@ -20,7 +20,6 @@ export default class AddonItem {
 			if (item) {
 				this.item = item
 				ztoolkit.log("From prefKey")
-				ztoolkit.log("\n\n******")
 				this.hiddenNotes()
 				return
 			}
@@ -44,7 +43,6 @@ export default class AddonItem {
 		Zotero.Prefs.set(this.prefKey, item.key)
 		this.item = item
 		this.hiddenNotes()
-		ztoolkit.log("\n\n******")
 	}
 
 	/**
@@ -131,22 +129,13 @@ export default class AddonItem {
 		const itemTitle = this.title
 		Zotero.Search.prototype.search = async function () {
 			let ids = await search.apply(this, arguments);
-			// 只有在搜索结果是笔记时才过滤
-			if (
-				Zotero.Items.get(ids[0]).itemTypeID == 26 &&
-				Zotero.Items.get(ids.slice(-1)[0]).itemTypeID == 26
-			) {
-				ztoolkit.log("hook ids", ids.length)
-				return ids.filter((id: number) => {
-					const parentID = Zotero.Items.get(id).parentID
-					if (!parentID) { return true }
-					const parentItem = Zotero.Items.get(parentID)
-					if (!parentItem) { return true }
-					return parentItem.key != excludeKey && parentItem.getField("title") != itemTitle
-				})
-			} else {
-				return ids
-			}
+			return ids.filter((id: number) => {
+				const parentID = Zotero.Items.get(id).parentID
+				if (!parentID) { return true }
+				const parentItem = Zotero.Items.get(parentID)
+				if (!parentItem) { return true }
+				return parentItem.key != excludeKey && parentItem.getField("title") != itemTitle
+			})
 		}
 	}
 }
