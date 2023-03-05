@@ -74,6 +74,9 @@ pref("extensions.zotero.__addonRef__.function.Tags.enable", true);
 
 pref("extensions.zotero.__addonRef__.nestedTags.sortord", "0");
 
+pref("extensions.zotero.__addonRef__.GPT.secretKey", "");
+
+
 
 
 
