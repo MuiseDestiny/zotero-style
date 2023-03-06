@@ -53,17 +53,20 @@ async function onStartup() {
     views.createIFColumn(),
     views.createPublicationTagsColumn(),
     views.createRatingColumn(),
-    views.registerCommands(),
     views.initItemSelectListener(),
     views.addNumberToCollectionTree(),
   ]
-
-  await Promise.all(tasks);
+  try {
+    await Promise.all(tasks);
+  } catch (e) {
+    console.log("ERROR", e)
+  }
   await views.registerSwitchColumnsViewUI();
   try {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
     ztoolkit.ItemTree.refresh()
   } catch { }
+  await views.registerCommands()
 }
 
 function onShutdown(): void {
