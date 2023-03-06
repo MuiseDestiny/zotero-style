@@ -3,12 +3,15 @@ import { getString, initLocale } from "./modules/locale";
 import Views from "./modules/views"; 
 import Events from "./modules/events";
 import AddonItem from "./modules/item";
+import { registerPrefsScripts, registerPrefs } from "./modules/prefs";
+
 
 Zotero._AddonItemGlobal = Zotero._AddonItemGlobal || new AddonItem()
 const addonItem = Zotero._AddonItemGlobal
 
 
 async function onStartup() {
+  registerPrefs();
   // Register the callback in Zotero as an item observer
   const notifierID = Zotero.Notifier.registerObserver(
     { notify: onNotify },
@@ -111,8 +114,19 @@ async function onNotify(
   }
 }
 
+async function onPrefsEvent(type: string, data: { [key: string]: any }) {
+  switch (type) {
+    case "load":
+      registerPrefsScripts(data.window);
+      break;
+    default:
+      return;
+  }
+}
+
 export default {
   onStartup,
   onShutdown,
-  onNotify
+  onNotify,
+  onPrefsEvent
 };

@@ -1,28 +1,39 @@
 <vbox
   id="zotero-prefpane-__addonRef__"
-  onload="Zotero.AddonTemplate.hooks.onPrefsEvent('load', {window})"
+  onload="Zotero.ZoteroStyle.hooks.onPrefsEvent('load', {window})"
 >
   <groupbox>
-    <label><html:h2>&zotero.__addonRef__.pref.title;</html:h2></label>
-    <checkbox
-      id="zotero-prefpane-__addonRef__-enable"
-      label="&zotero.__addonRef__.pref.enable.label;"
-      preference="extensions.zotero.__addonRef__.enable"
-    />
-    <hbox>
-      <html:label for="zotero-prefpane-__addonRef__-input"
-        >&zotero.__addonRef__.pref.input.label;</html:label
-      >
-      <html:input
-        type="text"
-        id="zotero-prefpane-__addonRef__-input"
-        preference="extensions.zotero.__addonRef__.input"
-      ></html:input>
-    </hbox>
+    <label>
+      <html:h3>Functions</html:h3>
+    </label>
+    <checkbox label="IF" preference="extensions.zotero.__addonRef__.function.IFColumn.enable" />
+    <checkbox label="Title" preference="extensions.zotero.__addonRef__.function.titleColumn.enable"/>
+    <checkbox label="Tags" preference="extensions.zotero.__addonRef__.function.tagsColumn.enable" />
+    <checkbox label="#Tags" preference="extensions.zotero.__addonRef__.function.textTagsColumn.enable" />
+    <checkbox label="Rating" preference="extensions.zotero.__addonRef__.function.ratingColumn.enable" />
+    <checkbox label="Progress" preference="extensions.zotero.__addonRef__.function.progressColumn.enable" />
+    <checkbox label="Graph View" preference="extensions.zotero.__addonRef__.function.graphView.enable" />
+    <checkbox label="Nested Tags" preference="extensions.zotero.__addonRef__.function.Tags.enable" />
+    <checkbox label="View Groups" preference="extensions.zotero.__addonRef__.function.columnsViews.enable" />
+    <checkbox label="Item Type Filter" preference="extensions.zotero.__addonRef__.function.itemTypeFilter.enable" />
+    <checkbox label="Publication Tags" preference="extensions.zotero.__addonRef__.function.PublicationTagsColumn.enable" />
+    <checkbox label="Annotation Colors" preference="extensions.zotero.__addonRef__.function.annotationColors.enable" />
+    <checkbox label="Add Number To Collection Tree" preference="extensions.zotero.__addonRef__.function.addNumberToCollectionTree.enable" />
+  </groupbox>
+  <groupbox>
+    <label>
+      <html:h3>Links</html:h3>
+    </label>
+    <description><label class="zotero-text-link" value="Help" 
+      href="https://github.com/MuiseDestiny/zotero-style#zotero-style"></label></description>
+    <description><label class="zotero-text-link" value="History"
+      href="https://github.com/MuiseDestiny/zotero-style/releases"></label></description>
+    <description><label class="zotero-text-link" value="Share"
+      href="https://github.com/MuiseDestiny/zotero-style/issues/48"></label></description>
+    <description><label class="zotero-text-link" value="Issue"
+      href="https://github.com/MuiseDestiny/zotero-style/issues/new/choose"></label></description>
   </groupbox>
 </vbox>
 <vbox>
-  <label
-    value="&zotero.__addonRef__.help.version.label;  &zotero.__addonRef__.help.releasetime.label;"
-  ></label>
+  <label value="&zotero.__addonRef__.help.version.label; &zotero.__addonRef__.help.releasetime.label;"></label>
 </vbox>
