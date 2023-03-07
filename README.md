@@ -17,7 +17,9 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 
 > This plugin modifies some of Zotero's existing columns and adds some interesting ones, and I'll introduce them one by one.
 
-![bandicam-2023-02-23-21-34-45-536](https://user-images.githubusercontent.com/51939531/220922783-b7d78b5f-6cc3-4aff-8581-2e6ca341aec5.gif)
+
+
+<img src="https://user-images.githubusercontent.com/51939531/220922783-b7d78b5f-6cc3-4aff-8581-2e6ca341aec5.gif" width="100%" height="100%">
 
 ### Title
 
@@ -59,7 +61,8 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
   
 <summary>Column Settings</summary>
 
- ![image](https://user-images.githubusercontent.com/51939531/223394517-19cf5bf8-b5e3-402a-8da7-5952b1fd062e.png)
+<img src="https://user-images.githubusercontent.com/51939531/223394517-19cf5bf8-b5e3-402a-8da7-5952b1fd062e.png" width="50%" height="50%">
+
 
  **Fileds**
   
