@@ -59,7 +59,8 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
   
 <summary>Column Settings</summary>
 
- 
+ ![image](https://user-images.githubusercontent.com/51939531/223394517-19cf5bf8-b5e3-402a-8da7-5952b1fd062e.png)
+
  **Fileds**
   
   You can choose fields to display by editing `Fields` field in Column Settings. Check the table below for field definitions.
