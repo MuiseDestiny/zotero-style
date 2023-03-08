@@ -8,7 +8,6 @@ import utils from "./utils";
 import Bubble from "./bubble";
 import { Tags } from "./tags";
 
-
 export default class Views {
   private progress: Progress;
   private addonItem: AddonItem;
@@ -25,7 +24,7 @@ export default class Views {
       (original) =>
         async function () {
           // @ts-ignore
-          let items = await original.bind(this)();
+          let items = await original.call(this);
           const originalLength = items.length
           for (let i = 0; i < filterFunctions.length; i++){
             items = filterFunctions[i](items)
@@ -863,7 +862,7 @@ export default class Views {
           try {
             page = Number(this.addonItem.get(item, "readingTime").page)
           } catch { }
-          let record: Record = { page, data: {} }
+          let annoRecord: any = { page, data: {} }
           let pdfItem
           const cacheKey = `${item.key}-getBestAttachment`
           pdfItem = this.cache[cacheKey]
@@ -871,38 +870,45 @@ export default class Views {
           const annoArray = pdfItem.getAnnotations()
           if (annoArray.length == 0) { return span }
           annoArray.forEach((anno: any) => {
-            const charNum = (anno._annotationText || anno._annotationComment || "").length
+            const charNum = (anno.annotationText || anno.annotationComment || "").length
             try {
-              let pageIndex = Number(JSON.parse(anno._annotationPosition).pageIndex)
+              let pageIndex = Number(JSON.parse(anno.annotationPosition).pageIndex)
               const _page = pageIndex + 1
               page = _page > page ? _page : page
-              if (pageIndex in record.data == false) {
-                record.data[pageIndex] = charNum
-              } else {
-                // @ts-ignore
-                record.data[pageIndex] += charNum
-              }
+              annoRecord.data[pageIndex] ??= []
+              annoRecord.data[pageIndex].push({ value: charNum, color: anno.annotationColor})
             } catch { }
           })
-          record.page = page
-          let values = []
-          for (let i = 0; i < record.page; i++) {
-            values.push(parseFloat(record.data[i] as string) || 0)
-          }
-          if ([...values].sort((a, b) => b -a )[0] == 0) { return span}
+          annoRecord.page = page
           const style = Zotero.Prefs.get(
             `${config.addonRef}.progressColumn.style`
           ) as string || "bar"
-          // @ts-ignore
-          let progressNode = (new Progress())[style](
-            values,
-            Zotero.Prefs.get(
-              `${config.addonRef}.progressColumn.color`
-            ) as string,
-            Zotero.Prefs.get(
-              `${config.addonRef}.progressColumn.opacity`
-            ) as string
-          )
+          const color = Zotero.Prefs.get(
+            `${config.addonRef}.progressColumn.color`
+          ) as string;
+          const opacity = Zotero.Prefs.get(
+            `${config.addonRef}.progressColumn.opacity`
+          ) as string;
+          let progressNode
+          const UI = new Progress()
+          let values = []
+          for (let i = 0; i < annoRecord.page; i++) {
+            values.push(annoRecord.data[i] ? annoRecord.data[i].map((i: any)=>i.value).reduce((a: any, b: any) => a + b) : 0)
+          }
+          console.log(annoRecord, values)
+
+          if (style != "stack") {
+            // 不是stack，需要精简数据
+            if ([...values].sort((a, b) => b -a )[0] == 0) { return span}
+            // @ts-ignore
+            progressNode = UI[style](
+              values,
+              color,
+              opacity
+            )
+          } else {
+            progressNode = UI.stack(values, annoRecord, opacity);
+          }
           span.appendChild(progressNode)
           return span;
         },
@@ -915,7 +921,7 @@ export default class Views {
           prefKey: "progressColumn.style",
           name: "Style",
           type: "select",
-          values: ["bar", "line", "opacity"]
+          values: ["bar", "line", "opacity", "stack"]
         },
         {
           prefKey: "progressColumn.color",
@@ -2249,7 +2255,7 @@ export default class Views {
                       textAlign: "justify"
                     },
                     properties: {
-                      innerText: xhr.response.choices[0].message.content.substr(2)
+                      innerText: xhr.response.choices[0].message.content.replace(/^\n*/, "")
                     }
                   }
                 ]
@@ -3694,8 +3700,11 @@ export default class Views {
         (index: number, selection: object, oldDiv: HTMLDivElement, columns: any[]) => {
           const div = original.call(ZoteroPane.collectionsView, index, selection, oldDiv, columns)
           const ref = ZoteroPane.collectionsView.getRow(index).ref!
-          const key = JSON.stringify(ref.key || ref) + "collection-add-number"
           if (index > 0) {
+            let key: string;
+            try {
+              key = JSON.stringify(ref.key || ref) + "collection-add-number"
+            } catch { return div }
             window.setTimeout(async () => {
               let getCollectionAllItemNumber = async (c: any) => {
                 let s = (await c.getChildItems()).length
@@ -3748,10 +3757,10 @@ export default class Views {
                 let collection = ref;
                 const childItemNumber = (await collection.getChildItems()).length
                 text = childItemNumber
-                const offspringItemNumber = await getCollectionAllItemNumber(collection)
-                if (childItemNumber != offspringItemNumber) {
-                  text = `<span style="opacity: 0.5; margin-right: 6px;">${childItemNumber}</span>${offspringItemNumber}`
-                }
+                // const offspringItemNumber = await getCollectionAllItemNumber(collection)
+                // if (childItemNumber != offspringItemNumber) {
+                //   text = `<span style="opacity: 0.5; margin-right: 6px;">${childItemNumber}</span>${offspringItemNumber}`
+                // }
               }
               else if (ref?._ObjectType == "Search") {
                 text = (await ref.search()).length

@@ -138,7 +138,6 @@ export default class Progress {
     return container
   }
 
-
   public bar(values: number[], color: string = "#FD8A8A", opacity: string = "1"): HTMLElement {
     let maxValue = [...values].sort((a, b) => b - a)[0]
     let span = ztoolkit.UI.createElement(document, "span", {
@@ -181,6 +180,7 @@ export default class Progress {
     }
     return span
   }
+
   /**
    * 线形进度
    * 显示百分比
@@ -243,6 +243,65 @@ export default class Progress {
    */
   public circlePercent(value: number, maxValue: number) {
 
+  }
+
+  public stack(values: number[], record: { page: number; data: { [pageIndex: string]: { value: number; color: string}[] }}, opacity: string) {
+    let maxValue = [...values].sort((a, b) => b - a)[0]
+    let span = ztoolkit.UI.createElement(document, "span", {
+      styles: {
+        display: "inline-block",
+        width: "100%",
+        height: "20px",
+        opacity
+      }
+    })
+    for (let pageIndex = 0; pageIndex < record.page;pageIndex++) {
+      const styles = {
+        position: "absolute",
+        display: "inline-block",
+        bottom: "0",
+        left: "0",
+        width: "100%",
+      }
+      span.appendChild(
+        ztoolkit.UI.createElement(document, "span", {
+          classList: ["bar-box"],
+          styles: {
+            display: "inline-block",
+            height: "100%",
+            width: `${100 / record.page}%`,
+            position: "relative"
+          },
+          children: [
+            {
+              tag: "span",
+              styles: Object.assign({}, styles, {
+                height: `${100 * values[pageIndex] / maxValue}%`,
+                display: "flex",
+                flexDirection: "column"
+              }),
+              children: (() => {
+                if (!record.data[pageIndex]) { return []}
+                let arr = []
+                for (let data of record.data[pageIndex]) {
+                  arr.push({
+                    tag: "span",
+                    styles: {
+                      width: "100%",
+                      display: "inline-block",
+                      height: `${data.value / values[pageIndex] * 100}%`,
+                      backgroundColor: data.color
+                    }
+                  })
+                }
+                return arr
+              })()
+            }
+          ]
+        })
+      )
+    }
+    return span
   }
 
   static getRGB(color: string) {

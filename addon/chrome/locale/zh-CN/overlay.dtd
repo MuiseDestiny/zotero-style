@@ -1,2 +1,2 @@
-<!ENTITY zotero.__addonRef__.help.version.label "__addonName__  __buildVersion__">
+<!ENTITY zotero.__addonRef__.help.version.label "__addonName__ __buildVersion__">
 <!ENTITY zotero.__addonRef__.help.releasetime.label "Build __buildTime__">
