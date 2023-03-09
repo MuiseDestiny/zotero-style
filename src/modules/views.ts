@@ -125,7 +125,6 @@ export default class Views {
             }
           } catch { }
         }
-        
         const cellSpan = original(index, data, column) as HTMLSpanElement;
         // 图标替换
         // try {
@@ -2328,7 +2327,8 @@ export default class Views {
                     styles: {
                       fontSize: "18px",
                       lineHeight: "30px",
-                      textAlign: "justify"
+                      textAlign: "justify",
+                      "-moz-user-select": "text"
                     },
                     properties: {
                       innerText: xhr.response.choices[0].message.content.replace(/^\n*/, "")
@@ -2338,6 +2338,7 @@ export default class Views {
               }
             ]
           }, container);
+          prompt.inputNode.blur()
         } else {
           showGPTState("#8e8ea0", "Receiving question...")
         }
