@@ -11,7 +11,7 @@
 
 You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-style/issues/48).
 
-[中文文档](https://www.notion.so/Zotero-Style-bc2aebbbb6df4b7baa858e376e4fc5be?pvs=4)
+[中文文档]https://www.notion.so/Zotero-Style-bc2aebbbb6df4b7baa858e376e4fc5be)
 ---
 
 ## Columns
