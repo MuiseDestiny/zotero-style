@@ -58,6 +58,7 @@ async function onStartup() {
     views.createRatingColumn(),
     views.initItemSelectListener(),
     views.addNumberToCollectionTree(),
+    views.renderCreatorColumn(),
   ]
   try {
     await Promise.all(tasks);

@@ -72,6 +72,13 @@ pref("extensions.zotero.__addonRef__.function.itemTypeFilter.enable", true);
 pref("extensions.zotero.__addonRef__.function.addNumberToCollectionTree.enable", true);
 pref("extensions.zotero.__addonRef__.function.Tags.enable", true);
 
+pref("extensions.zotero.__addonRef__.function.creatorColumn.enable", true);
+pref("extensions.zotero.__addonRef__.creatorColumn.format", "${firstCreator} et al.");
+pref("extensions.zotero.__addonRef__.creatorColumn.slices", "0:1");
+pref("extensions.zotero.__addonRef__.creatorColumn.join", ", ");
+
+
+
 pref("extensions.zotero.__addonRef__.nestedTags.sortord", "0");
 
 pref("extensions.zotero.__addonRef__.GPT.secretKey", "");

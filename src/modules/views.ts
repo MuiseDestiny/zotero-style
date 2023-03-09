@@ -229,6 +229,63 @@ export default class Views {
     )
   }
 
+  public async renderCreatorColumn() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.creatorColumn.enable`) as boolean) { return }
+    const key = "firstCreator"
+    await ztoolkit.ItemTree.addRenderCellHook(
+      key,
+      (index: number, data: string, column: any, original: Function) => {
+        const cellSpan = original(index, data, column) as HTMLSpanElement;
+        const item = ZoteroPane.getSortedItems()[index]
+        const creators = item.getCreators() as any
+        const firstCreator = item.firstCreator as string;
+        const format = Zotero.Prefs.get(`${config.addonRef}.creatorColumn.format`) as string
+        const join = Zotero.Prefs.get(`${config.addonRef}.creatorColumn.join`) as string
+        let slices = Zotero.Prefs.get(`${config.addonRef}.creatorColumn.slices`) as string
+        let newCreators: any = []
+        try {
+          slices.split(/,\s*/).forEach((slice: string) => {            
+            newCreators = newCreators.concat(
+              creators.slice(...slice.split(":").filter(i => i.trim().length).map(i => Number(i)))
+            )
+          })
+        } catch { return cellSpan}
+        let textArray = []
+        for (let i = 0; i < newCreators.length; i++) {
+          textArray.push(
+            format
+              .replace(/\$\{firstName\}/g, newCreators[i].firstName)
+              .replace(/\$\{lastName\}/g, newCreators[i].lastName)
+              .replace(/\$\{firstCreator\}/g, firstCreator)
+          )
+        }
+        cellSpan.innerText = textArray.join(join)
+        return cellSpan
+      }
+    )
+
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: "creatorColumn.format",
+          name: "Format",
+          type: "input"
+        },
+        {
+          prefKey: "creatorColumn.slices",
+          name: "Slices",
+          type: "input",
+        },
+        {
+          prefKey: "creatorColumn.join",
+          name: "Join",
+          type: "input",
+        },
+      ]
+    )
+  }
+
   private replaceCellIcon(item: Zotero.Item, cellSpan: HTMLSpanElement) {
     const iconSpan = cellSpan.querySelector(".cell-icon") as HTMLSpanElement
     let res = item.attachmentPath?.match(/\.(\w+)$/)
@@ -831,6 +888,39 @@ export default class Views {
    */
   public async createProgressColumn() {
     if (!Zotero.Prefs.get(`${config.addonRef}.function.progressColumn.enable`) as boolean) { return }
+    let update = async (item: Zotero.Item) => {
+      const cacheKey = `${item.key}-annoRecord`
+      if (item.isRegularItem()) {
+        let pdfItem
+        try {
+          pdfItem = await item.getBestAttachment()
+        } catch {
+          return
+        }
+        if (!pdfItem) {
+          return
+        }
+        let page: number = 0;
+        try {
+          page = Number(this.addonItem.get(item, "readingTime").page)
+        } catch { }
+        let annoRecord: any = { page, data: {} }
+        const annoArray = pdfItem.getAnnotations()
+        annoArray.forEach((anno: any) => {
+          const charNum = (anno.annotationText || anno.annotationComment || "").length
+          try {
+            let pageIndex = Number(JSON.parse(anno.annotationPosition).pageIndex)
+            const _page = pageIndex + 1
+            page = _page > page ? _page : page
+            annoRecord.data[pageIndex] ??= []
+            annoRecord.data[pageIndex].push({ value: charNum, color: anno.annotationColor })
+          } catch { }
+        })
+        annoRecord.page = page
+        this.cache[cacheKey] = annoRecord
+        return annoRecord
+      }
+    }
     const key = "Progress"
     await ztoolkit.ItemTree.register(
       key,
@@ -842,10 +932,9 @@ export default class Views {
         item: Zotero.Item
       ) => {
         window.setTimeout(async () => {
-          const cacheKey = `${item.key}-getBestAttachment`
-          this.cache[cacheKey] = item.isRegularItem() && await item.getBestAttachment()
+          await update(item)
         })
-        return this.addonItem.get(item, "readingTime")?.page
+        return ""
       },
       {
         renderCellHook: (index: any, data: any, column: any) => {
@@ -856,30 +945,18 @@ export default class Views {
               height: "20px"
             }
           }) as HTMLSpanElement
-          
-          let item = ZoteroPane.itemsView.getRow(index).ref
-          let page: number = 0;
-          try {
-            page = Number(this.addonItem.get(item, "readingTime").page)
-          } catch { }
-          let annoRecord: any = { page, data: {} }
-          let pdfItem
-          const cacheKey = `${item.key}-getBestAttachment`
-          pdfItem = this.cache[cacheKey]
-          if (!pdfItem) { return span }
-          const annoArray = pdfItem.getAnnotations()
-          if (annoArray.length == 0) { return span }
-          annoArray.forEach((anno: any) => {
-            const charNum = (anno.annotationText || anno.annotationComment || "").length
-            try {
-              let pageIndex = Number(JSON.parse(anno.annotationPosition).pageIndex)
-              const _page = pageIndex + 1
-              page = _page > page ? _page : page
-              annoRecord.data[pageIndex] ??= []
-              annoRecord.data[pageIndex].push({ value: charNum, color: anno.annotationColor})
-            } catch { }
-          })
-          annoRecord.page = page
+          let selectedItems = ZoteroPane.getSelectedItems()
+          let item = ZoteroPane.getSortedItems()[index]
+          const cacheKey = `${item.key}-annoRecord`
+          let annoRecord = this.cache[cacheKey]
+          if (!annoRecord) { return span}
+          if (selectedItems.length) {
+            if (selectedItems[0].key == item.key) {
+              window.setTimeout(async () => {
+                await update(item)
+              })  
+            }
+          }
           const style = Zotero.Prefs.get(
             `${config.addonRef}.progressColumn.style`
           ) as string || "bar"
@@ -895,7 +972,6 @@ export default class Views {
           for (let i = 0; i < annoRecord.page; i++) {
             values.push(annoRecord.data[i] ? annoRecord.data[i].map((i: any)=>i.value).reduce((a: any, b: any) => a + b) : 0)
           }
-          console.log(annoRecord, values)
 
           if (style != "stack") {
             // 不是stack，需要精简数据
