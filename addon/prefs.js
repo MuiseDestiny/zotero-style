@@ -69,11 +69,14 @@ pref("extensions.zotero.__addonRef__.annotationColors", '[["general.yellow","#ff
 pref("extensions.zotero.__addonRef__.annotationColorsGroups", '[["Untitled",[["general.yellow","#ffd400"],["general.red","#ff6666"],["general.green","#5fb236"],["general.blue","#2ea8e5"],["general.purple","#a28ae5"],["general.magenta","#e56eee"],["general.orange","#f19837"],["general.gray","#aaaaaa"]]]]');
 
 pref("extensions.zotero.__addonRef__.function.itemTypeFilter.enable", true);
+
 pref("extensions.zotero.__addonRef__.function.addNumberToCollectionTree.enable", true);
+pref("extensions.zotero.__addonRef__.addNumberToCollectionTree.mode", "0");
+
 pref("extensions.zotero.__addonRef__.function.Tags.enable", true);
 
 pref("extensions.zotero.__addonRef__.function.creatorColumn.enable", true);
-pref("extensions.zotero.__addonRef__.creatorColumn.format", "${firstCreator} et al.");
+pref("extensions.zotero.__addonRef__.creatorColumn.format", "${firstCreator}");
 pref("extensions.zotero.__addonRef__.creatorColumn.slices", "0:1");
 pref("extensions.zotero.__addonRef__.creatorColumn.join", ", ");
 
@@ -82,6 +85,14 @@ pref("extensions.zotero.__addonRef__.creatorColumn.join", ", ");
 pref("extensions.zotero.__addonRef__.nestedTags.sortord", "0");
 
 pref("extensions.zotero.__addonRef__.GPT.secretKey", "");
+
+pref("extensions.zotero.__addonRef__.storage.filename", "");
+
+pref("extensions.zotero.__addonRef__.easyscholar.username", "");
+pref("extensions.zotero.__addonRef__.easyscholar.password", "");
+
+
+
 
 
 

@@ -4,11 +4,7 @@ import Views from "./modules/views";
 import Events from "./modules/events";
 import AddonItem from "./modules/item";
 import { registerPrefsScripts, registerPrefs } from "./modules/prefs";
-
-
-Zotero._AddonItemGlobal = Zotero._AddonItemGlobal || new AddonItem()
-const addonItem = Zotero._AddonItemGlobal
-
+import LocalStorage from "./modules/localStorage";
 
 async function onStartup() {
   registerPrefs();
@@ -36,20 +32,39 @@ async function onStartup() {
     Zotero.uiReadyPromise,
   ]);
   initLocale();
+  
+  // 不争不抢先加载
+  await Zotero.Promise.delay(1000)
+
   ztoolkit.UI.basicOptions.ui.enableElementRecord = false
   ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
-  if (!addonItem.item) { await addonItem.init() }
 
-  const events = new Events(addonItem)
+  // 初始化储存位置
+  let storage
+  const storageIn = Zotero.Prefs.get(`${config.addonRef}.storage.in`) as string
+  if (storageIn == "note") {
+    Zotero._AddonItemGlobal = Zotero._AddonItemGlobal || new AddonItem()
+    const addonItem = Zotero._AddonItemGlobal
+    if (!addonItem.item) { await addonItem.init() }
+    storage = addonItem
+  } else if (storageIn == "file"){
+    storage = new LocalStorage(
+      Zotero.Prefs.get(`${config.addonRef}.storage.filename`) as string
+    )
+    await storage.lock;
+  }
+  console.log(storage)
+
+  const events = new Events(storage)
   events.onInit()
   
-  const views = new Views(addonItem)
+  const views = new Views(storage)
   Zotero.ZoteroStyle.data.views = views
-  
+
   const tasks = [
     views.initTags(),
     views.createGraphView(),
-    views.renderTitleProgress(),
+    views.renderTitleColumn(),
     views.createTagsColumn(),
     views.createTextTagsColumn(),
     views.createProgressColumn(),
@@ -97,12 +112,12 @@ async function onNotify(
   ) {
     ztoolkit.log("select reader tab")
     let reader = await ztoolkit.Reader.getReader();
-    // 重置等待更新
-    addonItem.set(
-      (Zotero.Items.get(reader.itemID) as _ZoteroItem).parentItem as _ZoteroItem,
-      "annotationNumber",
-      ""
-    )
+    // // 重置等待更新
+    // addonItem.set(
+    //   (Zotero.Items.get(reader.itemID) as _ZoteroItem).parentItem as _ZoteroItem,
+    //   "annotationNumber",
+    //   ""
+    // )
     Zotero.ZoteroStyle.data.views.modifyAnnotationColors(reader);
   } else if (
     event == "select" &&

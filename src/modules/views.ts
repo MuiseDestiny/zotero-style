@@ -7,14 +7,16 @@ import field2Info from "./easyscholar";
 import utils from "./utils";
 import Bubble from "./bubble";
 import { Tags } from "./tags";
+import Requests from "E:/Github/zotero-reference/src/modules/requests";
+import LocalStorage from "./localStorage";
 
 export default class Views {
   private progress: Progress;
-  private addonItem: AddonItem;
+  private storage: AddonItem | LocalStorage;
   private cache: { [key: string]: any } = {};
   private filterFunctions: ((items: Zotero.Item[]) => Zotero.Item[])[] = [];
-  constructor(addonItem: AddonItem) {
-    this.addonItem = addonItem;
+  constructor(storage: AddonItem | LocalStorage) {
+    this.storage = storage;
     this.progress = new Progress()
     Zotero.ZoteroStyle.data.Tags = Tags;
     this.addStyle()
@@ -105,10 +107,11 @@ export default class Views {
   }
 
   /**
-   * 渲染标题进度条
+   * 渲染标题进度条，调整标签
    * 标题是必定显示的所以奇数偶数显示逻辑写在这里
    */
-  public async renderTitleProgress() {
+  public async renderTitleColumn() {
+    console.log("renderTitleColumn")
     if (!Zotero.Prefs.get(`${config.addonRef}.function.titleColumn.enable`) as boolean) { return }
     const key = "title"
     await ztoolkit.ItemTree.addRenderCellHook(
@@ -127,9 +130,9 @@ export default class Views {
         }
         const cellSpan = original(index, data, column) as HTMLSpanElement;
         // 图标替换
-        // try {
-        this.replaceCellIcon(ZoteroPane.getSortedItems()[index], cellSpan)
-        // } catch { }
+        try {
+          this.replaceCellIcon(ZoteroPane.getSortedItems()[index], cellSpan)
+        } catch { }
         let titleSpan = cellSpan.querySelector(".cell-text") as HTMLSpanElement;
         const titleHTML = titleSpan.innerHTML
         titleSpan.innerHTML = ""
@@ -141,11 +144,13 @@ export default class Views {
             properties: {
               innerHTML: titleHTML
             }
-          })
+          }
+        )
         titleSpan.appendChild(span)
         if (!Zotero.Prefs.get(
           `${config.addonRef}.titleColumn.tags`
         )) {
+          // 移除标签
           cellSpan.querySelectorAll(".tag-swatch").forEach(e => {
             e.remove()
           })
@@ -165,7 +170,7 @@ export default class Views {
           ) as string
         if (Number(opacity) == 0) { return cellSpan }
         const item = ZoteroPane.itemsView.getRow(index).ref
-        let record: Record = this.addonItem.get(item, "readingTime") as Record
+        let record: Record = this.storage.get(item, "readingTime") as Record
         if(!record) { return cellSpan }
         let values = []
         for (let i = 0; i < record.page; i++) {
@@ -223,6 +228,12 @@ export default class Views {
           prefKey: "titleColumn.selected",
           name: "Selected Color",
           type: "input",
+        },
+        {
+          prefKey: "addNumberToCollectionTree.mode",
+          name: "Number Mode",
+          type: "select",
+          values: ["0", "1", "2", "3"],
         },
       ]
     )
@@ -611,6 +622,8 @@ export default class Views {
           const span = ztoolkit.UI.createElement(document, "span", {
             styles: {
               display: "block",
+              width: "100%",
+              height: "20px"
             }
           }) as HTMLSpanElement
           if (data == "") { return span }
@@ -901,7 +914,7 @@ export default class Views {
         }
         let page: number = 0;
         try {
-          page = Number(this.addonItem.get(item, "readingTime").page)
+          page = Number(this.storage.get(item, "readingTime").page)
         } catch { }
         let annoRecord: any = { page, data: {} }
         const annoArray = pdfItem.getAnnotations()
@@ -971,7 +984,7 @@ export default class Views {
           for (let i = 0; i < annoRecord.page; i++) {
             values.push(annoRecord.data[i] ? annoRecord.data[i].map((i: any)=>i.value).reduce((a: any, b: any) => a + b) : 0)
           }
-
+          if (!values.length) { return span}
           if (style != "stack") {
             // 不是stack，需要精简数据
             if ([...values].sort((a, b) => b -a )[0] == 0) { return span}
@@ -1181,7 +1194,7 @@ export default class Views {
           const r: number = .7
           const color = {
             active: "#FF597B",
-            default: "#97DECE"
+            default: "#F9B5D0"
           }
           let b1: Bubble, b2: Bubble, c1: number, c2: number
           const optionNode = ztoolkit.UI.createElement(
@@ -1969,7 +1982,8 @@ export default class Views {
       }
     }
     let theme = ""
-    window.setInterval(async () => {
+    let id = window.setInterval(async () => {
+      if (!addon.data.alive) {return window.clearInterval(id)}
       if (!Zotero.Prefs.get(`${config.addonRef}.graphView.show`)) {
         resizer.style.height = "0px";
         container.style.height = "0";
@@ -2573,7 +2587,7 @@ export default class Views {
           // 有条目，且条目有阅读时间
           let item = getItem()
           if (!item) { return false }
-          let record = this.addonItem.get(item, "readingTime")
+          let record = this.storage.get(item, "readingTime")
           ztoolkit.log(record)
           return Zotero.Prefs.get(`${config.addonRef}.function.titleColumn.enable`) as boolean && record?.data && Object.keys(record.data).length > 0 
         },
@@ -2584,7 +2598,7 @@ export default class Views {
           const container = prompt.createCommandsContainer()
           const item = getItem() as _ZoteroItem
           prompt.inputNode.placeholder = item.getField("title")
-          const record = this.addonItem.get(item, "readingTime")
+          const record = this.storage.get(item, "readingTime")
           if (!record || !record.data || Object.keys(record.data).length == 0) {
             prompt.showTip("这里一片荒芜~")
             return
@@ -2731,7 +2745,7 @@ export default class Views {
               }
               // 写入笔记逻辑
               if (data.itemKey) {
-                this.addonItem.set(
+                this.storage.set(
                   Zotero.Items.getByLibraryAndKey(1, data.itemKey),
                   "readingTime",
                   record
@@ -3394,16 +3408,16 @@ export default class Views {
       //     // 有条目，且条目有阅读时间
       //     let item = getItem()
       //     if (!item) { return false }
-      //     let record = this.addonItem.get(item, "readingTime")
+      //     let record = this.storage.get(item, "readingTime")
       //     return record?.data && Object.keys(record.data).length > 0
       //   },
       //   callback: (prompt) => {
       //     let item = getItem() as _ZoteroItem
       //     prompt.inputNode.placeholder = item.getField("title")
       //     try {
-      //       let record = this.addonItem.get(item, "readingTime")
+      //       let record = this.storage.get(item, "readingTime")
       //       record.data = {}
-      //       this.addonItem.set(item, "readingTime", record)
+      //       this.storage.set(item, "readingTime", record)
       //     } catch { }
       //     prompt.showTip("重置成功")
       //   }
@@ -3416,8 +3430,10 @@ export default class Views {
         },
         callback: (prompt: Prompt) => {
           let item = getItem() as _ZoteroItem
-          Zotero.Prefs.set(this.addonItem.prefKey, item.key)
-          this.addonItem.item = item
+          Zotero.Prefs.set("Zotero.AddonItem.key", item.key)
+          if ("item" in this.storage) {
+            this.storage.item = item
+          }
           prompt.showTip(`设置成功，该条目下有${item.getNotes().length}条记录。`)
         }
       }
@@ -3623,6 +3639,15 @@ export default class Views {
       ) {
         (document.querySelector("#zotero-editpane-tags-tab") as HTMLSpanElement).click()
       }
+      if (target?.classList.contains("PublicationTags")) {
+        new ztoolkit.ProgressWindow("Publication Tags", {closeTime: 1000})
+          .createLine({ text: "update", type: "default" }).show()
+        try {
+          let item = ZoteroPane.getSelectedItems()[0]
+          utils.wait(item, "publication", false)
+          ztoolkit.ItemTree.refresh()
+        } catch {}
+      }
       /**
        * 2 选中一个条目后再点击触发
        */
@@ -3827,17 +3852,40 @@ export default class Views {
               if (key in this.cache) {
                 setText(this.cache[key], true)
               }
-
+              // 读取模式
+              const modeKey = `${config.addonRef}.addNumberToCollectionTree.mode`
+              const mode = Number(Zotero.Prefs.get(modeKey) as string)
+              
               // 悄悄更新
               let text: string | undefined = undefined
               if (ref._ObjectType == "Collection") { 
                 let collection = ref;
                 const childItemNumber = (await collection.getChildItems()).length
-                text = childItemNumber
-                // const offspringItemNumber = await getCollectionAllItemNumber(collection)
-                // if (childItemNumber != offspringItemNumber) {
-                //   text = `<span style="opacity: 0.5; margin-right: 6px;">${childItemNumber}</span>${offspringItemNumber}`
-                // }
+                const offspringItemNumber = await getCollectionAllItemNumber(collection)
+                switch (mode) {
+                  case 0:
+                    text = childItemNumber;
+                    break;
+                  case 1:
+                    text = offspringItemNumber
+                    break;
+                  case 2:
+                    if (childItemNumber != offspringItemNumber) {
+                      text = `<span style="opacity: 0.5; margin-right: 6px;">${childItemNumber}</span>${offspringItemNumber}`
+                    } else {
+                      text = childItemNumber
+                    }
+                    break;
+                  case 3:
+                    if (childItemNumber != offspringItemNumber) {
+                      text = `<span style="opacity: 0.5; margin-right: 6px;">${offspringItemNumber}</span>${childItemNumber}`
+                    } else {
+                      text = childItemNumber
+                    }
+                    break;
+                  default:
+                    break
+                }
               }
               else if (ref?._ObjectType == "Search") {
                 text = (await ref.search()).length

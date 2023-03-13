@@ -1,6 +1,6 @@
 {
   "name": "zotero-style",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "description": "让你的Zotero看起来更有趣",
   "config": {
     "addonName": "Zotero Style",
@@ -33,7 +33,9 @@
   "homepage": "https://github.com/muisedestiny/zotero-style#readme",
   "dependencies": {
     "3d-force-graph": "^1.71.1",
+    "d3": "^7.8.2",
     "math": "^0.0.3",
+    "pako": "^2.1.0",
     "pdfjs": "^2.4.7",
     "pdfjs-dist": "^3.4.120",
     "pixi": "^0.3.1",

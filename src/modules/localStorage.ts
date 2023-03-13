@@ -1,28 +1,32 @@
 import { config } from "../../package.json";
 
 class LocalStorage {
-  private filename: string;
+  private filename!: string;
   private cache: any;
-  private pending = false
-  constructor(name: string) {
-    const window = Zotero.getMainWindow();
-    const temp = Zotero.getTempDirectory();
-    // @ts-ignore
-    this.filename = window.OS.Path.join(temp.path.replace(temp.leafName, ""), `${name}.json`);
-    window.setTimeout(async () => {
-      await this.init()
-    })
+  public lock: _ZoteroPromiseObject;
+  constructor(filename: string) {
+    this.lock = Zotero.Promise.defer()
+    this.init(filename)
   }
 
-  async init() {
-    this.pending = true
+  async init(filename: string) {
+    const window = Zotero.getMainWindow();
+    // @ts-ignore
+    const OS = window.OS;
+    if (!(await OS.File.exists(filename))) {
+      const temp = Zotero.getTempDirectory();
+      this.filename = OS.Path.join(temp.path.replace(temp.leafName, ""), `${filename}.json`);
+    } else {
+      this.filename = filename
+    }
     try {
       const rawString = await Zotero.File.getContentsAsync(this.filename) as string
       this.cache = JSON.parse(rawString)
+      ztoolkit.log(this.cache)
     } catch {
       this.cache = {}
     }
-    this.pending = false
+    this.lock.resolve()
   }
 
   get(item: Zotero.Item, key: string) {
@@ -31,7 +35,7 @@ class LocalStorage {
   }
 
   async set(item: Zotero.Item, key: string, value: any) {
-    if (!this.cache && !this.pending) { await this.init() }
+    await this.lock.promise;
     (this.cache[item.id] ??= {})[key] = value
     window.setTimeout(async () => {
       await Zotero.File.putContentsAsync(this.filename, JSON.stringify(this.cache));

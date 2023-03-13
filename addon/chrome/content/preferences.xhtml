@@ -23,6 +23,21 @@
   </groupbox>
   <groupbox>
     <label>
+      <html:h3>Storage - Beta</html:h3>
+    </label>
+    <radiogroup preference="extensions.zotero.__addonRef__.storage.in">
+      <radio id="storage-note" label="Note" value="note" />
+      <hbox>
+        <radio id="storage-file" label="File" value="file" disabled="true"/>
+        <textbox id="storage-filename" preference="extensions.zotero.__addonRef__.storage.filename" 
+          readonly="true" flex="1" />
+        <button id="choose-path" label="Choose"/>
+      </hbox>
+    </radiogroup>
+
+  </groupbox>
+  <groupbox>
+    <label>
       <html:h3>Links</html:h3>
     </label>
     <description><label class="zotero-text-link" value="Help" 

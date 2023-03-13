@@ -1,4 +1,5 @@
 import AddonItem from "./item";
+import LocalStorage from "./localStorage";
 
 export default class Events {
 	public recordInterval = 10;  // s
@@ -12,10 +13,10 @@ export default class Events {
 		hangCount: -1
 	}
 	public intervalID: number | undefined;
-	private addonItem: AddonItem;
+	private storage: AddonItem | LocalStorage;
 	private cache: {[key: string]: any} = {};
-	constructor(addonItem: AddonItem) {
-		this.addonItem = addonItem;
+	constructor(storage: AddonItem) {
+		this.storage = storage;
 	}
 
 	public onInit() {
@@ -61,7 +62,7 @@ export default class Events {
 
 		// 数据挂载
 		const cacheKey = `readingTime-${item.key}`
-		this.cache[cacheKey] = this.cache[cacheKey] || this.addonItem.get(item, "readingTime")
+		this.cache[cacheKey] = this.cache[cacheKey] || this.storage.get(item, "readingTime")
 		if (!this.cache[cacheKey]) {
 			this.cache[cacheKey] = {
 				page: page,
@@ -73,7 +74,7 @@ export default class Events {
 		} else {
 			this.cache[cacheKey].data[pageIndex] = this.recordInterval
 		}
-		await this.addonItem.set(item, "readingTime", this.cache[cacheKey])
+		await this.storage.set(item, "readingTime", this.cache[cacheKey])
 	}
 
 	public getReader() {
