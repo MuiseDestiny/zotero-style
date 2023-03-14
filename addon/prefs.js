@@ -86,10 +86,12 @@ pref("extensions.zotero.__addonRef__.nestedTags.sortord", "0");
 
 pref("extensions.zotero.__addonRef__.GPT.secretKey", "");
 
+
+pref("extensions.zotero.__addonRef__.storage.in", "note");
 pref("extensions.zotero.__addonRef__.storage.filename", "");
 
-pref("extensions.zotero.__addonRef__.easyscholar.username", "");
-pref("extensions.zotero.__addonRef__.easyscholar.password", "");
+// pref("extensions.zotero.__addonRef__.easyscholar.username", "");
+// pref("extensions.zotero.__addonRef__.easyscholar.password", "");
 
 
 

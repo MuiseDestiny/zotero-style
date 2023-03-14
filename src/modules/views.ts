@@ -111,7 +111,7 @@ export default class Views {
    * 标题是必定显示的所以奇数偶数显示逻辑写在这里
    */
   public async renderTitleColumn() {
-    console.log("renderTitleColumn")
+    ztoolkit.log("renderTitleColumn")
     if (!Zotero.Prefs.get(`${config.addonRef}.function.titleColumn.enable`) as boolean) { return }
     const key = "title"
     await ztoolkit.ItemTree.addRenderCellHook(
@@ -623,10 +623,13 @@ export default class Views {
             styles: {
               display: "block",
               width: "100%",
-              height: "20px"
+              // height: "20px"
             }
           }) as HTMLSpanElement
-          if (data == "") { return span }
+          if (data == "") {
+            span.style.height = "20px"
+            return span
+          }
           try {
             try {
               data = JSON.parse(data.split("\n")[1])
@@ -674,7 +677,7 @@ export default class Views {
                 }
                 return s
               } catch (e) {
-                console.log(e)
+                ztoolkit.log(e)
                 return s
               }
             }
@@ -2025,6 +2028,7 @@ export default class Views {
       ) { return }
       itemKeys = _itemKeys
       for (let i = 0; i < 3; i++) {
+        ztoolkit.log(getGraph(items))
         frame.contentWindow!.postMessage(getGraph(items), "*")
         await Zotero.Promise.delay(1000)
       }
@@ -2276,7 +2280,7 @@ export default class Views {
         return prompt.inputNode.value.startsWith("> ")
       },
       callback: async (prompt) => {
-        console.log(prompt.event)
+        ztoolkit.log(prompt.event)
         if (prompt.event?.key == "Enter") {
           const secretKey = Zotero.Prefs.get(`${config.addonRef}.GPT.secretKey`)
           if (!secretKey) {
@@ -3633,12 +3637,12 @@ export default class Views {
       /**
        * 1 点击标签相关，打开侧边栏标签选项卡
        */
-      if (
-        target?.classList.contains("Tags") ||
-        target?.classList.contains("TextTags")
-      ) {
-        (document.querySelector("#zotero-editpane-tags-tab") as HTMLSpanElement).click()
-      }
+      // if (
+      //   target?.classList.contains("Tags") ||
+      //   target?.classList.contains("TextTags")
+      // ) {
+      //   (document.querySelector("#zotero-editpane-tags-tab") as HTMLSpanElement).click()
+      // }
       if (target?.classList.contains("PublicationTags")) {
         new ztoolkit.ProgressWindow("Publication Tags", {closeTime: 1000})
           .createLine({ text: "update", type: "default" }).show()

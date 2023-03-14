@@ -5,6 +5,7 @@ import Events from "./modules/events";
 import AddonItem from "./modules/item";
 import { registerPrefsScripts, registerPrefs } from "./modules/prefs";
 import LocalStorage from "./modules/localStorage";
+import GraphView from "./modules/graphView";
 
 async function onStartup() {
   registerPrefs();
@@ -32,7 +33,7 @@ async function onStartup() {
     Zotero.uiReadyPromise,
   ]);
   initLocale();
-  
+
   // 不争不抢先加载
   await Zotero.Promise.delay(1000)
 
@@ -52,18 +53,20 @@ async function onStartup() {
       Zotero.Prefs.get(`${config.addonRef}.storage.filename`) as string
     )
     await storage.lock;
+  } else {
+    return 
   }
-  console.log(storage)
+  ztoolkit.log(storage)
 
   const events = new Events(storage)
   events.onInit()
   
   const views = new Views(storage)
   Zotero.ZoteroStyle.data.views = views
-
+  await (new GraphView()).init()
   const tasks = [
     views.initTags(),
-    views.createGraphView(),
+    // views.createGraphView(),
     views.renderTitleColumn(),
     views.createTagsColumn(),
     views.createTextTagsColumn(),
@@ -78,7 +81,7 @@ async function onStartup() {
   try {
     await Promise.all(tasks);
   } catch (e) {
-    console.log("ERROR", e)
+    ztoolkit.log("ERROR", e)
   }
   await views.registerSwitchColumnsViewUI();
   try {
@@ -86,6 +89,8 @@ async function onStartup() {
     ztoolkit.ItemTree.refresh()
   } catch { }
   await views.registerCommands()
+
+
 }
 
 function onShutdown(): void {

@@ -17,25 +17,38 @@ const utils = {
         }
         if (data) { return data }
         // 开启一个异步更新影响因子
+        // 下面代码对es官方影响较大
+        // window.setTimeout(async () => {
+        //   const username = Zotero.Prefs.get(`${config.addonRef}.easyscholar.username`) as string
+        //   const password = Zotero.Prefs.get(`${config.addonRef}.easyscholar.password`) as string
+        //   if (username.length && password.length) {
+        //     await this.requests.get(
+        //       `https://easyscholar.cc/login?userName=${username}&password=${password}`
+        //     )
+        //   }
+        //   const response = await this.requests.post(
+        //     "https://easyscholar.cc/extension/listPublicationRank4",
+        //     {
+        //       publicationName: { "0": publicationTitle }
+        //     }
+        //   )
+        //   ztoolkit.log(response)
+        //   if (response && response.data) {
+        //     let data = response.data.publicationRankList[0]
+        //     if (data) {
+        //       delete data.tempID
+        //       await this.localStorage.set(item, key, data)
+        //     }
+        //   }
+        // })
         window.setTimeout(async () => {
-          const username = Zotero.Prefs.get(`${config.addonRef}.easyscholar.username`) as string
-          const password = Zotero.Prefs.get(`${config.addonRef}.easyscholar.password`) as string
-          if (username.length && password.length) {
-            await this.requests.get(
-              `https://easyscholar.cc/login?userName=${username}&password=${password}`
-            )
-          }
-          const response = await this.requests.post(
-            "https://easyscholar.cc/extension/listPublicationRank4",
-            {
-              publicationName: { "0": publicationTitle }
-            }
+          const response = await this.requests.get(
+            `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${publicationTitle}`,
           )
-          console.log(response)
+          ztoolkit.log(response)
           if (response && response.data) {
-            let data = response.data.publicationRankList[0]
+            let data = response.data[0]
             if (data) {
-              delete data.tempID
               await this.localStorage.set(item, key, data)
             }
           }
