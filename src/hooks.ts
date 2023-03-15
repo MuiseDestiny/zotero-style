@@ -63,10 +63,10 @@ async function onStartup() {
   
   const views = new Views(storage)
   Zotero.ZoteroStyle.data.views = views
-  await (new GraphView()).init()
+  
   const tasks = [
     views.initTags(),
-    // views.createGraphView(),
+    views.createGraphView(),
     views.renderTitleColumn(),
     views.createTagsColumn(),
     views.createTextTagsColumn(),
