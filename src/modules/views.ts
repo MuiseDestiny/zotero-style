@@ -624,9 +624,9 @@ export default class Views {
             styles: {
               display: "block",
               width: "100%",
-              // height: "20px"
             }
           }) as HTMLSpanElement
+          console.log(data)
           if (data == "") {
             span.style.height = "20px"
             return span
@@ -712,6 +712,9 @@ export default class Views {
                   innerText: text
                 }
               }))
+            }
+            if (!span.querySelector("span")) {
+              span.style.height = "20px"
             }
             return span;
           } catch (e) {
@@ -3426,8 +3429,9 @@ export default class Views {
       if (!tagStart) { return items }
       return items.filter((item: Zotero.Item) => {
         return (
-          // 条目本身包含此标签
-          (item.isRegularItem() && item.getTags().find((tag: { tag: string }) => tag.tag.startsWith(tagStart))) ||
+          // 条目/笔记本身包含此标签
+          (item.getTags && item.getTags().find((tag: { tag: string }) => tag.tag.startsWith(tagStart))) ||
+          // PDF附件包含词标签
           (item.isAttachment()) && item.attachmentContentType == "application/pdf" && item.getAnnotations().some(annoItem => {
             return annoItem.getTags().some(tag => tag.tag.startsWith(tagStart))
           })

@@ -42,10 +42,10 @@ const utils = {
         //   }
         // })
         window.setTimeout(async () => {
+          this.requests.cache = {}
           const response = await this.requests.get(
-            `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${publicationTitle}`,
+            `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${escape(publicationTitle)}`,
           )
-          ztoolkit.log(response)
           if (response && response.data) {
             let data = response.data[0]
             if (data) {

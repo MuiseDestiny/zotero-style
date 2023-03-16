@@ -7,6 +7,14 @@ const d3 = require("./d3")
 export default class GraphView {
   private renderer: any;
   private container!: HTMLDivElement;
+  private urls: any = {
+    Zotero: "https://www.zotero.org/",
+    Style: "https://github.com/MuiseDestiny/zotero-style",
+    Help: "https://github.com/MuiseDestiny/zotero-style#zotero-style",
+    Share: "https://github.com/MuiseDestiny/zotero-style/issues/48",
+    Issue: "https://github.com/MuiseDestiny/zotero-style/issues/new/choose",
+    Plugins: "https://zotero-chinese.gitee.io/zotero-plugins/#/"
+  }
   private cache: any ={};
   private mode = "default"
   private modeFunction: {[mode: string]: Function}
@@ -16,6 +24,7 @@ export default class GraphView {
       related: this.getGraphByRelatedLink.bind(this),
       author: this.getGraphByAuthorLink.bind(this),
       tag: this.getGraphByTagLink.bind(this),
+      journal: this.getGraphByPublicationLink.bind(this),
     };
   }
 
@@ -33,12 +42,12 @@ export default class GraphView {
     newNode.setAttribute("tooltiptext", "Hi, I am your Style.")
     newNode.setAttribute("command", "")
     newNode.setAttribute("oncommand", "")
-    newNode.addEventListener("click", () => {
+    newNode.addEventListener("click", async () => {
       let node = this.container
       if (!node) { return }
       if (node.style.display == "none") {
         node.style.display = ""
-        this.setData(this.getGraph(true))
+        this.setData(await this.getGraph(true))
         Zotero.Prefs.set(`${config.addonRef}.graphView.enable`, true)
       } else {
         node.style.display = "none"
@@ -64,26 +73,76 @@ export default class GraphView {
     return `${author}, ${year}`
   }
 
-  private getGraph(cache: boolean=false) {
+  private async getGraph(cache: boolean=false) {
     const items = ZoteroPane.getSortedItems()
     const collection = ZoteroPane.getSelectedCollection()
     const collectionKey = collection ? collection.key : "My Library"
     if (cache && (this.cache[this.mode] ??= {})[collectionKey]) { return this.cache[this.mode][collectionKey]} 
-    const graph = this.modeFunction[this.mode](items);
+    const graph = await this.modeFunction[this.mode](items);
     (this.cache[this.mode] ??= {})[collectionKey] = graph
     return graph
   }
 
-  private getGraphByDefaultLink(items: Zotero.Item[]) {
-    const graph = {
+  private getGraphByDefaultLink() {
+    return {
       nodes: {
-        Sun: { links: { Earth: true, Moon: true } },
-        Earth: { links: { Sun: true, Moon: true, Zotero: true } },
-        Moon: { links: { Earth: true, Moon: true } },
-        Zotero: { links: { You: true } },
-        You: { links: {} },
-        "Hi, I'm Style.": { links: {} }
+        Zotero: { links: { Style: true }, type: "url"},
+        Style: { links: { Zotero: true }, type: "url" },
+        Help: { links: { Style: true }, type: "url" },
+        Share: { links: { Style: true }, type: "url" },
+        Issue: { links: { Style: true }, type: "url" },
+        Plugins: {links: {Zotero: true, Style: true}, type: "url"}
       }
+    }
+  }
+
+  private async _getGraphByDefaultLink(items: Zotero.Item[]) {
+    const recentDay = "Recent Day"
+    const recentWeek = "Recent Week"
+    const recentMonth = "Recent Month"
+    function getTimeRange(date: Date) {
+      var today = new window.Date(); // 当前日期和时间
+      // @ts-ignore
+      var deltaInMs = today - date; // 计算与当前日期之间的时间差，单位为毫秒
+
+      var oneDayMs = 24 * 60 * 60 * 1000; // 一天的毫秒数
+      var oneWeekMs = 7 * oneDayMs; // 一周的毫秒数
+      var oneMonthMs = 30 * oneDayMs; // 一个月的毫秒数
+
+      if (deltaInMs < oneDayMs) {
+        return { type: recentDay, delta: deltaInMs };
+      } else if (deltaInMs < oneWeekMs) {
+        return { type: recentWeek, delta: deltaInMs };
+      } else if (deltaInMs < oneMonthMs) {
+        return { type: recentMonth, delta: deltaInMs };
+      } else {
+        return
+      }
+    }
+    items = ZoteroPane.getSortedItems() as Zotero.Item[]
+    let deltaItems: any = {
+      recentDay: [],
+      recentWeek: [],
+      recentMonth: []
+    }
+    items.filter(i => i.isRegularItem()).forEach(item => {
+      let date = new window.Date(item.dateModified) as Date
+      let info = getTimeRange(date)
+      if (info) {
+        deltaItems[info.type].push({ item, delta: info.delta})
+      }
+    })
+    const graph: any = {
+      nodes: {}
+    }
+    
+    for (let deltaType in deltaItems) {
+      graph.nodes[deltaType] ??= { links: {} }
+      const items = deltaItems[deltaType]
+      items.forEach((item: any) => {
+        graph.nodes[item.item.id] = { links: { deltaType: true }, type: "item" }
+        graph.nodes[deltaType].links[item.item.id] = true
+      })
     }
     return graph
   }
@@ -147,6 +206,14 @@ export default class GraphView {
     return this.getGraphByItemArrLink(items, getTags)
   }
 
+  private getGraphByPublicationLink(items: Zotero.Item[]) {
+    let getPublicationTitle = (item: Zotero.Item) => {
+      return [item.getField("publicationTitle")]
+    }
+    return this.getGraphByItemArrLink(items, getPublicationTitle)
+  }
+
+
   private async createContainer() {
     document.querySelectorAll("#graph").forEach(e => e.remove());
     document.querySelectorAll(".resizer").forEach(e => e.remove())
@@ -155,14 +222,13 @@ export default class GraphView {
     }
     const mainNode = document.querySelector("#item-tree-main-default")! as HTMLDivElement
     // 图形容器
+    const minHeight = 200
     const container = ztoolkit.UI.createElement(document, "div", {
       styles: {
         width: "100%",
-        minHeight: "400px",
-        borderTop: "2px solid #cecece",
-        position: "relative"
-        // display: Zotero.Prefs.get(`${config.addonRef}.graphView.enable`) ? "" : "none"
-        // display: ""
+        minHeight: `${minHeight}px`,
+        height: Zotero.Prefs.get(`${config.addonRef}.graphView.height`) as string,
+        display: Zotero.Prefs.get(`${config.addonRef}.graphView.enable`) ? "" : "none"
       }
     })
     // 选项
@@ -219,9 +285,9 @@ export default class GraphView {
         listeners: [
           {
             type: "click",
-            listener: () => {
+            listener: async () => {
               this.mode = mode
-              this.setData(this.getGraph(true))
+              this.setData(await this.getGraph(true))
               optionContainer.querySelectorAll(".option").forEach((e: any)=>e.style.backgroundColor = color.default)
               optionNode.style.backgroundColor = color.active
             }
@@ -250,9 +316,6 @@ export default class GraphView {
     }
     const frame = ztoolkit.UI.createElement(document, "iframe", { namespace: "html" }) as HTMLIFrameElement
     frame.setAttribute("src", `chrome://${config.addonRef}/content/dist/index.html`)
-    // frame.setAttribute("src", ``)
-
-    frame.style.height = "500px"
     frame.style.border = "none"
     frame.style.outline = "none"
     frame.style.width = "100%"
@@ -263,6 +326,50 @@ export default class GraphView {
     mainNode.append(container)
     this.container = container
     await this.initIFrame(frame)
+
+    // 调节高度
+    const resizer = ztoolkit.UI.createElement(document, "div", {
+      styles: {
+        height: `1px`,
+        width: "100%",
+        backgroundColor: "#cecece",
+        cursor: "ns-resize",
+      },
+    })
+    container.insertBefore(resizer, frame)
+    let y = 0, x = 0;
+    let h = 0, w = 0;
+    const mouseDownHandler = function (e: MouseEvent) {
+      frame.style.display = "none"
+      y = e.clientY;
+      x = e.clientX;
+      const rect = container.getBoundingClientRect()
+      h = rect.height;
+      w = rect.width;
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
+    };
+    const mouseMoveHandler = (e: MouseEvent) => {
+      const dy = e.clientY - y;
+      let hh = h - dy
+      const height = `${hh <= minHeight ? minHeight : hh}px`
+      container.style.height = height;
+      window.setTimeout(() => {
+        frame.style.height = height;
+        // @ts-ignore
+        frame.contentDocument!.querySelector("#graph-view").style.height = height;
+        this.renderer.onResize()
+        Zotero.Prefs.set(`${config.addonRef}.graphView.height`, height)
+      })
+    };
+    const mouseUpHandler = () => {
+      frame.style.display = ""
+      this.renderer.onResize()
+      document.removeEventListener('mousemove', mouseMoveHandler);
+      document.removeEventListener('mouseup', mouseUpHandler);
+    };
+    resizer.addEventListener('mousedown', mouseDownHandler);
+
   }
 
 
@@ -303,16 +410,23 @@ export default class GraphView {
     /**
      * 点击节点定位文献
      */
-    renderer.onNodeClick = (e: any, id: string, type: number) => {
-      userSelect = false
-      ZoteroPane.itemsView.selectItem(Number(id))
+    renderer.onNodeClick = (e: any, id: string, type: string) => {
+      console.log(id, type)
+      if (type == "item") {
+        userSelect = false
+        ZoteroPane.itemsView.selectItem(Number(id))
+      } else if (type == "url") {
+        Zotero.launchURL(this.urls[id]);
+      }
     }
     /**
      * 双击关系图谱空白分析当前图谱
      */
     frame.addEventListener("dblclick", () => {
       // 分析链接
-      this.setData(this.getGraph(ZoteroPane.getSortedItems()))
+      window.setTimeout(async () => {
+        this.setData(await this.getGraph())
+      })
     })
 
     /**
@@ -327,7 +441,7 @@ export default class GraphView {
      * 加载一个默认图谱
      */
     
-    this.setData(this.getGraph())
+    this.setData(await this.getGraph())
   }
 
   private setData(graph: any) {
