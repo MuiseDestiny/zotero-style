@@ -24,7 +24,7 @@ export default class GraphView {
       related: this.getGraphByRelatedLink.bind(this),
       author: this.getGraphByAuthorLink.bind(this),
       tag: this.getGraphByTagLink.bind(this),
-      journal: this.getGraphByPublicationLink.bind(this),
+      publication: this.getGraphByPublicationLink.bind(this),
     };
   }
 
