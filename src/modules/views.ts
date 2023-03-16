@@ -17,12 +17,12 @@ export default class Views {
   private cache: { [key: string]: any } = {};
   private filterFunctions: ((items: Zotero.Item[]) => Zotero.Item[])[] = [];
   constructor(storage: AddonItem | LocalStorage) {
+    Zotero[config.addonInstance].data.views = this
     this.storage = storage;
     this.progress = new Progress()
     Zotero.ZoteroStyle.data.Tags = Tags;
     this.addStyle()
-    const filterFunctions = this.filterFunctions
-    if (!Zotero.CollectionTreeRow._getItems) {
+    try {
       ztoolkit.patch(
         Zotero.CollectionTreeRow.prototype, "getItems", config.addonRef,
         (original) =>
@@ -30,8 +30,14 @@ export default class Views {
             // @ts-ignore
             let items = await original.call(this);
             const originalLength = items.length
-            for (let i = 0; i < filterFunctions.length; i++){
-              items = filterFunctions[i](items)
+            try {
+              if (!Zotero[config.addonInstance]) {return items}
+              const filterFunctions = Zotero[config.addonInstance].data.views.filterFunctions
+              for (let i = 0; i < filterFunctions.length; i++){
+                items = filterFunctions[i](items)
+              }
+            } catch {
+
             }
             // 等加载结束后尝试打开，只负责打开，不折叠
             window.setTimeout(async () => {
@@ -52,8 +58,7 @@ export default class Views {
             return items
           }
       )
-      Zotero.CollectionTreeRow._getItems = true
-    }
+    } catch {}
   }
 
   public addStyle() {
@@ -342,25 +347,27 @@ export default class Views {
     if (!Zotero.Prefs.get(`${config.addonRef}.function.tagsColumn.enable`) as boolean) { return } 
     // 用于分离多emoj，很魔鬼的bug
     const runes = require("runes")
-    // 新增加的标签列，在调用Zotero.Tags，setColor时不会刷新
-    ztoolkit.patch(Zotero.Tags, "setColor", config.addonRef + "setColor", (original) => {
-      return async (id: number, name: string, color: string, pos: number) => {
-        await original.call(Zotero.Tags, id, name, color, pos)
-        window.setTimeout(async () => {
-          // @ts-ignore
-          await ztoolkit.ItemTree.refresh();
-        })
-      }
-    })
-    ztoolkit.patch(Zotero.Tags, "removeFromLibrary", config.addonRef + "removeFromLibrary", (original) => {
-      return async (libraryID: number, tagIDs: number[]) => {
-        await original.call(Zotero.Tags, libraryID, tagIDs)
-        window.setTimeout(async () => {
-          // @ts-ignore
-          await ztoolkit.ItemTree.refresh();
-        })
-      }
-    })
+    try {
+      // 新增加的标签列，在调用Zotero.Tags，setColor时不会刷新
+      ztoolkit.patch(Zotero.Tags, "setColor", config.addonRef + "setColor", (original) => {
+        return async (id: number, name: string, color: string, pos: number) => {
+          await original.call(Zotero.Tags, id, name, color, pos)
+          window.setTimeout(async () => {
+            // @ts-ignore
+            await ztoolkit.ItemTree.refresh();
+          })
+        }
+      })
+      ztoolkit.patch(Zotero.Tags, "removeFromLibrary", config.addonRef + "removeFromLibrary", (original) => {
+        return async (libraryID: number, tagIDs: number[]) => {
+          await original.call(Zotero.Tags, libraryID, tagIDs)
+          window.setTimeout(async () => {
+            // @ts-ignore
+            await ztoolkit.ItemTree.refresh();
+          })
+        }
+      })
+    } catch {}
 
     const key = "Tags"
     await ztoolkit.ItemTree.register(
@@ -1090,11 +1097,10 @@ export default class Views {
                   display: "inline-block",
                   height: "1em",
                   width: "1em",
-                  textAlgin: "center",
                   color: color,
                   padding: `0 ${padding}em`,
                   fontSize: `${size}em`,
-                  textAlign: "center"
+                  textAlign: "center",
                 },
                 properties: {
                   innerText: text
@@ -1280,9 +1286,11 @@ export default class Views {
     // toolbar UI
     const toolbar = document.querySelector("#zotero-items-toolbar") as XUL.Element
     toolbar.onmouseenter = () => {
+      if (!Zotero[config.addonInstance]) { return }
       updateOptionNode(-1)
     }
     toolbar.onmouseleave = () => {
+      if (!Zotero[config.addonInstance]) { return }
       switchContainer.style.opacity = "0"
     }
     const switchContainer = toolbar.insertBefore(
@@ -3407,21 +3415,23 @@ export default class Views {
       await Zotero.Promise.delay(100)
     }
     const tagsUI = new Tags();
-    ztoolkit.patch(
-      ZoteroPane.tagSelector,
-      "render",
-      config.addonRef,
-      (original) => 
-        () => {
-          const res = original.apply(ZoteroPane.tagSelector)
-          window.setTimeout(async () => {
-            if (!((document.querySelector(".nested-tags-box") as HTMLDivElement)?.style.display == "none")) {
-              await tagsUI.init();
-            }
-          }) 
-          return res
-        }
-    )
+    try {
+      ztoolkit.patch(
+        ZoteroPane.tagSelector,
+        "render",
+        config.addonRef,
+        (original) => 
+          () => {
+            const res = original.apply(ZoteroPane.tagSelector)
+            window.setTimeout(async () => {
+              if (!((document.querySelector(".nested-tags-box") as HTMLDivElement)?.style.display == "none")) {
+                await tagsUI.init();
+              }
+            }) 
+            return res
+          }
+      )
+    } catch {}
     window.setTimeout(async () => {
       await tagsUI.init();
     }, 5000)
@@ -3442,156 +3452,164 @@ export default class Views {
     })
 
     // Zotero.Reader.open(item.id, location
-    ztoolkit.patch(
-      Zotero.Reader,
-      "open",
-      config.addonRef,
-      (original) =>
-        async (id: number, location: { pageIndex: number, annotationKey: string }, ...other: any) => {
-          if (!location) {
-            const tagStart = tagsUI.getTagStart()
-            if (tagStart) { 
-              const attItem = Zotero.Items.get(id) as Zotero.Item;
-              const annoItem = attItem.getAnnotations()
-                .find(annoItem => {
-                  return annoItem.getTags().find(tag => tag.tag.startsWith(tagStart));
-                })
-              if (annoItem) {
-                location = {
-                  pageIndex: Number(annoItem.annotationPageLabel) - 1,
-                  annotationKey: annoItem.key as string
-                }
-              }
-             }
-          }
-          window.setTimeout(async () => {
-            // 随着缩放它会一直闪烁，这个bug，Zotero官方一直没修复
-            // 所以将它替换为border形式，即使不消失也不会太影响观感
-            const win = (
-              (await ztoolkit.Reader.getReader() as _ZoteroReaderInstance)._iframeWindow as any
-            ).wrappedJSObject
-            ztoolkit.UI.appendElement({
-              tag: "style",
-              ignoreIfExists: true,
-              properties: {
-                innerHTML: `
-                  .layer-blink .rect {
-                    background-color: transparent !important;
-                    border: 2px solid deeppink;
+    // if (!Zotero.Reader._open) {
+    try {
+      ztoolkit.patch(
+        Zotero.Reader,
+        "open",
+        config.addonRef,
+        (original) =>
+          // @ts-ignore
+          async (id: number, location: { pageIndex: number, annotationKey: string }, ...other: any) => {
+            if (!location) {
+              const tagStart = tagsUI.getTagStart()
+              if (tagStart) { 
+                const attItem = Zotero.Items.get(id) as Zotero.Item;
+                const annoItem = attItem.getAnnotations()
+                  .find(annoItem => {
+                    return annoItem.getTags().find(tag => tag.tag.startsWith(tagStart));
+                  })
+                if (annoItem) {
+                  location = {
+                    pageIndex: Number(annoItem.annotationPageLabel) - 1,
+                    annotationKey: annoItem.key as string
                   }
-                `
-              },
-            }, win.document.documentElement as any);
-          }, 0)
-          return original.call(Zotero.Reader, id, location, ...other)
-        }
-    )
+                }
+                }
+            }
+            window.setTimeout(async () => {
+              // 随着缩放它会一直闪烁，这个bug，Zotero官方一直没修复
+              // 所以将它替换为border形式，即使不消失也不会太影响观感
+              const win = (
+                (await ztoolkit.Reader.getReader() as _ZoteroReaderInstance)._iframeWindow as any
+              ).wrappedJSObject
+              ztoolkit.UI.appendElement({
+                tag: "style",
+                ignoreIfExists: true,
+                properties: {
+                  innerHTML: `
+                    .layer-blink .rect {
+                      background-color: transparent !important;
+                      border: 2px solid deeppink;
+                    }
+                  `
+                },
+              }, win.document.documentElement as any);
+            }, 0)
+            return original.call(Zotero.Reader, id, location, ...other)
+          }
+      )
+    } catch {}
+    //   Zotero.Reader._open = true
+    // }
   }
 
   public async addNumberToCollectionTree() {
     if (!Zotero.Prefs.get(`${config.addonRef}.function.addNumberToCollectionTree.enable`) as boolean) { return }
-    ztoolkit.patch(
-      ZoteroPane.collectionsView,
-      "renderItem",
-      config.addonRef,
-      (original) =>
-        (index: number, selection: object, oldDiv: HTMLDivElement, columns: any[]) => {
-          const div = original.call(ZoteroPane.collectionsView, index, selection, oldDiv, columns)
-          const ref = ZoteroPane.collectionsView.getRow(index).ref!
-          if (index > 0) {
-            let key: string;
-            try {
-              key = JSON.stringify(ref.key || ref) + "collection-add-number"
-            } catch { return div }
-            window.setTimeout(async () => {
-              let getCollectionAllItemNumber = async (c: any) => {
-                let s = (await c.getChildItems()).length
-                if (c.hasChildCollections()) {
-                  let cs = c.getChildCollections()
-                  for (let i = 0; i < cs.length; i++) {
-                    s += await getCollectionAllItemNumber(cs[i])
+    try {
+      ztoolkit.patch(
+        ZoteroPane.collectionsView,
+        "renderItem",
+        config.addonRef,
+        (original) =>
+          (index: number, selection: object, oldDiv: HTMLDivElement, columns: any[]) => {
+            const div = original.call(ZoteroPane.collectionsView, index, selection, oldDiv, columns)
+            const ref = ZoteroPane.collectionsView.getRow(index).ref!
+            if (index > 0) {
+              let key: string;
+              try {
+                key = JSON.stringify(ref.key || ref) + "collection-add-number"
+              } catch { return div }
+              window.setTimeout(async () => {
+                let getCollectionAllItemNumber = async (c: any) => {
+                  let s = (await c.getChildItems()).length
+                  if (c.hasChildCollections()) {
+                    let cs = c.getChildCollections()
+                    for (let i = 0; i < cs.length; i++) {
+                      s += await getCollectionAllItemNumber(cs[i])
+                    }
+                  }
+                  return s
+                }
+                let setText = (text: string | undefined, force: boolean = false) => {
+                  if (text && ((!force && text != this.cache[key]) || force)) {
+                    this.cache[key] = text;
+                    const primary = div.querySelector(".primary")
+                    const numberNode = primary.querySelector(".number")
+                    if (numberNode) {
+                      numberNode.innerHTML = text
+                    } else {
+                      ztoolkit.UI.appendElement({
+                        tag: "span",
+                        classList: [config.addonRef],
+                        styles: {
+                          display: "inline-block",
+                          flex: "1"
+                        }
+                      }, primary)
+                      ztoolkit.UI.appendElement({
+                        tag: "span",
+                        classList: [config.addonRef, "number"],
+                        styles: {
+                          marginRight: "6px",
+                        },
+                        properties: {
+                          innerHTML: text
+                        }
+                      }, primary)
+                    }
                   }
                 }
-                return s
-              }
-              let setText = (text: string | undefined, force: boolean = false) => {
-                if (text && ((!force && text != this.cache[key]) || force)) {
-                  this.cache[key] = text;
-                  const primary = div.querySelector(".primary")
-                  const numberNode = primary.querySelector(".number")
-                  if (numberNode) {
-                    numberNode.innerHTML = text
-                  } else {
-                    ztoolkit.UI.appendElement({
-                      tag: "span",
-                      classList: [config.addonRef],
-                      styles: {
-                        display: "inline-block",
-                        flex: "1"
+  
+                // 缓存读取
+                if (key in this.cache) {
+                  setText(this.cache[key], true)
+                }
+                // 读取模式
+                const modeKey = `${config.addonRef}.addNumberToCollectionTree.mode`
+                const mode = Number(Zotero.Prefs.get(modeKey) as string)
+                
+                // 悄悄更新
+                let text: string | undefined = undefined
+                if (ref._ObjectType == "Collection") { 
+                  let collection = ref;
+                  const childItemNumber = (await collection.getChildItems()).length
+                  const offspringItemNumber = await getCollectionAllItemNumber(collection)
+                  switch (mode) {
+                    case 0:
+                      text = childItemNumber;
+                      break;
+                    case 1:
+                      text = offspringItemNumber
+                      break;
+                    case 2:
+                      if (childItemNumber != offspringItemNumber) {
+                        text = `<span style="opacity: 0.5; margin-right: 6px;">${childItemNumber}</span>${offspringItemNumber}`
+                      } else {
+                        text = childItemNumber
                       }
-                    }, primary)
-                    ztoolkit.UI.appendElement({
-                      tag: "span",
-                      classList: [config.addonRef, "number"],
-                      styles: {
-                        marginRight: "6px",
-                      },
-                      properties: {
-                        innerHTML: text
+                      break;
+                    case 3:
+                      if (childItemNumber != offspringItemNumber) {
+                        text = `<span style="opacity: 0.5; margin-right: 6px;">${offspringItemNumber}</span>${childItemNumber}`
+                      } else {
+                        text = childItemNumber
                       }
-                    }, primary)
+                      break;
+                    default:
+                      break
                   }
                 }
-              }
-
-              // 缓存读取
-              if (key in this.cache) {
-                setText(this.cache[key], true)
-              }
-              // 读取模式
-              const modeKey = `${config.addonRef}.addNumberToCollectionTree.mode`
-              const mode = Number(Zotero.Prefs.get(modeKey) as string)
-              
-              // 悄悄更新
-              let text: string | undefined = undefined
-              if (ref._ObjectType == "Collection") { 
-                let collection = ref;
-                const childItemNumber = (await collection.getChildItems()).length
-                const offspringItemNumber = await getCollectionAllItemNumber(collection)
-                switch (mode) {
-                  case 0:
-                    text = childItemNumber;
-                    break;
-                  case 1:
-                    text = offspringItemNumber
-                    break;
-                  case 2:
-                    if (childItemNumber != offspringItemNumber) {
-                      text = `<span style="opacity: 0.5; margin-right: 6px;">${childItemNumber}</span>${offspringItemNumber}`
-                    } else {
-                      text = childItemNumber
-                    }
-                    break;
-                  case 3:
-                    if (childItemNumber != offspringItemNumber) {
-                      text = `<span style="opacity: 0.5; margin-right: 6px;">${offspringItemNumber}</span>${childItemNumber}`
-                    } else {
-                      text = childItemNumber
-                    }
-                    break;
-                  default:
-                    break
+                else if (ref?._ObjectType == "Search") {
+                  text = (await ref.search()).length
                 }
-              }
-              else if (ref?._ObjectType == "Search") {
-                text = (await ref.search()).length
-              }
-              setText(text as string)
-            })
+                setText(text as string)
+              })
+            }
+            return div
           }
-          return div
-        }
-    )
+      )
+    } catch {}
   }
 }
 

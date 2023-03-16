@@ -34,11 +34,8 @@ async function onStartup() {
   ]);
   initLocale();
 
-  // 不争不抢先加载
+  // // 不争不抢先加载
   await Zotero.Promise.delay(1000)
-
-  ztoolkit.UI.basicOptions.ui.enableElementRecord = false
-  ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
 
   // 初始化储存位置
   let storage
@@ -62,7 +59,6 @@ async function onStartup() {
   events.onInit()
   
   const views = new Views(storage)
-  Zotero.ZoteroStyle.data.views = views
   
   const tasks = [
     views.initTags(),
