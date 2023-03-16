@@ -94,12 +94,21 @@ async function onStartup() {
 }
 
 function onShutdown(): void {
-  ztoolkit.log("zotero style onShutdown")
-  ztoolkit.unregisterAll()
-  ztoolkit.UI.unregisterAll()
-  ztoolkit.ItemTree.unregisterAll()
-  addon.data.alive = false;
-  delete Zotero.ZoteroStyle;
+  try {
+    ztoolkit.log("zotero style onShutdown")
+    ztoolkit.unregisterAll()
+    ztoolkit.UI.unregisterAll()
+    ztoolkit.ItemTree.unregisterAll()
+    // 移除创建的按钮
+    document.querySelector("#zotero-style-show-hide-graph-view")?.remove();
+    // 恢复嵌套标签
+    (document.querySelector(".tag-selector") as HTMLDivElement).style.display = ""
+  } catch (e) {
+    console.log("ERROR onShutdown", e)
+  } finally {
+    addon.data.alive = false;
+    delete Zotero.ZoteroStyle;
+  }
 }
 
 async function onNotify(

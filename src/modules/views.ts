@@ -22,35 +22,38 @@ export default class Views {
     Zotero.ZoteroStyle.data.Tags = Tags;
     this.addStyle()
     const filterFunctions = this.filterFunctions
-    ztoolkit.patch(
-      Zotero.CollectionTreeRow.prototype, "getItems", config.addonRef,
-      (original) =>
-        async function () {
-          // @ts-ignore
-          let items = await original.call(this);
-          const originalLength = items.length
-          for (let i = 0; i < filterFunctions.length; i++){
-            items = filterFunctions[i](items)
-          }
-          // 等加载结束后尝试打开，只负责打开，不折叠
-          window.setTimeout(async () => {
-            if (originalLength > items.length) {
-              const filterItems = ZoteroPane.getSortedItems()
-              for (let i = filterItems.length - 1; i >= 0; i--) {
-                let _item = filterItems[i]
-                if (
-                  _item.isRegularItem() &&
-                  !items.find((item: Zotero.Item) => item.id == _item.id) &&
-                  !ZoteroPane.itemsView.isContainerOpen(i)
-                ) {
-                  await ZoteroPane.itemsView.toggleOpenState(i)
+    if (!Zotero.CollectionTreeRow._getItems) {
+      ztoolkit.patch(
+        Zotero.CollectionTreeRow.prototype, "getItems", config.addonRef,
+        (original) =>
+          async function () {
+            // @ts-ignore
+            let items = await original.call(this);
+            const originalLength = items.length
+            for (let i = 0; i < filterFunctions.length; i++){
+              items = filterFunctions[i](items)
+            }
+            // 等加载结束后尝试打开，只负责打开，不折叠
+            window.setTimeout(async () => {
+              if (originalLength > items.length) {
+                const filterItems = ZoteroPane.getSortedItems()
+                for (let i = filterItems.length - 1; i >= 0; i--) {
+                  let _item = filterItems[i]
+                  if (
+                    _item.isRegularItem() &&
+                    !items.find((item: Zotero.Item) => item.id == _item.id) &&
+                    !ZoteroPane.itemsView.isContainerOpen(i)
+                  ) {
+                    await ZoteroPane.itemsView.toggleOpenState(i)
+                  }
                 }
               }
-            }
-          }, 0)
-          return items
-        }
-    )
+            }, 0)
+            return items
+          }
+      )
+      Zotero.CollectionTreeRow._getItems = true
+    }
   }
 
   public addStyle() {
@@ -626,7 +629,6 @@ export default class Views {
               width: "100%",
             }
           }) as HTMLSpanElement
-          console.log(data)
           if (data == "") {
             span.style.height = "20px"
             return span
