@@ -281,4 +281,5 @@ Two ways display your tags after assigning color and position: (1) you can open 
 - [endnote](https://buy.endnote.com/)
 - [obsidian](https://help.obsidian.md/Obsidian/Index)
 - [tag-wrangler](https://github.com/pjeby/tag-wrangler)
+- [chatGPT](https://chat.openai.com/)
 
