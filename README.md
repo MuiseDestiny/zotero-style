@@ -23,8 +23,6 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 <img src="https://user-images.githubusercontent.com/51939531/220922783-b7d78b5f-6cc3-4aff-8581-2e6ca341aec5.gif" width="100%" height="100%">
 
 
-![graph-view](https://user-images.githubusercontent.com/51939531/225794470-ec1487a2-172d-4c4f-9524-7aee7106db89.png)
-
 ### Title
 
 > As the background of title, reading progress visually reflect the distribution of your reading time of each page for the PDF under a item, the darker the color the longer the reading time.
