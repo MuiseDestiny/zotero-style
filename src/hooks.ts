@@ -95,6 +95,7 @@ function onShutdown(): void {
     ztoolkit.unregisterAll()
     ztoolkit.UI.unregisterAll()
     ztoolkit.ItemTree.unregisterAll()
+    
     // 移除创建的按钮
     document.querySelector("#zotero-style-show-hide-graph-view")?.remove();
     // 恢复嵌套标签

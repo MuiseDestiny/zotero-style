@@ -1833,6 +1833,7 @@ export default class Views {
   public async createGraphView() {
     if (!Zotero.Prefs.get(`${config.addonRef}.function.graphView.enable`) as boolean) { return }
     await (new GraphView()).init();
+
   }
 
   /**

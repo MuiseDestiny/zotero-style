@@ -49,6 +49,7 @@ export default class Bubble {
         window.clearTimeout(Number(closeTimer))
       }
       // 透明度
+      ele.style.display = ""
       ele.style.opacity = "1"
     } else {
       ele = ztoolkit.UI.createElement(document, "div", {

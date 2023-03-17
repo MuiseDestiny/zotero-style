@@ -43,9 +43,14 @@ const utils = {
         // })
         window.setTimeout(async () => {
           this.requests.cache = {}
-          const response = await this.requests.get(
+          let response = await this.requests.get(
             `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${escape(publicationTitle)}`,
           )
+          response = response || await this.requests.get(
+            `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${publicationTitle}`,
+          )
+          console.log(
+            response)
           if (response && response.data) {
             let data = response.data[0]
             if (data) {

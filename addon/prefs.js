@@ -3,6 +3,8 @@ pref("extensions.zotero.__addonRef__.enable", true);
 pref("extensions.zotero.__addonRef__.function.graphView.enable", true);
 pref("extensions.zotero.__addonRef__.graphView.show", false);
 pref("extensions.zotero.__addonRef__.graphView.height", "400px");
+pref("extensions.zotero.__addonRef__.graphView.theme", "light");
+
 
 pref("extensions.zotero.__addonRef__.function.tagsColumn.enable", true);
 pref("extensions.zotero.__addonRef__.tagsColumn.margin", "0.35");
@@ -10,7 +12,7 @@ pref("extensions.zotero.__addonRef__.tagsColumn.align", "left");
 
 pref("extensions.zotero.__addonRef__.function.textTagsColumn.enable", true);
 pref("extensions.zotero.__addonRef__.textTagsColumn.prefix", "#");
-pref("extensions.zotero.__addonRef__.textTagsColumn.match", "");
+pref("extensions.zotero.__addonRef__.textTagsColumn.match", "#");
 pref("extensions.zotero.__addonRef__.textTagsColumn.opacity", "0.5");
 pref("extensions.zotero.__addonRef__.textTagsColumn.backgroundColor", "#fadec9");
 pref("extensions.zotero.__addonRef__.textTagsColumn.textColor", "black");

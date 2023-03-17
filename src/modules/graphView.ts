@@ -7,6 +7,7 @@ const d3 = require("./d3")
 export default class GraphView {
   private renderer: any;
   private container!: HTMLDivElement;
+  private resizer!: HTMLDivElement;
   private urls: any = {
     Zotero: "https://www.zotero.org/",
     Style: "https://github.com/MuiseDestiny/zotero-style",
@@ -14,6 +15,10 @@ export default class GraphView {
     Share: "https://github.com/MuiseDestiny/zotero-style/issues/48",
     Issue: "https://github.com/MuiseDestiny/zotero-style/issues/new/choose",
     Plugins: "https://zotero-chinese.gitee.io/zotero-plugins/#/"
+  }
+  private functions: any = {
+    light: () => {this.setTheme("light")},
+    dark: () => { this.setTheme("dark") },
   }
   private cache: any ={};
   private mode = "default"
@@ -24,7 +29,6 @@ export default class GraphView {
       related: this.getGraphByRelatedLink.bind(this),
       author: this.getGraphByAuthorLink.bind(this),
       tag: this.getGraphByTagLink.bind(this),
-      publication: this.getGraphByPublicationLink.bind(this),
     };
   }
 
@@ -33,13 +37,131 @@ export default class GraphView {
     this.registerButton()
   }
 
+  public setTheme(theme?: "light" | "dark" | undefined) {
+    ztoolkit.log("set theme", theme)
+    if (!theme) {
+      theme = Zotero.Prefs.get(`${config.addonRef}.graphView.theme`) as ("light" | "dark")
+      if (["light", "dark"].indexOf(theme) == -1) {
+        theme = "light"
+      }
+    }
+    const fillTag = 7583672
+    const themeColor = {
+      light: {
+        backgroundColor: "#ffffff",
+        resizerColor: "#cccccc",
+        colors: {
+          "fill": {
+            "a": 1,
+            "rgb": 5921370
+          },
+          "fillFocused": {
+            "a": 1,
+            "rgb": 9137391
+          },
+          "fillTag": {
+            "a": .5,
+            "rgb": fillTag
+          },
+          "fillUnresolved": {
+            "a": 0.5,
+            "rgb": 11250603
+          },
+          "fillAttachment": {
+            "a": 1,
+            "rgb": 14724096
+          },
+          "arrow": {
+            "a": 0.5,
+            "rgb": 2236962
+          },
+          "circle": {
+            "a": 1,
+            "rgb": 9137391
+          },
+          "line": {
+            "a": 1,
+            "rgb": 13948116
+          },
+          "text": {
+            "a": 1,
+            "rgb": 2236962
+          },
+          "fillHighlight": {
+            "a": 1,
+            "rgb": 9730288
+          },
+          "lineHighlight": {
+            "a": 1,
+            "rgb": 9730288
+          }
+        }
+      },
+      dark: {
+        backgroundColor: "#2e3441",
+        resizerColor: "#3b4252",
+        colors: {
+          "fill": {
+            "a": 1,
+            "rgb": 12237498
+          },
+          "fillFocused": {
+            "a": 1,
+            "rgb": 9137391
+          },
+          "fillTag": {
+            "a": .5,
+            "rgb": fillTag
+          },
+          "fillUnresolved": {
+            "a": 0.5,
+            "rgb": 6710886
+          },
+          "fillAttachment": {
+            "a": 1,
+            "rgb": 14737009
+          },
+          "arrow": {
+            "a": 0.5,
+            "rgb": 14342874
+          },
+          "circle": {
+            "a": 1,
+            "rgb": 9137391
+          },
+          "line": {
+            "a": .23,
+            "rgb": 13948116
+          },
+          "text": {
+            "a": 1,
+            "rgb": 14342874
+          },
+          "fillHighlight": {
+            "a": 1,
+            "rgb": 8215533
+          },
+          "lineHighlight": {
+            "a": 1,
+            "rgb": 8215533
+          }
+        }
+      }
+    }
+    this.renderer.colors = themeColor[theme].colors
+    this.renderer.testCSS();
+    this.container.style.backgroundColor = themeColor[theme].backgroundColor;
+    this.resizer.style.backgroundColor = themeColor[theme].resizerColor;
+    this.renderer.containerEl.style.backgroundColor = themeColor[theme].backgroundColor;
+  }
+
   private registerButton() {
     console.log("registerButton is called")
     const node = document.querySelector("#zotero-tb-advanced-search")
     console.log(node)
     let newNode = node?.cloneNode(true) as XUL.ToolBarButton
     newNode.setAttribute("id", "zotero-style-show-hide-graph-view")
-    newNode.setAttribute("tooltiptext", "Hi, I am your Style.")
+    newNode.setAttribute("tooltiptext", "show/hide graph view")
     newNode.setAttribute("command", "")
     newNode.setAttribute("oncommand", "")
     newNode.addEventListener("click", async () => {
@@ -86,16 +208,27 @@ export default class GraphView {
   private getGraphByDefaultLink() {
     return {
       nodes: {
+        // url
         Zotero: { links: { Style: true }, type: "url"},
         Style: { links: { Zotero: true }, type: "url" },
         Help: { links: { Style: true }, type: "url" },
         Share: { links: { Style: true }, type: "url" },
         Issue: { links: { Style: true }, type: "url" },
-        Plugins: {links: {Zotero: true, Style: true}, type: "url"}
+        Plugins: { links: { Zotero: true, Style: true }, type: "url" },
+        // function
+        Theme: { links: { Style: true }, type: "tag" },
+        light: { links: { Theme: true }, type: "function" },
+        dark: { links: { Theme: true }, type: "function" }
+
       }
     }
   }
 
+  /**
+   * 计划分析日，周，月阅读的文献
+   * @param items 
+   * @returns 
+   */
   private async _getGraphByDefaultLink(items: Zotero.Item[]) {
     const recentDay = "Recent Day"
     const recentWeek = "Recent Week"
@@ -165,21 +298,42 @@ export default class GraphView {
     return graph
   }
 
-  private getGraphByItemArrLink(items: Zotero.Item[], getArr: Function) {
-    let nodes: { [key: string]: any } = {}
-    let graph: { [key: string]: any } = { nodes }
+  private async getGraphByItemArrLink(items: Zotero.Item[], getArr: Function) {
+    const nodes: { [key: string]: any } = {}
+    const graph: { [key: string]: any } = { nodes }
+    const sharedValues: { [key: string]: { count: number, items: Set<Zotero.Item> } } = {}
+
+    // 找出所有共享值
     items.forEach((item) => {
-      let id = item.id
-      nodes[id] = { links: {}, type: "item" }
       const values = getArr(item)
-      const otherItems = items.filter(i => i != item)
-      otherItems.forEach(otherItem => {
-        const hasCommonValue = getArr(otherItem).find((value: string) => {
-          return values.indexOf(value) != -1
-        })
-        if (hasCommonValue) {
-          nodes[id].links[otherItem.id] = true
+      if (values.length == 0) {
+        nodes[item.id] = { links: {}, type: "item" }
+      }
+      values.forEach((value: string) => {
+        if (!sharedValues.hasOwnProperty(value)) {
+          sharedValues[value] = { count: 0, items: new Set() }
         }
+        sharedValues[value].count += 1
+        sharedValues[value].items.add(item)
+      })
+    })
+    // 根据分位点，计算临界值
+    const pct = 0.95
+    const countArr = Object.values(sharedValues).map(i => i.count).filter(i=>i>1).sort()
+    const limit = countArr[parseInt((countArr.length * pct).toFixed(0))]
+    console.log(limit)
+    // 创建节点对象
+    Object.keys(sharedValues).forEach((value: string) => {
+      const items = [...sharedValues[value].items]
+      items.forEach(item => {
+        nodes[item.id] ??= { links: {}, type: "item" }
+        if (items.length > limit) {
+          nodes[item.id].links[value] = true;
+          (nodes[value] ??= {links: {}, type: "tag"}).links[item.id] = true
+        }
+        items.filter(i => i != item).forEach(_item => {
+          nodes[item.id].links[_item.id] = true
+        })
       })
     })
     return graph
@@ -199,20 +353,13 @@ export default class GraphView {
       const allTags =  item.getTags().map(tag => tag.tag).filter(i=>!i.startsWith("/"))
       let tags: string[] = []
       allTags.forEach(tag => {
+        tags.push(tag)
         tag.split("/").forEach(i => tags.push(i))
       })
       return tags
     }
     return this.getGraphByItemArrLink(items, getTags)
   }
-
-  private getGraphByPublicationLink(items: Zotero.Item[]) {
-    let getPublicationTitle = (item: Zotero.Item) => {
-      return [item.getField("publicationTitle")]
-    }
-    return this.getGraphByItemArrLink(items, getPublicationTitle)
-  }
-
 
   private async createContainer() {
     document.querySelectorAll("#graph").forEach(e => e.remove());
@@ -328,7 +475,7 @@ export default class GraphView {
     await this.initIFrame(frame)
 
     // 调节高度
-    const resizer = ztoolkit.UI.createElement(document, "div", {
+    const resizer = this.resizer = ztoolkit.UI.createElement(document, "div", {
       styles: {
         height: `1px`,
         width: "100%",
@@ -369,9 +516,8 @@ export default class GraphView {
       document.removeEventListener('mouseup', mouseUpHandler);
     };
     resizer.addEventListener('mousedown', mouseDownHandler);
-
+    this.setTheme()
   }
-
 
   private async initIFrame(frame: HTMLIFrameElement) {
     // 等待js执行结束
@@ -417,6 +563,8 @@ export default class GraphView {
         ZoteroPane.itemsView.selectItem(Number(id))
       } else if (type == "url") {
         Zotero.launchURL(this.urls[id]);
+      } else if (type == "function"){
+        this.functions[id]()
       }
     }
     /**
