@@ -45,6 +45,7 @@ export default class GraphView {
         theme = "light"
       }
     }
+    Zotero.Prefs.set(`${config.addonRef}.graphView.theme`, theme)
     const fillTag = 7583672
     const themeColor = {
       light: {
@@ -150,6 +151,7 @@ export default class GraphView {
     }
     this.renderer.colors = themeColor[theme].colors
     this.renderer.testCSS();
+
     this.container.style.backgroundColor = themeColor[theme].backgroundColor;
     this.resizer.style.backgroundColor = themeColor[theme].resizerColor;
     this.renderer.containerEl.style.backgroundColor = themeColor[theme].backgroundColor;
@@ -375,7 +377,8 @@ export default class GraphView {
         width: "100%",
         minHeight: `${minHeight}px`,
         height: Zotero.Prefs.get(`${config.addonRef}.graphView.height`) as string,
-        display: Zotero.Prefs.get(`${config.addonRef}.graphView.enable`) ? "" : "none"
+        display: Zotero.Prefs.get(`${config.addonRef}.graphView.enable`) ? "" : "none",
+        backgroundColor: "transparent"
       }
     })
     // 选项
@@ -468,18 +471,17 @@ export default class GraphView {
     frame.style.width = "100%"
     frame.style.height = "100%"
     frame.style.overflow = "hidden"
-    frame.style.backgroundColor = "#ffffff"
+    frame.style.backgroundColor = "transparent"
     container.append(frame)
     mainNode.append(container)
     this.container = container
-    await this.initIFrame(frame)
 
     // 调节高度
     const resizer = this.resizer = ztoolkit.UI.createElement(document, "div", {
       styles: {
         height: `1px`,
         width: "100%",
-        backgroundColor: "#cecece",
+        backgroundColor: "transparent",
         cursor: "ns-resize",
       },
     })
@@ -516,6 +518,7 @@ export default class GraphView {
       document.removeEventListener('mouseup', mouseUpHandler);
     };
     resizer.addEventListener('mousedown', mouseDownHandler);
+    await this.initIFrame(frame)
     this.setTheme()
   }
 

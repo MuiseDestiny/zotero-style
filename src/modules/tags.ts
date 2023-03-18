@@ -29,6 +29,7 @@ export class Tags {
       "Frequency (9-0)",
     ]
   }
+  private searchText?: string;
   private plainTags: string[] = [];
   private nestedTags!: NestedTags["children"];
   /**
@@ -107,6 +108,15 @@ export class Tags {
           #zotero-tag-selector .tag-selector-list  {
             height: auto !important;
           }
+          .nested-search-box .icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0.8;
+          }
+          .nested-search-box .icon:hover {
+            opacity: 1
+          }
         `
       },
     });
@@ -156,6 +166,17 @@ export class Tags {
   }
 
   public async getPlainTags(): Promise<string[]> {
+    let func: Function | undefined 
+    if (this.searchText && this.searchText.trim().length) {
+      let regex: RegExp;
+      const res = this.searchText.match(/\/(.+)\/(\w*)/)
+      if (res) {
+        regex = new RegExp(res[1], res[2])
+        func = (s: string) => regex.test(s)
+      } else {
+        func = (s: string) => s.indexOf(this.searchText!) != -1
+      }
+    }
     let plainTags: string[] = [];
     (
       Zotero.Prefs.get("tagSelector.displayAllTags")
@@ -173,6 +194,11 @@ export class Tags {
       .filter((tag: string) => {
         return Tags.getTagMatch(tag)
       })
+    if (func) {
+      plainTags = plainTags.filter((tag: string) => {
+        return func!(tag)
+      })
+    }
     return plainTags
   }
 
@@ -256,7 +282,9 @@ export class Tags {
         flex: "1 1 auto",
         display: "flex",
         width: `${ZoteroPane.tagSelector.getContainerDimensions().width}px`,
-        justifyContent: "space-between"
+        flexDirection: "column",
+        justifyContent: "space-between",
+        alignItems: "center"
       }
     }, this.container) as HTMLDivElement
     // 左侧边到条目面板中间的splitter
@@ -266,17 +294,126 @@ export class Tags {
       styles: {
         width: "calc(100% - 10px)",
         padding: "5px",
-        height: "auto",
+        height: "100%",
         overflowX: "",
         overflowY: "auto"
       }
     }, this.nestedTagsContainer) as HTMLDivElement;
+    // 搜索框
+    const searchBoxHeight = 15
+    const searchBox = ztoolkit.UI.appendElement({
+      tag: "div",
+      classList: ["nested-search-box"],
+      styles: {
+        width: "calc(100% - 35px)",
+        height: `${searchBoxHeight}px`,
+        padding: "5px",
+        borderRadius: "5px",
+        border: "1px solid #e0e0e0",
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: "3px",
+        marginTop: "3px",
+        opacity: "0.6"
+      },
+      children: [
+        {
+          tag: "div",
+          styles: {
+            width: `${searchBoxHeight}px`,
+            height: `${searchBoxHeight}px`,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          },
+          properties: {
+            innerHTML: `<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="${searchBoxHeight}" height="${searchBoxHeight}"><path d="M1005.312 914.752l-198.528-198.464A448 448 0 1 0 0 448a448 448 0 0 0 716.288 358.784l198.4 198.4a64 64 0 1 0 90.624-90.432zM448 767.936A320 320 0 1 1 448 128a320 320 0 0 1 0 640z" fill="#5a5a5a"></path></svg>`
+          }
+        },
+        {
+          tag: "input",
+          id: "nested-tags-search-input",
+          styles: {
+            outline: "none",
+            border: "none",
+            width: "100%",
+            margin: "0 5px"
+          },
+          properties: {
+            value: this.searchText
+          },
+          listeners: [
+            {
+              type: "focus",
+              listener: () => {
+                searchBox.style.opacity = "1"
+              }
+            },
+            {
+              type: "blur",
+              listener: () => {
+                searchBox.style.opacity = "0.6"
+              }
+            },
+            {
+              type: "keyup",
+              listener: async () => {
+                const inputNode = searchBox.querySelector("input") as HTMLInputElement
+                const clearNode = searchBox.querySelector(".clear") as HTMLInputElement
+                const searchText = inputNode.value as string
+                if (searchText.length) {
+                  clearNode.style.display = ""
+                }
+                // 搜索
+                console.log("search...", searchText)
+                this.searchText = searchText
+                // 复制一份
+                this.plainTags = await this.getPlainTags()
+                this.nestedTags = await this.getNestedTags()
+                box.innerHTML = ""
+                await this.render(box, this.nestedTags)
+              }
+            }
+          ]
+        },
+        {
+          tag: "div",
+          classList: ["icon", "clear"],
+          styles: {
+            width: `${searchBoxHeight}px`,
+            height: `${searchBoxHeight}px`,
+            display: "none"
+          },
+          properties: {
+            innerHTML: `<svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="${searchBoxHeight}" height="${searchBoxHeight}"><path d="M512.288 1009.984c-274.912 0-497.76-222.848-497.76-497.76s222.848-497.76 497.76-497.76c274.912 0 497.76 222.848 497.76 497.76s-222.848 497.76-497.76 497.76zM700.288 368.768c12.16-12.16 12.16-31.872 0-44s-31.872-12.16-44.032 0l-154.08 154.08-154.08-154.08c-12.16-12.16-31.872-12.16-44.032 0s-12.16 31.84 0 44l154.08 154.08-154.08 154.08c-12.16 12.16-12.16 31.84 0 44s31.872 12.16 44.032 0l154.08-154.08 154.08 154.08c12.16 12.16 31.872 12.16 44.032 0s12.16-31.872 0-44l-154.08-154.08 154.08-154.08z" fill="#5a5a5a" p-id="5698"></path></svg>`
+          },
+          listeners: [
+            {
+              type: "click",
+              listener: async () => {
+                const inputNode = searchBox.querySelector("input") as HTMLInputElement
+                const clearNode = searchBox.querySelector(".clear") as HTMLInputElement
+                inputNode.value = ""
+                clearNode.style.display = "none"
+                this.searchText = ""
+                // 复制一份
+                this.plainTags = await this.getPlainTags()
+                this.nestedTags = await this.getNestedTags()
+                box.innerHTML = ""
+                await this.render(box, this.nestedTags)
+              }
+            }
+          ]
+        },
+      ]
+    }, this.nestedTagsContainer) as HTMLDivElement;
+
     // 这是Zotero原本标签视图的父节点，在Zotero中这么命名
     const tagSelector = this.container.querySelector(".tag-selector")! as HTMLDivElement
     this.render(box, this.nestedTags)
     let icons = {
       sort: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-sort-asc"><path d="M11 11h4"></path><path d="M11 15h7"></path><path d="M11 19h10"></path><path d="M9 7 6 4 3 7"></path><path d="M6 6v14"></path></svg>`,
-      // sort: `<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-folder-tree"><path d="M278.2 74c-12.5-12.5-32.8-12.5-45.3 0L65.1 241.8c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L225 172.5v756.1c0 17.7 14.3 32 32 32s32-14.3 32-32V175.3l113.3 113.3c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L278.2 74zM951.6 738.1c-12.5-12.5-32.8-12.5-45.3 0L791.7 852.7V96.6c0-17.7-14.3-32-32-32s-32 14.3-32 32v753.3L614.3 736.6c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l169.4 169.4c12.5 12.5 32.8 12.5 45.3 0l167.9-167.9c12.5-12.6 12.5-32.8 0-45.3z"></path></svg>`,
       nest: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-folder-tree"><path d="M13 10h7a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"></path><path d="M13 21h7a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.88a1 1 0 0 1-.9-.55l-.44-.9a1 1 0 0 0-.9-.55H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"></path><path d="M3 3v2c0 1.1.9 2 2 2h3"></path><path d="M3 3v13c0 1.1.9 2 2 2h3"></path></svg>`,
       collapse: {
         true: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-chevrons-up-down"><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg>`,
