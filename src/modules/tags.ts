@@ -196,7 +196,7 @@ export class Tags {
       })
     if (func) {
       plainTags = plainTags.filter((tag: string) => {
-        return func!(tag)
+        return tag.split("/").find(s=>func!(s))
       })
     }
     return plainTags
