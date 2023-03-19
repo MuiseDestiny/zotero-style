@@ -17,44 +17,54 @@ const utils = {
         }
         if (data) { return data }
         // 开启一个异步更新影响因子
-        // 下面代码对es官方影响较大
-        // window.setTimeout(async () => {
-        //   const username = Zotero.Prefs.get(`${config.addonRef}.easyscholar.username`) as string
-        //   const password = Zotero.Prefs.get(`${config.addonRef}.easyscholar.password`) as string
-        //   if (username.length && password.length) {
-        //     await this.requests.get(
-        //       `https://easyscholar.cc/login?userName=${username}&password=${password}`
-        //     )
-        //   }
-        //   const response = await this.requests.post(
-        //     "https://easyscholar.cc/extension/listPublicationRank4",
-        //     {
-        //       publicationName: { "0": publicationTitle }
-        //     }
-        //   )
-        //   ztoolkit.log(response)
-        //   if (response && response.data) {
-        //     let data = response.data.publicationRankList[0]
-        //     if (data) {
-        //       delete data.tempID
-        //       await this.localStorage.set(item, key, data)
-        //     }
-        //   }
-        // })
+        let secretKey = Zotero.Prefs.get(`${config.addonRef}.easyscholar.secretKey`) as string
         window.setTimeout(async () => {
-          this.requests.cache = {}
-          let response = await this.requests.get(
-            `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${escape(publicationTitle)}`,
-          )
-          response = response || await this.requests.get(
-            `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${publicationTitle}`,
-          )
-          console.log(
-            response)
-          if (response && response.data) {
-            let data = response.data[0]
-            if (data) {
-              await this.localStorage.set(item, key, data)
+          if (secretKey) {
+            let response = await this.requests.get(
+              `https://easyscholar.cc/open/getPublicationRank?secretKey=${secretKey}&publicationName=${escape(publicationTitle) }`,
+            ) || await this.requests.get(
+              `https://easyscholar.cc/open/getPublicationRank?secretKey=${secretKey}&publicationName=${publicationTitle}`,
+            )
+            ztoolkit.log(response)
+            if (response && response.data) {
+              // 自定义数据集+官方数据集合并
+              let officialAllData = response.data.officialRank.all
+              let customRankInfo = response.data.customRank.rankInfo
+              response.data.customRank.rank.forEach((rankString: string) => {
+                try {
+                  // 1613160542602600448&&&2
+                  let uuid: string, rank: string;
+                  [uuid, rank] = rankString.split("&&&")
+                  rank = {
+                    "1": "oneRankText",
+                    "2": "twoRankText",
+                    "3": "threeRankText",
+                    "4": "fourRankText",
+                    "5": "fiveRankText"
+                  }[rank] as string
+                  let info = customRankInfo.find((i:any) => i.uuid == uuid)
+                  officialAllData[info.abbName] = info[rank]
+                } catch {}
+              })
+              console.log(officialAllData)
+              if (officialAllData) {
+                await this.localStorage.set(item, key, officialAllData)
+              }
+            }
+          } else {
+            this.requests.cache = {}
+            let response = await this.requests.get(
+              `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${escape(publicationTitle)}`,
+            ) || await this.requests.get(
+              `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${publicationTitle}`,
+            )
+            console.log(
+              response)
+            if (response && response.data) {
+              let data = response.data[0]
+              if (data) {
+                await this.localStorage.set(item, key, data)
+              }
             }
           }
         })

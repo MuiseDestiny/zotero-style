@@ -303,7 +303,7 @@ export default class GraphView {
   private async getGraphByItemArrLink(items: Zotero.Item[], getArr: Function) {
     const nodes: { [key: string]: any } = {}
     const graph: { [key: string]: any } = { nodes }
-    const sharedValues: { [key: string]: { count: number, items: Set<Zotero.Item> } } = {}
+    const sharedValues: { [key: string]: { items: Set<Zotero.Item> } } = {}
 
     // 找出所有共享值
     items.forEach((item) => {
@@ -313,15 +313,15 @@ export default class GraphView {
       }
       values.forEach((value: string) => {
         if (!sharedValues.hasOwnProperty(value)) {
-          sharedValues[value] = { count: 0, items: new Set() }
+          sharedValues[value] = { items: new Set() }
         }
-        sharedValues[value].count += 1
         sharedValues[value].items.add(item)
       })
     })
     // 根据分位点，计算临界值
-    const pct = 0.95
-    const countArr = Object.values(sharedValues).map(i => i.count).filter(i=>i>1).sort()
+    const pct = 0.9
+    console.log(sharedValues)
+    const countArr = Object.values(sharedValues).map(i => i.items.size).filter(i=>i>1).sort()
     const limit = countArr[parseInt((countArr.length * pct).toFixed(0))]
     console.log(limit)
     // 创建节点对象
@@ -329,7 +329,8 @@ export default class GraphView {
       const items = [...sharedValues[value].items]
       items.forEach(item => {
         nodes[item.id] ??= { links: {}, type: "item" }
-        if (items.length > limit) {
+        console.log(items.length)
+        if (items.length >= limit) {
           nodes[item.id].links[value] = true;
           (nodes[value] ??= {links: {}, type: "tag"}).links[item.id] = true
         }

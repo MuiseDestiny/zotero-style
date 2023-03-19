@@ -3516,6 +3516,10 @@ export default class Views {
         (original) =>
           (index: number, selection: object, oldDiv: HTMLDivElement, columns: any[]) => {
             const div = original.call(ZoteroPane.collectionsView, index, selection, oldDiv, columns)
+
+            // div.querySelector("span").style.backgroundColor = "#ffffff"
+            // div.querySelector("span").style.color = "#ffffff"
+            
             const ref = ZoteroPane.collectionsView.getRow(index).ref!
             if (index > 0) {
               let key: string;

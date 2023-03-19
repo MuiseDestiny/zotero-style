@@ -301,6 +301,7 @@ export class Tags {
     }, this.nestedTagsContainer) as HTMLDivElement;
     // 搜索框
     const searchBoxHeight = 15
+    let timer: number;
     const searchBox = ztoolkit.UI.appendElement({
       tag: "div",
       classList: ["nested-search-box"],
@@ -364,15 +365,21 @@ export class Tags {
                 const searchText = inputNode.value as string
                 if (searchText.length) {
                   clearNode.style.display = ""
+                } else {
+                  clearNode.style.display = "none"
+
                 }
-                // 搜索
-                console.log("search...", searchText)
-                this.searchText = searchText
-                // 复制一份
-                this.plainTags = await this.getPlainTags()
-                this.nestedTags = await this.getNestedTags()
-                box.innerHTML = ""
-                await this.render(box, this.nestedTags)
+                window.clearTimeout(timer)
+                timer = window.setTimeout(async () => {
+                  // 搜索
+                  console.log("search...", searchText)
+                  this.searchText = searchText
+                  // 复制一份
+                  this.plainTags = await this.getPlainTags()
+                  this.nestedTags = await this.getNestedTags()
+                  box.innerHTML = ""
+                  await this.render(box, this.nestedTags)
+                }, 500)
               }
             }
           ]
@@ -383,7 +390,7 @@ export class Tags {
           styles: {
             width: `${searchBoxHeight}px`,
             height: `${searchBoxHeight}px`,
-            display: "none"
+            display: this.searchText?.length ? "" : "none"
           },
           properties: {
             innerHTML: `<svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="${searchBoxHeight}" height="${searchBoxHeight}"><path d="M512.288 1009.984c-274.912 0-497.76-222.848-497.76-497.76s222.848-497.76 497.76-497.76c274.912 0 497.76 222.848 497.76 497.76s-222.848 497.76-497.76 497.76zM700.288 368.768c12.16-12.16 12.16-31.872 0-44s-31.872-12.16-44.032 0l-154.08 154.08-154.08-154.08c-12.16-12.16-31.872-12.16-44.032 0s-12.16 31.84 0 44l154.08 154.08-154.08 154.08c-12.16 12.16-12.16 31.84 0 44s31.872 12.16 44.032 0l154.08-154.08 154.08 154.08c12.16 12.16 31.872 12.16 44.032 0s12.16-31.872 0-44l-154.08-154.08 154.08-154.08z" fill="#5a5a5a" p-id="5698"></path></svg>`
