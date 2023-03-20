@@ -159,7 +159,7 @@ export default class GraphView {
 
   private registerButton() {
     console.log("registerButton is called")
-    const node = document.querySelector("#zotero-tb-advanced-search")
+    const node = document.querySelector("#zotero-tb-advanced-search")!
     console.log(node)
     let newNode = node?.cloneNode(true) as XUL.ToolBarButton
     newNode.setAttribute("id", "zotero-style-show-hide-graph-view")
@@ -178,7 +178,7 @@ export default class GraphView {
         Zotero.Prefs.set(`${config.addonRef}.graphView.enable`, false)
       }
     })
-    newNode.style.listStyleImage = `url(chrome://${config.addonRef}/content/icons/favicon-small.png)`
+    newNode.style.listStyleImage = `url(chrome://${config.addonRef}/content/icons/favicon@32x32.png)`
     document.querySelector("#zotero-items-toolbar")?.insertBefore(newNode, node?.nextElementSibling!)
     console.log(document.querySelector("#zotero-items-toolbar"))
   }

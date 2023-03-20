@@ -19,12 +19,16 @@ const utils = {
         // 开启一个异步更新影响因子
         let secretKey = Zotero.Prefs.get(`${config.addonRef}.easyscholar.secretKey`) as string
         window.setTimeout(async () => {
+          this.requests.cache = {}
           if (secretKey) {
             let response = await this.requests.get(
-              `https://easyscholar.cc/open/getPublicationRank?secretKey=${secretKey}&publicationName=${escape(publicationTitle) }`,
-            ) || await this.requests.get(
-              `https://easyscholar.cc/open/getPublicationRank?secretKey=${secretKey}&publicationName=${publicationTitle}`,
+              `https://easyscholar.cc/open/getPublicationRank?secretKey=${secretKey}&publicationName=${escape(publicationTitle)}`,
             )
+            if (response.code != 200) {
+              response = await this.requests.get(
+                `https://easyscholar.cc/open/getPublicationRank?secretKey=${secretKey}&publicationName=${publicationTitle}`,
+              )
+            }
             ztoolkit.log(response)
             if (response && response.data) {
               // 自定义数据集+官方数据集合并
@@ -52,14 +56,12 @@ const utils = {
               }
             }
           } else {
-            this.requests.cache = {}
             let response = await this.requests.get(
               `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${escape(publicationTitle)}`,
             ) || await this.requests.get(
               `https://easyscholar.cc/homeController/getQueryTable.ajax?sourceName=${publicationTitle}`,
             )
-            console.log(
-              response)
+            console.log(response)
             if (response && response.data) {
               let data = response.data[0]
               if (data) {

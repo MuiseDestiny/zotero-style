@@ -109,7 +109,10 @@ export default class Views {
           @keyframes rotate{from{transform: rotate(0deg)}
               to{transform: rotate(359deg)}
           }
-          
+          #zotero-style-show-hide-graph-view .toolbarbutton-icon {
+            width: 16px;
+            height: 16px;
+          }
         `
       },
     });
@@ -707,7 +710,31 @@ export default class Views {
                 } else {
                   text = `${getMapString(field.toUpperCase())} ${getMapString(fieldValue)}`
                 }
-                color = defaultColor
+                if (["A", "B", "C", "D"].indexOf(fieldValue)) {
+                  let color: string
+                  switch (fieldValue) {
+                    case "A":
+                      color = rankColors[0]
+                      break;
+                    case "B":
+                      color = rankColors[1]
+                      break;
+                    case "C":
+                      color = rankColors[2]
+                      break;
+                    case "D":
+                      color = rankColors[3]
+                      break;
+                    case "E":
+                      color = rankColors[4]
+                      break
+                    default:
+                      color = defaultColor
+                      break;
+                  }
+                } else {
+                  color = defaultColor
+                }
               }
               let [red, green, blue] = Progress.getRGB(color)
               span.appendChild(ztoolkit.UI.createElement(document, "span", {
@@ -3519,8 +3546,8 @@ export default class Views {
 
             // div.querySelector("span").style.backgroundColor = "#ffffff"
             // div.querySelector("span").style.color = "#ffffff"
-            
-            const ref = ZoteroPane.collectionsView.getRow(index).ref!
+            const row = ZoteroPane.collectionsView.getRow(index)
+            const ref = row.ref!
             if (index > 0) {
               let key: string;
               try {
@@ -3606,8 +3633,8 @@ export default class Views {
                       break
                   }
                 }
-                else if (ref?._ObjectType == "Search") {
-                  text = (await ref.search()).length
+                else {
+                  text = ""
                 }
                 setText(text as string)
               })
