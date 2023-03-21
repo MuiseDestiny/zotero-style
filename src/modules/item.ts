@@ -130,7 +130,10 @@ export default class AddonItem {
 		Zotero.Search.prototype.search = async function () {
 			let ids = await search.apply(this, arguments);
 			return ids.filter((id: number) => {
-				const parentID = Zotero.Items.get(id).parentID
+				let parentID
+				try {
+					parentID = Zotero.Items.get(id).parentID
+				} catch {return true}
 				if (!parentID) { return true }
 				const parentItem = Zotero.Items.get(parentID)
 				if (!parentItem) { return true }
