@@ -22,6 +22,7 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 
 <img src="https://user-images.githubusercontent.com/51939531/220922783-b7d78b5f-6cc3-4aff-8581-2e6ca341aec5.gif" width="100%" height="100%">
 
+![graph-view](https://user-images.githubusercontent.com/51939531/226494857-d14f275a-3ad1-495e-a0c6-d2f971bc42aa.gif)
 
 ### Title
 
