@@ -8,7 +8,7 @@ export function registerPrefs() {
     pluginID: config.addonID,
     src: rootURI + "chrome/content/preferences.xhtml",
     label: "Style",
-    image: `chrome://${config.addonRef}/content/icons/favicon-small.png`,
+    image: `chrome://${config.addonRef}/content/icons/favicon@32x32.png`,
     extraDTD: [`chrome://${config.addonRef}/locale/overlay.dtd`],
     defaultXUL: true,
   };
