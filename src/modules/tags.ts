@@ -342,19 +342,21 @@ export class Tags {
             margin: "0 5px"
           },
           properties: {
-            value: this.searchText
+            value: this.searchText,
           },
           listeners: [
             {
               type: "focus",
               listener: () => {
                 searchBox.style.opacity = "1"
+                searchBox.style.boxShadow = `0 0 0 1px rgba(0,0,0,0.5)`
               }
             },
             {
               type: "blur",
               listener: () => {
                 searchBox.style.opacity = "0.6"
+                searchBox.style.boxShadow = ``
               }
             },
             {

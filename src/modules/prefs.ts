@@ -62,6 +62,18 @@ export function registerPrefsScripts(_window: Window) {
           }
         } catch(e) {console.log(e)}
       })
+      Object.keys(storage.cache).forEach((_id: string) => {
+        let id = Number(_id)
+        let key = Zotero.Items.get(id).key
+        let data = storage.cache[key]
+        if (!data.readingTime?.data) {
+          storage.cache[key] = storage.cache[id]
+        }
+      })
+      window.setTimeout(async () => {
+        await Zotero.File.putContentsAsync(storage.filename, JSON.stringify(storage.cache));
+        ztoolkit.getGlobal("alert")("Please restart Zotero.")
+      })
     }
   })
 }

@@ -947,7 +947,7 @@ export default class Views {
     let update = async (item: Zotero.Item) => {
       const cacheKey = `${item.key}-annoRecord`
       if (item.isRegularItem()) {
-        let pdfItem
+        let pdfItem: Zotero.Item
         try {
           pdfItem = await item.getBestAttachment()
         } catch {
@@ -958,8 +958,18 @@ export default class Views {
         }
         let page: number = 0;
         try {
-          page = Number(this.storage.get(item, "readingTime").page)
-        } catch { }
+          const key = `${pdfItem.id} total-pages`
+          // this.cache[key] ??= (await Zotero.Fulltext.getPages(pdfItem.id)).total
+          // if (!this.cache[key]) {
+          //   window.setTimeout(async () => {
+          //     await Zotero.FullText.indexItems([pdfItem.id], { complete: true });
+          //   })
+          // }
+          page = Number(this.storage.get(item, "readingTime").page) ||
+            (this.cache[key] ??= (await Zotero.Fulltext.getPages(pdfItem.id)).total) ||
+            page
+        } catch (e) { console.log(e) }
+        console.log(page)
         let annoRecord: any = { page, data: {} }
         const annoArray = pdfItem.getAnnotations()
         annoArray.forEach((anno: any) => {
@@ -3546,6 +3556,7 @@ export default class Views {
 
             // div.querySelector("span").style.backgroundColor = "#ffffff"
             // div.querySelector("span").style.color = "#ffffff"
+
             const row = ZoteroPane.collectionsView.getRow(index)
             const ref = row.ref!
             if (index > 0) {

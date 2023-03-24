@@ -1,8 +1,8 @@
 import { config } from "../../package.json";
 
 class LocalStorage {
-  private filename!: string;
-  private cache: any;
+  public filename!: string;
+  public cache: any;
   public lock: _ZoteroPromiseObject;
   constructor(filename: string) {
     this.lock = Zotero.Promise.defer()
@@ -31,12 +31,12 @@ class LocalStorage {
 
   get(item: Zotero.Item, key: string) {
     if (this.cache == undefined) { return }
-    return (this.cache[item.id] ??= {})[key]
+    return (this.cache[item.key] ??= {})[key]
   }
 
   async set(item: Zotero.Item, key: string, value: any) {
     await this.lock.promise;
-    (this.cache[item.id] ??= {})[key] = value
+    (this.cache[item.key] ??= {})[key] = value
     window.setTimeout(async () => {
       await Zotero.File.putContentsAsync(this.filename, JSON.stringify(this.cache));
     })
