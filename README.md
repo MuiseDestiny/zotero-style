@@ -285,3 +285,15 @@ Two ways display your tags after assigning color and position: (1) you can open 
 - [tag-wrangler](https://github.com/pjeby/tag-wrangler)
 - [chatGPT](https://chat.openai.com/)
 
+## Sponsor
+
+[Here](https://github.com/MuiseDestiny/zotero-reference#%E8%B5%9E%E5%8A%A9)
+
+
+<details>
+ 
+<summary>Thanks</summary>
+
+[@leichaoL](https://github.com/leichaoL)
+  
+</details>
