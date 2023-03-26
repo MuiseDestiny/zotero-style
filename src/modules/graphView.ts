@@ -8,6 +8,7 @@ export default class GraphView {
   private renderer: any;
   private container!: HTMLDivElement;
   private resizer!: HTMLDivElement;
+  private graph!: Graph;
   private urls: any = {
     Zotero: "https://www.zotero.org/",
     Style: "https://github.com/MuiseDestiny/zotero-style",
@@ -204,6 +205,7 @@ export default class GraphView {
     if (cache && (this.cache[this.mode] ??= {})[collectionKey]) { return this.cache[this.mode][collectionKey]} 
     const graph = await this.modeFunction[this.mode](items);
     (this.cache[this.mode] ??= {})[collectionKey] = graph
+    this.graph = graph
     return graph
   }
 
@@ -221,7 +223,6 @@ export default class GraphView {
         Theme: { links: { Style: true }, type: "tag" },
         light: { links: { Theme: true }, type: "function" },
         dark: { links: { Theme: true }, type: "function" }
-
       }
     }
   }
@@ -283,8 +284,8 @@ export default class GraphView {
   }
 
   private getGraphByRelatedLink(items: Zotero.Item[]) {
-    let nodes: { [key: string]: any } = {}
-    let graph: { [key: string]: any } = { nodes }
+    let nodes: Graph["nodes"] = {}
+    let graph: Graph = { nodes: {} }
     items.forEach((item, i) => {
       let id = item.id 
       nodes[id] = { links: {}, type: "item"}
@@ -323,7 +324,6 @@ export default class GraphView {
     console.log(sharedValues)
     const countArr = Object.values(sharedValues).map(i => i.items.size).filter(i=>i>1).sort()
     const limit = countArr[parseInt((countArr.length * pct).toFixed(0))]
-    console.log(limit)
     // 创建节点对象
     Object.keys(sharedValues).forEach((value: string) => {
       const items = [...sharedValues[value].items]
@@ -569,6 +569,12 @@ export default class GraphView {
         Zotero.launchURL(this.urls[id]);
       } else if (type == "function"){
         this.functions[id]()
+      } else if (type == "tag") {
+        // 查找tag对应的链接的条目，进行过滤
+        let ids = Object.keys(this.graph.nodes[id].links).filter(id => {
+          return this.graph.nodes[id].type == "item"
+        })
+        ZoteroPane.selectItems(ids.map(Number))
       }
     }
     /**
@@ -612,4 +618,13 @@ export default class GraphView {
     this.renderer.changed()
     this.renderer.onResize()
   }
+}
+
+interface Graph {
+  nodes: {
+    [id: string]: {
+      links: { [id: string]: boolean },
+      type: string;
+    };
+  };
 }

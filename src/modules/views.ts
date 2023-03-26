@@ -968,8 +968,7 @@ export default class Views {
           page = Number(this.storage.get(item, "readingTime").page) ||
             (this.cache[key] ??= (await Zotero.Fulltext.getPages(pdfItem.id)).total) ||
             page
-        } catch (e) { console.log(e) }
-        console.log(page)
+        } catch (e) {  }
         let annoRecord: any = { page, data: {} }
         const annoArray = pdfItem.getAnnotations()
         annoArray.forEach((anno: any) => {
