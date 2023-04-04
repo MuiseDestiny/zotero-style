@@ -50,7 +50,6 @@ const utils = {
                   officialAllData[info.abbName] = info[rank]
                 } catch {}
               })
-              console.log(officialAllData)
               if (officialAllData) {
                 await this.localStorage.set(item, key, officialAllData)
               }

@@ -1,8 +1,6 @@
 import { config } from "../../package.json";
 
-import Views from "./views";
 import Bubble from "./bubble";
-const d3 = require("./d3")
 
 export default class GraphView {
   private renderer: any;
