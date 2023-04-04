@@ -7,6 +7,7 @@
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
 ![Release Date](https://img.shields.io/github/release-date/MuiseDestiny/zotero-style?color=9cf)
 [![License](https://img.shields.io/github/license/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/blob/master/LICENSE)
+![Downloads latest release](https://img.shields.io/github/downloads/MuiseDestiny/zotero-style/latest/total?color=yellow)
 
 
 You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-style/issues/48).
