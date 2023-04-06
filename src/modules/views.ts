@@ -109,11 +109,14 @@ export default class Views {
           @keyframes rotate{from{transform: rotate(0deg)}
               to{transform: rotate(359deg)}
           }
+          `
+          // 这里添加后会让Mac的图标变形，所以遇Mac不添
+          + (Zotero.isMac ? "" : `
           #zotero-style-show-hide-graph-view .toolbarbutton-icon {
             width: 16px;
             height: 16px;
           }
-        `
+          `)
       },
     });
     document.documentElement.appendChild(styles);
@@ -599,7 +602,7 @@ export default class Views {
         if (!item.isRegularItem()) { return ""}
         try {
           const data = utils.wait(item, "publication")
-          if (!data) { return "" }
+          if (!data || data == "") { return "" }
           // 排序
           let sortBy: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
           sortBy = sortBy.split(/,\s*/g)
@@ -710,8 +713,8 @@ export default class Views {
                 } else {
                   text = `${getMapString(field.toUpperCase())} ${getMapString(fieldValue)}`
                 }
+                // let color: string
                 if (["A", "B", "C", "D"].indexOf(fieldValue)) {
-                  let color: string
                   switch (fieldValue) {
                     case "A":
                       color = rankColors[0]
@@ -753,6 +756,7 @@ export default class Views {
             if (!span.querySelector("span")) {
               span.style.height = "20px"
             }
+            console.log("success")
             return span;
           } catch (e) {
             ztoolkit.log(e)
@@ -3033,20 +3037,12 @@ export default class Views {
     })
     table?.addEventListener("click", async (event: any) => {
       const target = getChildrenTarget(event, (event.target! as HTMLDivElement).childNodes)
-      /**
-       * 1 点击标签相关，打开侧边栏标签选项卡
-       */
-      // if (
-      //   target?.classList.contains("Tags") ||
-      //   target?.classList.contains("TextTags")
-      // ) {
-      //   (document.querySelector("#zotero-editpane-tags-tab") as HTMLSpanElement).click()
-      // }
       if (target?.classList.contains("PublicationTags")) {
         new ztoolkit.ProgressWindow("Publication Tags", {closeTime: 1000})
           .createLine({ text: "update", type: "default" }).show()
         try {
           let item = ZoteroPane.getSelectedItems()[0]
+          console.log("click refresh", item.key)
           utils.wait(item, "publication", false)
           ztoolkit.ItemTree.refresh()
         } catch {}
