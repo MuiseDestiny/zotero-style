@@ -275,6 +275,8 @@ Two ways display your tags after assigning color and position: (1) you can open 
 - [Zotero超好用插件｜阅读进度可视化](http://xhslink.com/QSKlCn)
 - [寒假高校看论文 | Zotero论文进度可视化](http://xhslink.com/yoMlCn)
 - [Zotero style简单设置教程~](http://xhslink.com/yNQBUn)
+- [我学会怎么改zotero注释颜色的名字啦！！](http://xhslink.com/jfMeQo)
+- [zotero style教程|让你的zotero更有趣！](http://xhslink.com/VBSeQo)
 
 ## Acknowledgements
 
