@@ -58,14 +58,16 @@ const utils = {
               })
               if (officialAllData) {
                 await this.localStorage.set(item, key, officialAllData)
+                new ztoolkit.ProgressWindow("Publication Tags", { closeTime: 3000, closeOtherProgressWindows: true })
+                  .createLine({text: publicationTitle , type: "success" }).show()
                 ztoolkit.ItemTree.refresh()
               }
             }
           } else {
-            window.alert("温馨提示：请配置easyscholar密钥，配置方法页面已在浏览器打开。\n\nWarm tip: Please configure the easyscholar key, the configuration method page has been opened in your browser.")
-            Zotero.launchURL("https://github.com/MuiseDestiny/zotero-style/releases/tag/2.5.1");
-            Zotero.launchURL("https://ghproxy.com/https://github.com/MuiseDestiny/zotero-style/releases/tag/2.5.1")
-            Zotero.launchURL("https://easyscholar.cc/console/user/open")
+            if (!local) {
+              new ztoolkit.ProgressWindow("Publication Tags", { closeTime: 3000, closeOtherProgressWindows: true })
+                .createLine({ text: "No easyScholar secret key configured", type: "fail" }).show()
+            }
           }
         })
         return 

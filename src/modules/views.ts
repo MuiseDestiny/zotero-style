@@ -3038,13 +3038,19 @@ export default class Views {
     table?.addEventListener("click", async (event: any) => {
       const target = getChildrenTarget(event, (event.target! as HTMLDivElement).childNodes)
       if (target?.classList.contains("PublicationTags")) {
-        new ztoolkit.ProgressWindow("Publication Tags", {closeTime: 1000})
-          .createLine({ text: "update", type: "default" }).show()
         try {
           let item = ZoteroPane.getSelectedItems()[0]
-          console.log("click refresh", item.key)
-          utils.wait(item, "publication", false)
-          ztoolkit.ItemTree.refresh()
+          let publicationTitle = item.getField("publicationTitle")
+          if (!publicationTitle) {
+            new ztoolkit.ProgressWindow("Publication Tags", { closeTime: 3000 })
+              .createLine({ text: "No publicationTitle", type: "fail" }).show()
+          } else {
+            new ztoolkit.ProgressWindow("Publication Tags", {closeTime: 3000})
+              .createLine({ text: publicationTitle, type: "default" }).show()
+            console.log("click refresh", item.key)
+            utils.wait(item, "publication", false)
+            ztoolkit.ItemTree.refresh()
+          }
         } catch {}
       }
       /**
