@@ -260,6 +260,7 @@ Two ways display your tags after assigning color and position: (1) you can open 
 
 ## Recommended Links
 
+- <https://www.bilibili.com/video/BV1ss4y1E7sX> 个人推荐
 - <https://www.bilibili.com/video/BV1as4y1a7Gf>
 - <https://www.bilibili.com/video/BV1BA411R7hb>
 - <https://www.bilibili.com/video/BV1PK411o7JN>
