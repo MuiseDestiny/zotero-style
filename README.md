@@ -260,17 +260,21 @@ Two ways display your tags after assigning color and position: (1) you can open 
 
 ## Recommended Links
 
-- <https://www.bilibili.com/video/BV1ss4y1E7sX> 个人推荐
-- <https://www.bilibili.com/video/BV1as4y1a7Gf>
-- <https://www.bilibili.com/video/BV1BA411R7hb>
-- <https://www.bilibili.com/video/BV1PK411o7JN>
-- <https://www.bilibili.com/video/BV1Z44y1D7nP>
-- <http://xhslink.com/PnHlCn>
-- <http://xhslink.com/iUJlCn>
-- <http://xhslink.com/TPJlCn>
-- <http://xhslink.com/QSKlCn>
-- <http://xhslink.com/yoMlCn>
-- <http://xhslink.com/yNQBUn>
+### B站
+- [Zotero Style 使用手册](https://www.bilibili.com/video/BV1ss4y1E7sX)
+- [Zotero Style插件你值得拥有！关系图谱也有！](https://www.bilibili.com/video/BV1as4y1a7Gf)
+- [zotero-style - 使用示例，以及配色征集](https://www.bilibili.com/video/BV1BA411R7hb)
+- [zotero-style插件 - 标签标题对齐，为文献添加阅读高能进度条！](https://www.bilibili.com/video/BV1PK411o7JN)
+- [Zotero Style - 更新一些花里胡哨的功能，以及一个有用的参考文献导入](https://www.bilibili.com/video/BV1Z44y1D7nP)
+
+### 小红书
+
+- [Zotero新插件介绍 - Zotero Style](http://xhslink.com/PnHlCn)
+- [zotero style｜一个督促你阅读文献的插件❗️](http://xhslink.com/iUJlCn)
+- [能够显示高能阅读进度条的zotero宝藏插件](http://xhslink.com/TPJlCn)
+- [Zotero超好用插件｜阅读进度可视化](http://xhslink.com/QSKlCn)
+- [寒假高校看论文 | Zotero论文进度可视化](http://xhslink.com/yoMlCn)
+- [Zotero style简单设置教程~](http://xhslink.com/yNQBUn)
 
 ## Acknowledgements
 
