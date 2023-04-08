@@ -15,6 +15,10 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 [中文文档](https://www.notion.so/Zotero-Style-bc2aebbbb6df4b7baa858e376e4fc5be)
 ---
 
+## TODO
+
+- [ ] 视图组、颜色设置等参与同步
+
 ## Columns
 
 > This plugin modifies some of Zotero's existing columns and adds some interesting ones, and I'll introduce them one by one.
