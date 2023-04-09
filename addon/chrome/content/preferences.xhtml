@@ -38,6 +38,49 @@
   </groupbox>
   <groupbox>
     <label>
+      <html:h3>Settings</html:h3>
+    </label>
+    <vbox>
+      <hbox>
+        <label>Background color for odd rows of items</label>
+        <html:input type="text" preference="extensions.zotero.__addonRef__.titleColumn.odd">
+        </html:input>
+      </hbox>
+      <hbox>
+        <label>Background color for even rows of items</label>
+        <html:input type="text" preference="extensions.zotero.__addonRef__.titleColumn.even">
+        </html:input>
+      </hbox>
+      <hbox>
+        <label>Background color for selected item</label>
+        <html:input type="text" preference="extensions.zotero.__addonRef__.titleColumn.selected">
+        </html:input>
+      </hbox>
+      <hbox>
+        <label>Nested tag link symbol</label>
+        <html:select preference="extensions.zotero.__addonRef__.nestedTags.linkSymbol">
+          <html:option value="/">/</html:option>
+          <html:option value="+">+</html:option>
+          <html:option value="-">-</html:option>
+          <html:option value=":">:</html:option>
+          <html:option value="~">~</html:option>
+          <html:option value=">">&gt;</html:option>
+          <html:option value=">">&lt;</html:option>
+        </html:select>
+      </hbox>
+      <hbox>
+        <label>Number mode in the collection right</label>
+        <html:select preference="extensions.zotero.__addonRef__.addNumberToCollectionTree.mode">
+          <html:option value="0">childItemNumber</html:option>
+          <html:option value="1">offspringItemNumber</html:option>
+          <html:option value="2">childItemNumber offspringItemNumber</html:option>
+          <html:option value="3">offspringItemNumber childItemNumber</html:option>
+        </html:select>
+      </hbox>
+    </vbox>
+  </groupbox>
+  <groupbox>
+    <label>
       <html:h3>Links</html:h3>
     </label>
     <description><label class="zotero-text-link" value="Help" 

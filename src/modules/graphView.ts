@@ -282,8 +282,9 @@ export default class GraphView {
   }
 
   private getGraphByRelatedLink(items: Zotero.Item[]) {
+    console.log(items)
     let nodes: Graph["nodes"] = {}
-    let graph: Graph = { nodes: {} }
+    let graph: Graph = { nodes }
     items.forEach((item, i) => {
       let id = item.id 
       nodes[id] = { links: {}, type: "item"}

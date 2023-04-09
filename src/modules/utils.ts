@@ -10,7 +10,7 @@ const utils = {
   wait(item: Zotero.Item, key: string, local: boolean=true) {
     switch (key) {
       case "publication":
-        const publicationTitle = item.getField("publicationTitle")
+        const publicationTitle = this.getPublicationTitle(item)
         if (publicationTitle == "") { return }
         let data
         if (local) {
@@ -37,6 +37,10 @@ const utils = {
               // 自定义数据集+官方数据集合并
               let officialAllData = response.data.officialRank.all
               if (!officialAllData) {
+                if (!local) {
+                  new ztoolkit.ProgressWindow("Publication Tags", { closeTime: 3000, closeOtherProgressWindows: true })
+                    .createLine({ text: "Not Found", type: "default" }).show()
+                }
                 return await this.localStorage.set(item, key, "")
               }
               let customRankInfo = response.data.customRank.rankInfo
@@ -58,8 +62,12 @@ const utils = {
               })
               if (officialAllData) {
                 await this.localStorage.set(item, key, officialAllData)
-                new ztoolkit.ProgressWindow("Publication Tags", { closeTime: 3000, closeOtherProgressWindows: true })
-                  .createLine({text: publicationTitle , type: "success" }).show()
+                // 显示它支持的所有字段
+                let popupWin = new ztoolkit.ProgressWindow("Publication Tags", { closeTime: 3000, closeOtherProgressWindows: true }).show()
+                popupWin.createLine({text: publicationTitle, type: "default"})
+                Object.keys(officialAllData).forEach(k => {
+                  popupWin.createLine({ text: `${k}: ${officialAllData[k]}`, type: "success" })
+                })
                 ztoolkit.ItemTree.refresh()
               }
             }
@@ -74,6 +82,9 @@ const utils = {
       default:
         break
     }
+  },
+  getPublicationTitle(item: Zotero.Item) {
+    return [item.getField("publicationTitle"), item.getField("proceedingsTitle")].find(i=>i.trim().length > 0)
   }
 }
 

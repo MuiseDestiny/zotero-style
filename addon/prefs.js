@@ -13,9 +13,9 @@ pref("extensions.zotero.__addonRef__.tagsColumn.align", "left");
 pref("extensions.zotero.__addonRef__.function.textTagsColumn.enable", true);
 pref("extensions.zotero.__addonRef__.textTagsColumn.prefix", "#");
 pref("extensions.zotero.__addonRef__.textTagsColumn.match", "#");
-pref("extensions.zotero.__addonRef__.textTagsColumn.opacity", "0.5");
-pref("extensions.zotero.__addonRef__.textTagsColumn.backgroundColor", "#fadec9");
-pref("extensions.zotero.__addonRef__.textTagsColumn.textColor", "black");
+pref("extensions.zotero.__addonRef__.textTagsColumn.opacity", "0.13");
+pref("extensions.zotero.__addonRef__.textTagsColumn.backgroundColor", "#8e44ad");
+pref("extensions.zotero.__addonRef__.textTagsColumn.textColor", "auto");
 pref("extensions.zotero.__addonRef__.textTagsColumn.margin", "0.2");
 pref("extensions.zotero.__addonRef__.textTagsColumn.padding", "0.5");
 
@@ -39,7 +39,7 @@ pref("extensions.zotero.__addonRef__.IFColumn.info", false);
 
 pref("extensions.zotero.__addonRef__.function.PublicationTagsColumn.enable", true);
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.fields", "sci, sciif5, eii");
-pref("extensions.zotero.__addonRef__.PublicationTagsColumn.rankColors", '#ff9999, #86dad1, #ffe78f, #ffd4a9, #cce5ff');
+pref("extensions.zotero.__addonRef__.PublicationTagsColumn.rankColors", '#EE0000, #2F998C, #D2A500, #DA6D00, #007BF6');
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.defaultColor", "#86dad1");
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.textColor", 'black');
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.sortBy", 'sci, -sciif');
@@ -47,7 +47,7 @@ pref("extensions.zotero.__addonRef__.PublicationTagsColumn.map", "北大中文�
 
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.margin", "0.2");
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.padding", "0.5");
-pref("extensions.zotero.__addonRef__.PublicationTagsColumn.opacity", "0.5");
+pref("extensions.zotero.__addonRef__.PublicationTagsColumn.opacity", "0.13");
 
 pref("extensions.zotero.__addonRef__.function.progressColumn.enable", true);
 pref("extensions.zotero.__addonRef__.progressColumn.style", "bar");
@@ -85,8 +85,7 @@ pref("extensions.zotero.__addonRef__.creatorColumn.join", ", ");
 
 
 pref("extensions.zotero.__addonRef__.nestedTags.sortord", "0");
-
-pref("extensions.zotero.__addonRef__.GPT.secretKey", "");
+pref("extensions.zotero.__addonRef__.nestedTags.linkSymbol", "/");
 
 
 pref("extensions.zotero.__addonRef__.storage.in", "note");

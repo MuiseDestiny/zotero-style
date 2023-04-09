@@ -8,6 +8,7 @@ import LocalStorage from "./modules/localStorage";
 import GraphView from "./modules/graphView";
 
 async function onStartup() {
+  await Zotero.Promise.delay(1000)
   registerPrefs();
   // Register the callback in Zotero as an item observer
   const notifierID = Zotero.Notifier.registerObserver(
@@ -61,7 +62,6 @@ async function onStartup() {
   const views = new Views(storage)
   
   const tasks = [
-    views.initTags(),
     views.createGraphView(),
     views.renderTitleColumn(),
     views.createTagsColumn(),
@@ -80,6 +80,7 @@ async function onStartup() {
     ztoolkit.log("ERROR", e)
   }
   await views.registerSwitchColumnsViewUI();
+  await views.initTags();
   try {
     ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
     ztoolkit.ItemTree.refresh()
@@ -121,21 +122,17 @@ async function onNotify(
     type == "tab" &&
     extraData[ids[0]].type == "reader"
   ) {
-    ztoolkit.log("select reader tab")
-    let reader = await ztoolkit.Reader.getReader();
-    // // 重置等待更新
-    // addonItem.set(
-    //   (Zotero.Items.get(reader.itemID) as _ZoteroItem).parentItem as _ZoteroItem,
-    //   "annotationNumber",
-    //   ""
-    // )
-    Zotero.ZoteroStyle.data.views.modifyAnnotationColors(reader);
+    window.setTimeout(async () => {
+      ztoolkit.log("select reader tab")
+      let reader = await ztoolkit.Reader.getReader();
+      Zotero.ZoteroStyle.data.views.modifyAnnotationColors(reader);
+    })
   } else if (
     event == "select" &&
     type == "tab" &&
     extraData[ids[0]].type == "library"
   ) {
-    ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
+    // ZoteroPane.itemsView.tree._columns._updateVirtualizedTable()
   } else {
     return;
   }

@@ -31,7 +31,7 @@ export class Tags {
   }
   private searchText?: string;
   private plainTags: string[] = [];
-  private nestedTags!: NestedTags["children"];
+  public nestedTags!: NestedTags["children"];
   /**
    * 这是Zotero界面存在的Container，用于存放标签
    */
@@ -166,6 +166,7 @@ export class Tags {
   }
 
   public async getPlainTags(): Promise<string[]> {
+    const linkSymbol = Zotero.Prefs.get(`${config.addonRef}.nestedTags.linkSymbol`) as string
     let func: Function | undefined 
     if (this.searchText && this.searchText.trim().length) {
       let regex: RegExp;
@@ -196,18 +197,20 @@ export class Tags {
       })
     if (func) {
       plainTags = plainTags.filter((tag: string) => {
-        return tag.split("/").find(s=>func!(s))
+        return tag.split(linkSymbol).find(s=>func!(s))
       })
     }
     return plainTags
   }
 
   public getNestedTags(): NestedTags["children"] {
+    const linkSymbol = Zotero.Prefs.get(`${config.addonRef}.nestedTags.linkSymbol`) as string
+
     let nestedTags = {}
     for (let i = 0; i < this.plainTags.length; i++) {
       // tag是Zotero原始标签，比如`#数学/微积分`
       let plainTag = this.plainTags[i]
-      let splitTags = plainTag.replace(/^#\s*/, "").split("/")
+      let splitTags = plainTag.replace(/^#\s*/, "").split(linkSymbol)
       // _nestedTags用于逐层获取数据引用
       let _nestedTags: any = nestedTags
       for (let j = 0; j < splitTags.length; j++) {

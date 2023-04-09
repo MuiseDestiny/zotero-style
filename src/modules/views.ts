@@ -2,12 +2,10 @@ import { config } from "../../package.json";
 import AddonItem from "./item";
 import Progress from "./progress";
 import { getString, initLocale } from "./locale";
-import { Command, Prompt } from "E:/Github/zotero-plugin-toolkit/dist/managers/prompt";
 import field2Info from "./easyscholar";
 import utils from "./utils";
 import Bubble from "./bubble";
 import { Tags } from "./tags";
-import Requests from "E:/Github/zotero-reference/src/modules/requests";
 import LocalStorage from "./localStorage";
 import GraphView from "./graphView";
 
@@ -16,6 +14,7 @@ export default class Views {
   private storage: AddonItem | LocalStorage;
   private cache: { [key: string]: any } = {};
   private filterFunctions: ((items: Zotero.Item[]) => Zotero.Item[])[] = [];
+  public tagsUI?: Tags;
   constructor(storage: AddonItem | LocalStorage) {
     Zotero[config.addonInstance].data.views = this
     this.storage = storage;
@@ -229,27 +228,6 @@ export default class Views {
           name: "Opacity",
           type: "range",
           range: [0, 1, 0.01],
-        },
-        {
-          prefKey: "titleColumn.odd",
-          name: "Odd Color",
-          type: "input",
-        },
-        {
-          prefKey: "titleColumn.even",
-          name: "Even Color",
-          type: "input",
-        },
-        {
-          prefKey: "titleColumn.selected",
-          name: "Selected Color",
-          type: "input",
-        },
-        {
-          prefKey: "addNumberToCollectionTree.mode",
-          name: "Number Mode",
-          type: "select",
-          values: ["0", "1", "2", "3"],
         },
       ]
     )
@@ -501,13 +479,12 @@ export default class Views {
                 `${config.addonRef}.text${key}Column.opacity`
               ) as string
             )
-
             let tagSpan = ztoolkit.UI.createElement(document, "span", {
               namespace: "html",
               styles: {
                 backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
                 padding: `0.05em ${padding}em`,
-                color: textColor,
+                color: textColor == "auto" ? `rgba(${red}, ${green}, ${blue}, 1)` : textColor,
                 borderRadius: "3px",
                 margin: `${margin}em`
               },
@@ -740,10 +717,11 @@ export default class Views {
                 }
               }
               let [red, green, blue] = Progress.getRGB(color)
+              // 如果文本颜色是auto，则进行处理
               span.appendChild(ztoolkit.UI.createElement(document, "span", {
                 styles: {
                   backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
-                  color: textColor,
+                  color: textColor == "auto" ? `rgba(${red}, ${green}, ${blue}, 1)` : textColor,
                   padding: `0.05em ${padding}em`,
                   borderRadius: "3px",
                   margin: `${margin}em`
@@ -756,7 +734,6 @@ export default class Views {
             if (!span.querySelector("span")) {
               span.style.height = "20px"
             }
-            console.log("success")
             return span;
           } catch (e) {
             ztoolkit.log(e)
@@ -3040,7 +3017,7 @@ export default class Views {
       if (target?.classList.contains("PublicationTags")) {
         try {
           let item = ZoteroPane.getSelectedItems()[0]
-          let publicationTitle = item.getField("publicationTitle")
+          let publicationTitle = utils.getPublicationTitle(item)
           if (!publicationTitle) {
             new ztoolkit.ProgressWindow("Publication Tags", { closeTime: 3000 })
               .createLine({ text: "No publicationTitle", type: "fail" }).show()
@@ -3117,6 +3094,7 @@ export default class Views {
       await Zotero.Promise.delay(100)
     }
     const tagsUI = new Tags();
+    this.tagsUI = tagsUI;
     try {
       ztoolkit.patch(
         ZoteroPane.tagSelector,
