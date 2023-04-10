@@ -18,6 +18,7 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 ## TODO
 
 - [ ] 视图组、颜色设置等参与同步
+- [ ] 主题切换
 
 ## Columns
 
