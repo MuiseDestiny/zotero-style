@@ -1,5 +1,5 @@
 # Zotero Style
-> Zotero can look great.
+> 让你更爱看文献！
 
 <img src="addon/chrome/content/icons/favicon.png" width="36px" height="36px">
 
