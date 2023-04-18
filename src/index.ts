@@ -15,10 +15,10 @@ if (!basicTool.getGlobal("Zotero")[config.addonInstance]) {
   _globalThis.ztoolkit = addon.data.ztoolkit;
   ztoolkit.basicOptions.log.prefix = `[${config.addonName}]`;
   ztoolkit.basicOptions.log.disableConsole = addon.data.env === "production";
-  ztoolkit.UI.basicOptions.ui.enableElementJSONLog =
-    addon.data.env === "development";
+  ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false
+    // addon.data.env === "development";
   ztoolkit.basicOptions.log.disableConsole = true;
-  ztoolkit.UI.basicOptions.ui.enableElementJSONLog = true;
+  ztoolkit.UI.basicOptions.ui.enableElementJSONLog = false;
   Zotero.ZoteroStyle = addon;
   // Trigger addon hook for initialization
   addon.hooks.onStartup();

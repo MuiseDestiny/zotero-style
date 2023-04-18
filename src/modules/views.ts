@@ -2,16 +2,20 @@ import { config } from "../../package.json";
 import AddonItem from "./item";
 import Progress from "./progress";
 import { getString, initLocale } from "./locale";
+
 import field2Info from "./easyscholar";
-import utils from "./utils";
+import { updatePublicationTags, getPublicationTitle } from "./utils";
 import Bubble from "./bubble";
 import { Tags } from "./tags";
 import LocalStorage from "./localStorage";
 import GraphView from "./graphView";
+var ColorRNA = require('color-rna');
+
 
 export default class Views {
   private progress: Progress;
   private storage: AddonItem | LocalStorage;
+  private localStorage = new LocalStorage(config.addonRef)
   private cache: { [key: string]: any } = {};
   private filterFunctions: ((items: Zotero.Item[]) => Zotero.Item[])[] = [];
   public tagsUI?: Tags;
@@ -325,6 +329,7 @@ export default class Views {
         break
     }
   }
+
   /**
    * 把标签从标题分离为单独的列
    */
@@ -473,7 +478,10 @@ export default class Views {
               `${config.addonRef}.text${key}Column.textColor`
             ) as string
             backgroundColor = backgroundColor || _backgroundColor || "#fadec9"
-            let [red, green, blue] = Progress.getRGB(backgroundColor)
+            const c = new ColorRNA(backgroundColor)
+            let [red, green, blue] = c.rgb()
+            const hsl = c.HSL()
+            hsl[2] = 40
             let opacity = parseFloat(
               Zotero.Prefs.get(
                 `${config.addonRef}.text${key}Column.opacity`
@@ -484,7 +492,8 @@ export default class Views {
               styles: {
                 backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
                 padding: `0.05em ${padding}em`,
-                color: textColor == "auto" ? `rgba(${red}, ${green}, ${blue}, 1)` : textColor,
+                // color: textColor == "auto" ? `rgba(${red}, ${green}, ${blue}, 1)` : textColor,
+                color: textColor == "auto" ? c.HSL(hsl).getHex() : textColor,
                 borderRadius: "3px",
                 margin: `${margin}em`
               },
@@ -565,6 +574,7 @@ export default class Views {
    * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
    */
   public async createPublicationTagsColumn() {
+    await this.localStorage.lock.promise;
     if (!Zotero.Prefs.get(`${config.addonRef}.function.PublicationTagsColumn.enable`) as boolean) { return }
     const key = "PublicationTags"
     await ztoolkit.ItemTree.register(
@@ -578,7 +588,8 @@ export default class Views {
       ) => {
         if (!item.isRegularItem()) { return ""}
         try {
-          const data = utils.wait(item, "publication")
+          // 只读取本地，不请求网络，避免卡顿
+          const data = this.localStorage.get(item, "publication")
           if (!data || data == "") { return "" }
           // 排序
           let sortBy: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
@@ -608,7 +619,7 @@ export default class Views {
           }).join(".")
           return s + " \n" + JSON.stringify(data)
         } catch (e) {
-          ztoolkit.log(e)
+          console.log(e)
           return ""
         }
       },
@@ -716,12 +727,16 @@ export default class Views {
                   color = defaultColor
                 }
               }
-              let [red, green, blue] = Progress.getRGB(color)
+              const c = new ColorRNA(color)
+              let [red, green, blue] = c.rgb()
+              const hsl = c.HSL()
+              hsl[2] = 40
               // 如果文本颜色是auto，则进行处理
               span.appendChild(ztoolkit.UI.createElement(document, "span", {
                 styles: {
                   backgroundColor: `rgba(${red}, ${green}, ${blue}, ${opacity})`,
-                  color: textColor == "auto" ? `rgba(${red}, ${green}, ${blue}, 1)` : textColor,
+                  // color: textColor == "auto" ? `rgba(${red}, ${green}, ${blue}, 1)` : textColor,
+                  color: textColor == "auto" ? c.HSL(hsl).getHex() as string : textColor,
                   padding: `0.05em ${padding}em`,
                   borderRadius: "3px",
                   margin: `${margin}em`
@@ -812,6 +827,7 @@ export default class Views {
    * 不同分区用不同颜色表示，不同影响因子用长度表示，默认是当前collection最大影响因子
    */
   public async createIFColumn() {
+    await this.localStorage.lock.promise
     if (!Zotero.Prefs.get(`${config.addonRef}.function.IFColumn.enable`) as boolean) { return }
     const key = "IF"
     await ztoolkit.ItemTree.register(
@@ -823,7 +839,7 @@ export default class Views {
         includeBaseMapped: boolean,
         item: Zotero.Item
       ) => {
-        const data = utils.wait(item, "publication")
+        const data = this.localStorage.get(item, "publication")
         if (!data) { return "-1" }
         let value = data[Zotero.Prefs.get(`${config.addonRef}.${key}Column.field`) as string] || data.sciif || data.sciif5
         if (value) {
@@ -2060,7 +2076,8 @@ export default class Views {
         /**
          * 进度条UI，重置
          */
-        callback: (prompt: Prompt) => {
+        callback: (prompt) => {
+          prompt.promptNode.style.display = "none"
           const container = prompt.createCommandsContainer()
           const item = getItem() as _ZoteroItem
           prompt.inputNode.placeholder = item.getField("title")
@@ -2218,64 +2235,6 @@ export default class Views {
         }
       },
       {
-        name: "影响因子",
-        label: "Style",
-        when: () => {
-          let item = getItem()
-          return (item && item.getField("publicationTitle")) as boolean
-        },
-        callback: async (prompt: Prompt) => {
-          let hrefs = [
-            "https://www.ablesci.com/assets/css/global_local.css?v=20221123v1",
-            "https://www.ablesci.com/assets/layui/css/layui.css"
-          ]
-          let styles: HTMLElement[] = []
-          hrefs.forEach(href => {
-            if (document.querySelector(`[href="${href}"]`)) { return }
-            const style = ztoolkit.UI.createElement(
-              document, "link",
-              {
-                properties: {
-                  type: "text/css",
-                  rel: "stylesheet",
-                  href: href,
-                },
-              }
-            );
-            styles.push(style)
-            document.documentElement.appendChild(style);
-          })
-
-          let item = getItem() as _ZoteroItem
-          const publicationTitle = item.getField("publicationTitle")
-          ztoolkit.log(publicationTitle)
-          let res = await Zotero.HTTP.request(
-            "GET",
-            `https://www.ablesci.com/journal/index?keywords=${publicationTitle.replace(/\s+/g, "+")}`,
-            {
-              responseType: "text",
-              credentials: "include"
-            }
-          )
-          let text = res.response
-          let matchedArray = text.match(/<table[\s\S]+?<\/table>/g)
-          if (matchedArray) {
-            prompt.inputNode.setAttribute("placeholder", publicationTitle)
-            const tableString = matchedArray[0].replace("36%", "20%")
-            const parser = new window.DOMParser()
-            const table = parser.parseFromString(`<div class="command">${tableString}</div>`, "text/html")
-            const container = prompt.createCommandsContainer()
-            container.appendChild(table.body.firstChild!)
-          }
-          // @ts-ignore
-          prompt.promptNode.addEventListener("keyup", (event) => {
-            if (event.key == "Escape") {
-              styles.forEach(e => e.remove())
-            }
-          })
-        }
-      },
-      {
         name: "标签",
         label: "Style",
         when: () => {
@@ -2287,7 +2246,7 @@ export default class Views {
           }
           return false
         },
-        callback: (prompt: Prompt) => {
+        callback: (prompt) => {
           const libraryID = 1
           // 重命名标签
           // Zotero.Tags.rename(libraryID, oldName, newName);
@@ -2488,153 +2447,157 @@ export default class Views {
             // 已创建的标注颜色
             for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
               const group = groups[groupIndex]
-              container.appendChild(ztoolkit.UI.createElement(document, "div", {
-                classList: ["command"],
-                styles: {
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                },
-                listeners: [
-                  {
-                    type: "mousemove",
-                    listener: function () {
-                      // @ts-ignore
-                      prompt.selectItem(this);
-                    },
+              ztoolkit.UI.appendElement(
+                {
+                  tag: "div",
+                  classList: ["command"],
+                  styles: {
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
                   },
-                ],
-                children: [
-                  {
-                    tag: "span",
-                    id: "group-name",
-                    properties: {
-                      innerText: group[0],
-                    },
-                    listeners: [
-                      {
-                        type: "click",
-                        listener: function (event) {
-                          event.stopPropagation()
-                          event.preventDefault()
-                          // 单击名称变为可输入状态更改名称
-                          // @ts-ignore
-                          const spanNode = this as HTMLSpanElement;
-                          const inputNode = spanNode.nextSibling as HTMLInputElement;
-                          spanNode.style.display = "none"
-                          inputNode.style.display = ""
-                        }
-                      }
-                    ],
-                    styles: {
-                      borderRadius: "5px",
-                      backgroundColor: JSON.stringify(group[1]) == Zotero.Prefs.get(`${config.addonRef}.annotationColors`)
-                        ? "rgba(244, 132, 132, 0.3)" : "none",
-                      padding: "0 .5em",
-                      fontSize: ".9em"
-                    }
-                  },
-                  {
-                    tag: "input",
-                    listeners: [
-                      {
-                        type: "keyup",
-                        listener: function () {
-                          // @ts-ignore
-                          const inputNode = this as HTMLInputElement;
-                          group[0] = inputNode.value;
-                          save()
-                        }
+                  listeners: [
+                    {
+                      type: "mousemove",
+                      listener: function () {
+                        // @ts-ignore
+                        prompt.selectItem(this);
                       },
-                      {
-                        type: "blur",
-                        listener: function () {
-                          // @ts-ignore
-                          const inputNode = this as HTMLInputElement;
-                          group[0] = inputNode.value;
-                          const spanNode = inputNode.previousSibling as HTMLSpanElement;
-                          spanNode.style.display = ""
-                          spanNode.innerText = inputNode.value
-                          inputNode.style.display = "none"
-                          save()
+                    },
+                  ],
+                  children: [
+                    {
+                      tag: "span",
+                      id: "group-name",
+                      properties: {
+                        innerText: group[0],
+                      },
+                      listeners: [
+                        {
+                          type: "click",
+                          listener: function (event) {
+                            event.stopPropagation()
+                            event.preventDefault()
+                            // 单击名称变为可输入状态更改名称
+                            // @ts-ignore
+                            const spanNode = this as HTMLSpanElement;
+                            const inputNode = spanNode.nextSibling as HTMLInputElement;
+                            spanNode.style.display = "none"
+                            inputNode.style.display = ""
+                          }
                         }
+                      ],
+                      styles: {
+                        borderRadius: "5px",
+                        backgroundColor: JSON.stringify(group[1]) == Zotero.Prefs.get(`${config.addonRef}.annotationColors`)
+                          ? "rgba(244, 132, 132, 0.3)" : "none",
+                        padding: "0 .5em",
+                        fontSize: ".9em"
                       }
-                    ],
-                    styles: {
-                      display: "none",
-                      width: "20%",
-                      ...inputStyles,
                     },
-                    attributes: {
-                      value: group[0],
-                      placeholder: "Name"
-                    },
-                  },
-                  {
-                    tag: "div",
-                    listeners: [
-                      {
-                        type: "mousedown",
-                        listener: async (event: any) => {
-                          if (event.button == 0) {
-                            // 长按进入编辑，短按使用
-                            timer = window.setTimeout(() => {
-                              timer = undefined
-                              editAnnotations(group)
-                            }, 1000)
-                          } else if (event.button == 2) {
-                            // 单击右键删除
-                            groups.splice(groupIndex, 1)
-                            updateGroups()
+                    {
+                      tag: "input",
+                      listeners: [
+                        {
+                          type: "keyup",
+                          listener: function () {
+                            // @ts-ignore
+                            const inputNode = this as HTMLInputElement;
+                            group[0] = inputNode.value;
+                            save()
                           }
                         },
+                        {
+                          type: "blur",
+                          listener: function () {
+                            // @ts-ignore
+                            const inputNode = this as HTMLInputElement;
+                            group[0] = inputNode.value;
+                            const spanNode = inputNode.previousSibling as HTMLSpanElement;
+                            spanNode.style.display = ""
+                            spanNode.innerText = inputNode.value
+                            inputNode.style.display = "none"
+                            save()
+                          }
+                        }
+                      ],
+                      styles: {
+                        display: "none",
+                        width: "20%",
+                        ...inputStyles,
                       },
-                      {
-                        type: "mouseup",
-                        listener: async (event: any) => {
-                          if (event.button == 0) {
-                            if (timer) {
-                              // 长按事件未达到，执行选中
-                              window.clearTimeout(timer as number)
-                              saveAnnotations(group[1])
-                              
+                      attributes: {
+                        value: group[0],
+                        placeholder: "Name"
+                      },
+                    },
+                    {
+                      tag: "div",
+                      listeners: [
+                        {
+                          type: "mousedown",
+                          listener: async (event: any) => {
+                            if (event.button == 0) {
+                              // 长按进入编辑，短按使用
+                              timer = window.setTimeout(() => {
+                                timer = undefined
+                                editAnnotations(group)
+                              }, 1000)
+                            } else if (event.button == 2) {
+                              // 单击右键删除
+                              groups.splice(groupIndex, 1)
                               updateGroups()
                             }
-                          }
+                          },
                         },
-                      }
-                    ],
-                    styles: {
-                      display: "flex",
-                      flexDirection: "row",
-                      aliginItems: "center",
-                      justifyContent: "space-around",
-                      width: "80%",
-                    },
-                    children: (() => {
-                      let children: any[] = []
-                      for (let anno of group[1]) {
-                        children.push({
-                        tag: "span",
-                        id: "circle",
-                        attributes: {
-                          title: anno[0]
-                        },
-                        styles: {
-                          display: "inline-block",
-                          height: ".7em",
-                          width: ".7em",
-                          borderRadius: ".1em",
-                          backgroundColor: anno[1],
-                          margin: "0 auto"
+                        {
+                          type: "mouseup",
+                          listener: async (event: any) => {
+                            if (event.button == 0) {
+                              if (timer) {
+                                // 长按事件未达到，执行选中
+                                window.clearTimeout(timer as number)
+                                saveAnnotations(group[1])
+
+                                updateGroups()
+                              }
+                            }
+                          },
                         }
-                      })
-                      }
-                      return children
-                    })()
-                  }
-                ]
-              }))
+                      ],
+                      styles: {
+                        display: "flex",
+                        flexDirection: "row",
+                        aliginItems: "center",
+                        justifyContent: "space-around",
+                        width: "80%",
+                      },
+                      children: (() => {
+                        let children: any[] = []
+                        for (let anno of group[1]) {
+                          children.push({
+                            tag: "span",
+                            id: "circle",
+                            attributes: {
+                              title: anno[0]
+                            },
+                            styles: {
+                              display: "inline-block",
+                              height: ".7em",
+                              width: ".7em",
+                              borderRadius: ".1em",
+                              backgroundColor: anno[1],
+                              margin: "0 auto"
+                            }
+                          })
+                        }
+                        return children
+                      })()
+                    }
+                  ]
+                },
+                container
+              )
             }
             // 新增按钮
             container.appendChild(ztoolkit.UI.createElement(document, "div", {
@@ -2852,34 +2815,139 @@ export default class Views {
 
         }
       },
-      // {
-      //   name: "重置阅读进度",
-      //   label: "Style",
-      //   when: () => {
-      //     // 有条目，且条目有阅读时间
-      //     let item = getItem()
-      //     if (!item) { return false }
-      //     let record = this.storage.get(item, "readingTime")
-      //     return record?.data && Object.keys(record.data).length > 0
-      //   },
-      //   callback: (prompt) => {
-      //     let item = getItem() as _ZoteroItem
-      //     prompt.inputNode.placeholder = item.getField("title")
-      //     try {
-      //       let record = this.storage.get(item, "readingTime")
-      //       record.data = {}
-      //       this.storage.set(item, "readingTime", record)
-      //     } catch { }
-      //     prompt.showTip("重置成功")
-      //   }
-      // },
+      {
+        name: "期刊标签",
+        label: "Style",
+        callback: (prompt) => {
+          let secretKey = Zotero.Prefs.get(`${config.addonRef}.easyscholar.secretKey`) as string
+          const container = prompt.createCommandsContainer()
+          ztoolkit.UI.appendElement({
+            tag: "div",
+            styles: {
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "column",
+            },
+            children: [
+              {
+                tag: "input",
+                id: "secretKey",
+                properties: {
+                  value: secretKey,
+                  placeholder: "Easyscholar SecretKey"
+                },
+                styles: {
+                  height: "2em",
+                  border: "1px solid #eee",
+                  borderRadius: ".1em",
+                  padding: "0 0.5em",
+                  margin: "1em auto",
+                  width: "50%",
+                  textAlign: "center"
+                }
+              },
+              {
+                tag: "div",
+                styles: {
+                  height: "1.5em",
+                  width: "8em",
+                  borderRadius: "3px",
+                  textAlign: "center",
+                  border: "1px solid white",
+                  lineHeight: "1.5em",
+                  fontSize: "1em",
+                  color: "white",
+                  // fontWeight: "bold",
+                  margin: ".5em auto",
+                  backgroundColor: "rgba(35, 131, 226, 0.6)",
+                  cursor: "pointer"
+                },
+                properties: {
+                  innerText: "Help"
+                },
+                listeners: [
+                  {
+                    type: "click",
+                    listener: () => {
+                      new ztoolkit.ProgressWindow("提示", { closeOtherProgressWindows: true, closeTime: 3000 })
+                        .createLine({ text: "已为您在浏览器打开申请密钥教程，请参考配置", type:"default" })
+                        .show()
+                      Zotero.launchURL("https://github.com/MuiseDestiny/zotero-style/releases/tag/2.5.1")
+                      Zotero.launchURL("http://xhslink.com/d5E72o")
+                    }
+                  }
+                ]
+              },
+              {
+                tag: "div",
+                styles: {
+                  height: "1.5em",
+                  width: "8em",
+                  borderRadius: "3px",
+                  textAlign: "center",
+                  border: "1px solid white",
+                  lineHeight: "1.5em",
+                  fontSize: "1em",
+                  color: "white",
+                  // fontWeight: "bold",
+                  margin: ".5em auto",
+                  backgroundColor: "rgba(251, 127, 153, 0.6)",
+                  cursor: "pointer"
+
+                },
+                properties: {
+                  innerText: "Update"
+                },
+                listeners: [
+                  {
+                    type: "click",
+                    listener: async () => {
+                      Zotero.Prefs.set(`${config.addonRef}.easyscholar.secretKey`,
+                        (container.querySelector("#secretKey") as HTMLInputElement).value as string
+                      ) as string
+                      const selectedItems = ZoteroPane.getSelectedItems()
+                      const sortedItems = ZoteroPane.getSortedItems()
+                      let items = selectedItems.length > 1 ? selectedItems : sortedItems
+                      const state = { fail: 0, no: 0, success: 0 }
+                      const popupWin = new ztoolkit.ProgressWindow("Update PublicationTags", {closeOtherProgressWindows: true, closeTime: -1})
+                        .createLine({ text: `[0/0/0/${items.length}] 1%`, progress: 1 })
+                        .show()
+                      for (let i = 0; i < items.length;i++) {
+                        const flag = await updatePublicationTags(this.localStorage, items[i])
+                        
+                        if (flag == 1) {
+                          state.success += 1
+                        } else if(flag == 0){
+                          state.no += 1
+                        } else {
+                          state.fail += 1
+                        }
+                        const progress = 100 * (i + 1) / items.length
+                        const _progress = String(progress).split(".")[0]
+                        popupWin.changeLine({ text: `[${state.success}/${state.no}/${state.fail}/${items.length}] ${_progress}%`, progress })
+                      }
+                      if (state.success > 0) {
+                        popupWin.changeLine({type: "success"})
+                      } else {
+                        popupWin.changeLine({ type: "fail" })
+                      }
+                      popupWin.startCloseTimer(3000)
+                    }
+                  }
+                ]
+              }
+            ]
+          }, container)
+        },
+      },
       {
         name: "设置为插件储存条目",
         when: () => {
           let item = getItem()
           return item?.getField("title").includes("Addon") as boolean
         },
-        callback: (prompt: Prompt) => {
+        callback: (prompt) => {
           let item = getItem() as _ZoteroItem
           Zotero.Prefs.set("Zotero.AddonItem.key", item.key)
           if ("item" in this.storage) {
@@ -3017,15 +3085,13 @@ export default class Views {
       if (target?.classList.contains("PublicationTags")) {
         try {
           let item = ZoteroPane.getSelectedItems()[0]
-          let publicationTitle = utils.getPublicationTitle(item)
+          let publicationTitle = getPublicationTitle(item)
           if (!publicationTitle) {
-            new ztoolkit.ProgressWindow("Publication Tags", { closeTime: 3000 })
-              .createLine({ text: "No publicationTitle", type: "fail" }).show()
+            console.log("No publicationTitle")
           } else {
             new ztoolkit.ProgressWindow("Publication Tags", {closeTime: 3000})
               .createLine({ text: publicationTitle, type: "default" }).show()
-            console.log("click refresh", item.key)
-            utils.wait(item, "publication", false)
+            updatePublicationTags(this.localStorage, item, true)
             ztoolkit.ItemTree.refresh()
           }
         } catch {}
@@ -3157,6 +3223,7 @@ export default class Views {
                 }
                 }
             }
+            // 修复定位bug
             window.setTimeout(async () => {
               // 随着缩放它会一直闪烁，这个bug，Zotero官方一直没修复
               // 所以将它替换为border形式，即使不消失也不会太影响观感
@@ -3176,7 +3243,11 @@ export default class Views {
                 },
               }, win.document.documentElement as any);
             }, 0)
-            return original.call(Zotero.Reader, id, location, ...other)
+            // 为tab添加标签
+            window.setTimeout(async () => {
+              
+            })
+            return original.call(Zotero.Reader, id, location as any, ...other)
           }
       )
     } catch {}
@@ -3195,8 +3266,8 @@ export default class Views {
           (index: number, selection: object, oldDiv: HTMLDivElement, columns: any[]) => {
             const div = original.call(ZoteroPane.collectionsView, index, selection, oldDiv, columns)
 
-            // div.querySelector("span").style.backgroundColor = "#ffffff"
-            // div.querySelector("span").style.color = "#ffffff"
+            // div.querySelector("span").style.backgroundColor = "#FFABAB"
+            // div.querySelector("span").style.color = "#FFABAB"
 
             const row = ZoteroPane.collectionsView.getRow(index)
             const ref = row.ref!

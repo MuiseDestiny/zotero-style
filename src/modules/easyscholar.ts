@@ -454,6 +454,21 @@ const field2Info: any = {
       rank = 1
     }
     return { rank, key, value }
+  },
+  CPU(s: string) {
+    let key = "CPU", value = s, rank
+    if (s == "一流") {
+      rank = 1
+    } else if (s == "权威") {
+      rank = 2
+    } else if (s == "学科顶尖") {
+      rank = 3
+    } else if (s == "学科一流") {
+      rank = 4
+    } else if (s == "学科重要") {
+      rank = 5
+    }
+    return { rank, key, value }
   }
 }
 

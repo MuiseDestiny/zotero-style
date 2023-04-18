@@ -1,6 +1,6 @@
 {
   "name": "zotero-style",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "A Zotero plugin for creating a personal Zotero Style.",
   "config": {
     "addonName": "Zotero Style",
@@ -33,6 +33,7 @@
   "homepage": "https://github.com/muisedestiny/zotero-style#readme",
   "dependencies": {
     "3d-force-graph": "^1.71.1",
+    "color-rna": "^1.0.1",
     "d3": "^7.8.2",
     "math": "^0.0.3",
     "pako": "^2.1.0",

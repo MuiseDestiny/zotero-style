@@ -29,12 +29,15 @@ class LocalStorage {
     this.lock.resolve()
   }
 
-  get(item: Zotero.Item, key: string) {
-    if (this.cache == undefined) { return }
+  get(item: Zotero.Item | {key: string}, key: string) {
+    if (this.cache == undefined) {
+      console.log("cache is undefined")
+      return
+    }
     return (this.cache[item.key] ??= {})[key]
   }
 
-  async set(item: Zotero.Item, key: string, value: any) {
+  async set(item: Zotero.Item | {key: string}, key: string, value: any) {
     await this.lock.promise;
     (this.cache[item.key] ??= {})[key] = value
     window.setTimeout(async () => {

@@ -5,10 +5,8 @@ import Events from "./modules/events";
 import AddonItem from "./modules/item";
 import { registerPrefsScripts, registerPrefs } from "./modules/prefs";
 import LocalStorage from "./modules/localStorage";
-import GraphView from "./modules/graphView";
 
 async function onStartup() {
-  await Zotero.Promise.delay(1000)
   registerPrefs();
   // Register the callback in Zotero as an item observer
   const notifierID = Zotero.Notifier.registerObserver(
@@ -34,10 +32,6 @@ async function onStartup() {
     Zotero.uiReadyPromise,
   ]);
   initLocale();
-
-  // // 不争不抢先加载
-  await Zotero.Promise.delay(1000)
-
   // 初始化储存位置
   let storage
   const storageIn = Zotero.Prefs.get(`${config.addonRef}.storage.in`) as string
@@ -60,7 +54,8 @@ async function onStartup() {
   events.onInit()
   
   const views = new Views(storage)
-  
+  // 为用户默认打开显示所有标签，若要显示分类下，需要手动关闭
+  Zotero.Prefs.set("tagSelector.displayAllTags", true)
   const tasks = [
     views.createGraphView(),
     views.renderTitleColumn(),
