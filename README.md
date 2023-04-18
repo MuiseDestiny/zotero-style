@@ -1,5 +1,5 @@
 # Zotero Style
-> Zotero can look great.
+> 让你享受阅读文献的乐趣！
 
 <img src="addon/chrome/content/icons/favicon.png" width="36px" height="36px">
 
@@ -18,6 +18,7 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 ## TODO
 
 - [ ] 视图组、颜色设置等参与同步
+- [ ] 主题切换
 
 ## Columns
 
@@ -282,6 +283,7 @@ Two ways display your tags after assigning color and position: (1) you can open 
 - [Zotero style简单设置教程~](http://xhslink.com/yNQBUn)
 - [我学会怎么改zotero注释颜色的名字啦！！](http://xhslink.com/jfMeQo)
 - [zotero style教程|让你的zotero更有趣！](http://xhslink.com/VBSeQo)
+- [期刊标签配置密钥](http://xhslink.com/d5E72o)
 
 ## Acknowledgements
 
