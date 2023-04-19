@@ -130,6 +130,7 @@ export default class Views {
    * 标题是必定显示的所以奇数偶数显示逻辑写在这里
    */
   public async renderTitleColumn() {
+    await Zotero.Promise.delay(1000)
     ztoolkit.log("renderTitleColumn")
     if (!Zotero.Prefs.get(`${config.addonRef}.function.titleColumn.enable`) as boolean) { return }
     const key = "title"
