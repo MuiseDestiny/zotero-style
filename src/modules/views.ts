@@ -302,7 +302,6 @@ export default class Views {
     await ztoolkit.ItemTree.addRenderCellHook(
       key,
       (index: number, data: string, column: any, original: Function) => {
-        console.log(data)
         const cellSpan = original(index, data, column) as HTMLSpanElement;
         const fields = Zotero.Prefs.get(`${config.addonRef}.publicationColumn.fields`) as string
         const item = ZoteroPane.getSortedItems()[index]
@@ -2886,17 +2885,17 @@ export default class Views {
               {
                 tag: "div",
                 styles: {
-                  height: "1.5em",
+                  height: "2em",
                   width: "8em",
-                  borderRadius: "3px",
+                  borderRadius: "20px",
                   textAlign: "center",
                   border: "1px solid white",
-                  lineHeight: "1.5em",
+                  lineHeight: "1.7em",
                   fontSize: "1em",
                   color: "white",
-                  // fontWeight: "bold",
+                  fontWeight: "bold",
                   margin: ".5em auto",
-                  backgroundColor: "rgba(35, 131, 226, 0.6)",
+                  backgroundColor: "#BFACE2",
                   cursor: "pointer"
                 },
                 properties: {
@@ -2918,19 +2917,18 @@ export default class Views {
               {
                 tag: "div",
                 styles: {
-                  height: "1.5em",
+                  height: "2em",
                   width: "8em",
-                  borderRadius: "3px",
+                  borderRadius: "20px",
                   textAlign: "center",
                   border: "1px solid white",
-                  lineHeight: "1.5em",
+                  lineHeight: "1.7em",
                   fontSize: "1em",
                   color: "white",
-                  // fontWeight: "bold",
+                  fontWeight: "bold",
                   margin: ".5em auto",
-                  backgroundColor: "rgba(251, 127, 153, 0.6)",
+                  backgroundColor: "#BA90C6",
                   cursor: "pointer"
-
                 },
                 properties: {
                   innerText: "Update"
@@ -3219,18 +3217,20 @@ export default class Views {
     }, 5000)
 
     this.filterFunctions.push((items: Zotero.Item[]) => {
-      const tagStart = tagsUI.getTagStart()
-      if (!tagStart) { return items }
-      return items.filter((item: Zotero.Item) => {
-        return (
-          // 条目/笔记本身包含此标签
-          (item.getTags && item.getTags().find((tag: { tag: string }) => tag.tag.startsWith(tagStart))) ||
-          // PDF附件包含词标签
-          (item.isAttachment()) && item.attachmentContentType == "application/pdf" && item.getAnnotations().some(annoItem => {
-            return annoItem.getTags().some(tag => tag.tag.startsWith(tagStart))
-          })
-        )
+      const tagStartArr = tagsUI.getTagStart()!
+      if (tagStartArr.length == 0) { return items }
+      for (let i = 0; i < tagStartArr!.length; i++) {
+        items = tagsUI.filterItemsByTagStart(items, tagStartArr![i])
+      }
+      // 如果
+      window.setTimeout(async () => {
+        if (items.length == 0) {
+          Object.values(tagsUI.state).forEach((i: any) => i.select = false)
+        }
+        await ZoteroPane.itemsView.refreshAndMaintainSelection()
+        await tagsUI.init()
       })
+      return items
     })
 
     // Zotero.Reader.open(item.id, location

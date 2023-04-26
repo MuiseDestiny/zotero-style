@@ -1,4 +1,5 @@
 import { config } from "../../package.json";
+var ColorRNA = require('color-rna');
 
 /**
  * 用于创建高于Zotero本身的标签UI
@@ -20,7 +21,7 @@ export class Tags {
     },
     color: {
       hover: "#e4e4e4",
-      select: "#ffff99"
+      select: "#D14D72"
     },
     sorted: [
       "Tag (A-Z)",
@@ -44,7 +45,8 @@ export class Tags {
   /**
    * 用于记录层级标签的选择状态和折叠状态，使得刷新时候保持
    */
-  public state: { [id: string]: { collapse?: boolean;  select?: boolean} } = {};
+  public state: { [id: string]: { collapse?: boolean; select?: boolean } } = {};
+  private _state: any
   constructor() {
     this.props.icon.svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${this.props.icon.size}" height="${this.props.icon.size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle"><path d="M3 8L12 17L21 8"></path></svg>`
     this.prepare()
@@ -54,7 +56,8 @@ export class Tags {
    * 用于执行只需要执行一次的逻辑
    */
   private prepare() {
-    document.querySelector("#nested-tags-style")?.remove();
+    const c = new ColorRNA(this.props.color.select)
+    let [red, green, blue] = c.rgb()
     const styles = ztoolkit.UI.createElement(document, "style", {
       id: "nested-tags-style",
       properties: {
@@ -83,8 +86,27 @@ export class Tags {
           .menu-item:hover {
             background-color: #e4e4e4;
           }
+          .item {
+            margin: .1em 0;
+            transition: background-color .1s linear;
+          }
           .item:hover {
-            background-color: ${this.props.color.hover}
+            cursor: pointer;
+            background-color: ${this.props.color.hover};
+          }
+          .item:not(.disable):not(.selected):hover {
+            background-color: rgba(${red}, ${green}, ${blue}, .1) !important;
+          }
+          .item.selected:hover {
+            background-color: rgba(${red}, ${green}, ${blue}, 1);
+          }
+          .item.disable {
+            opacity: .6;
+            cursor: default;
+          }
+          .item.selected {
+            color: white;
+            background-color: rgba(${red}, ${green}, ${blue}, .9);
           }
           #zotero-tag-selector {
             display: flex;
@@ -136,6 +158,11 @@ export class Tags {
     splitter?.addEventListener("mouseup", () => {
       isMouseDown = false
     })
+
+    ZoteroPane.collectionsView.onSelect.addListener(async () => {
+      await Zotero.Promise.delay(1000)
+      await this.init(true)
+    })
   }
 
   /**
@@ -150,11 +177,17 @@ export class Tags {
     // 若不是强制刷新，则需要判断是否和上次获取plainTags相同
     if (!force) {
       if (
-        // 与上次相同
-        JSON.stringify(plainTags) == JSON.stringify(this.plainTags) ||
+        // 与上次状态相同
+        (
+          JSON.stringify(plainTags) == JSON.stringify(this.plainTags) &&
+          this._state == JSON.stringify(this.state)
+        ) ||
         // 未处于当前视图
         this.nestedTagsContainer?.style.display == "none"
-      ) { return }
+      ) {
+        console.log("skip init")
+        return
+      }
     }
     this.plainTags = plainTags
     // 隐藏Zotero标签视图，它将继续作为一种非嵌套视图存在，并由插件安排
@@ -163,6 +196,7 @@ export class Tags {
     this.nestedTags = await this.getNestedTags()
     // 渲染嵌套标签
     await this.refresh()
+    this._state = JSON.stringify(this.state)
   }
 
   public async getPlainTags(): Promise<string[]> {
@@ -203,9 +237,14 @@ export class Tags {
     return plainTags
   }
 
+  private key2tag(key: string) {
+    const linkSymbol = Zotero.Prefs.get(`${config.addonRef}.nestedTags.linkSymbol`) as string
+    let [plainTag, index] = JSON.parse(key)
+    return plainTag.split(linkSymbol).slice(0, index + 1).join(linkSymbol)
+  } 
+
   public getNestedTags(): NestedTags["children"] {
     const linkSymbol = Zotero.Prefs.get(`${config.addonRef}.nestedTags.linkSymbol`) as string
-
     let nestedTags = {}
     for (let i = 0; i < this.plainTags.length; i++) {
       // tag是Zotero原始标签，比如`#数学/微积分`
@@ -233,11 +272,10 @@ export class Tags {
    * @returns 
    */
   public getTagStart = () => {
-    const key = Object.keys(this.state).find((key: any) => this.state[key].select) as string
-    if (!key) { return }
-    let [plainTag, index] = JSON.parse(key)
-    const tagStart = plainTag.split("/").slice(0, index + 1).join("/")
-    return tagStart
+    const keys = Object.keys(this.state).filter((key: any) => this.state[key].select) as string[]
+    if (keys.length == 0) { return [] }
+    const tagStartArr = keys.map(this.key2tag)
+    return tagStartArr
   }
 
   /**
@@ -676,6 +714,19 @@ export class Tags {
     return menuNode
   }
 
+  public filterItemsByTagStart(items: Zotero.Item[], tagStart: string) {
+    return items.filter((item: Zotero.Item) => {
+      return (
+        // 条目/笔记本身包含此标签
+        (item.getTags && item.getTags().find((tag: { tag: string }) => tag.tag.startsWith(tagStart))) ||
+        // PDF附件包含词标签
+        (item.isAttachment()) && item.attachmentContentType == "application/pdf" && item.getAnnotations().some(annoItem => {
+          return annoItem.getTags().some(tag => tag.tag.startsWith(tagStart))
+        })
+      )
+    })
+  }
+
   /**
    * 用于渲染一个父节点下的一个层级的标签
    * nestedTags本身可看作一个children
@@ -692,13 +743,13 @@ export class Tags {
       (this.state[key] ??= {}).collapse ??= true
       const itemNode = ztoolkit.UI.appendElement({
         tag: "div",
-        classList: ["item"],
+        classList: ["item"].concat(this.state[key].select ? ["selected"] : []),
         styles: {
           borderRadius: "3px",
           height: "1.8em",
           lineHeight: "1.8em",
           padding: `0 ${this.props.item.padding}px`,
-          backgroundColor: this.state[key].select ? this.props.color.select : "",
+          // backgroundColor: this.state[key].select ? this.props.color.select : "",
         },
         listeners: [],
         children: [{
@@ -734,20 +785,25 @@ export class Tags {
                     {
                       type: "click",
                       listener: async () => {
+                        if (itemNode.classList.contains("disable")) { return }
                         // 点击标签名筛选逻辑
                         if (this.state[key].select) {
                           // 取消点击
                           this.state[key].select = false
-                          itemNode.style.backgroundColor = ""
+                          itemNode.classList.remove("selected")
                         } else {
                           // 点击匹配
-                          Object.values(this.state).forEach((i: any) => i.select = false)
+                          // #226: 允许多个select构成AND
+                          // Object.values(this.state).forEach((i: any) => i.select = false)
                           // @ts-ignore
                           this.nestedTagsContainer.querySelectorAll(".item").forEach(e => e.style.backgroundColor = "")
                           this.state[key].select = true
-                          itemNode.style.backgroundColor = this.props.color.select
+                          itemNode.classList.add("selected")
+                          // itemNode.style.backgroundColor = this.props.color.select
                         }
-                        await ZoteroPane.itemsView.refreshAndMaintainSelection()
+                        ZoteroPane.itemsView.refreshAndMaintainSelection()
+                        this._state = JSON.stringify(this.state)
+                        // await this.init(true)
                       }
                     },
                     {
@@ -881,6 +937,15 @@ export class Tags {
         }
         ]
       }, parent) as HTMLElement
+      // 判断是否可点击选择
+      if (
+        this.filterItemsByTagStart(
+          ZoteroPane.getSortedItems(),
+          this.key2tag(key)
+        ).length == 0
+      ) {
+        itemNode.classList.add("disable")
+      }
       // 有子节点
       if (Object.keys(children[tag].children).length) {
         // tree, 侧边线容器
