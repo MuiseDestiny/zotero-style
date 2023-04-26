@@ -6,7 +6,7 @@ import LocalStorage from "./localStorage";
 const requests = new Requests()
 
 export function getPublicationTitle(item: Zotero.Item) {
-  return [item.getField("publicationTitle"), item.getField("proceedingsTitle")].find(i => i.trim().length > 0)
+  return [item.getField("publicationTitle"), item.getField("proceedingsTitle")].find(i => i.trim().length > 0) || ""
 }
 
 /**

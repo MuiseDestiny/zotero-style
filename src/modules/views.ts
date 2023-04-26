@@ -130,6 +130,7 @@ export default class Views {
    * 标题是必定显示的所以奇数偶数显示逻辑写在这里
    */
   public async renderTitleColumn() {
+    // 防止与其他插件冲突
     await Zotero.Promise.delay(1000)
     ztoolkit.log("renderTitleColumn")
     if (!Zotero.Prefs.get(`${config.addonRef}.function.titleColumn.enable`) as boolean) { return }
@@ -290,6 +291,34 @@ export default class Views {
           prefKey: "creatorColumn.join",
           name: "Join",
           type: "input",
+        },
+      ]
+    )
+  }
+
+  public async renderPublicationColumn() {
+    if (!Zotero.Prefs.get(`${config.addonRef}.function.publicationColumn.enable`) as boolean) { return }
+    const key = "publicationTitle"
+    await ztoolkit.ItemTree.addRenderCellHook(
+      key,
+      (index: number, data: string, column: any, original: Function) => {
+        console.log(data)
+        const cellSpan = original(index, data, column) as HTMLSpanElement;
+        const fields = Zotero.Prefs.get(`${config.addonRef}.publicationColumn.fields`) as string
+        const item = ZoteroPane.getSortedItems()[index]
+        cellSpan.innerText = data || fields.split(/,\x20*/).map((field:string) => {
+          return item.getField(field)
+        }).find((i:string)=>i.length>0) || ""
+        return cellSpan
+      }
+    )
+    this.patchSetting(
+      key,
+      [
+        {
+          prefKey: "publicationColumn.fields",
+          name: "Fields",
+          type: "input"
         },
       ]
     )
@@ -589,9 +618,15 @@ export default class Views {
       ) => {
         if (!item.isRegularItem()) { return ""}
         try {
-          // 只读取本地，不请求网络，避免卡顿
           const data = this.localStorage.get(item, "publication")
-          if (!data || data == "") { return "" }
+          if (data == undefined) {
+            // 自动更新
+            window.setTimeout(async () => {
+              await updatePublicationTags(this.localStorage, item)
+            })
+            return ""
+          }
+          if (data == "") { return data }
           // 排序
           let sortBy: any = Zotero.Prefs.get(`${config.addonRef}.${key}Column.sortBy`) as string
           sortBy = sortBy.split(/,\s*/g)

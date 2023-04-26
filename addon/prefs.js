@@ -82,6 +82,10 @@ pref("extensions.zotero.__addonRef__.creatorColumn.format", "${firstCreator}");
 pref("extensions.zotero.__addonRef__.creatorColumn.slices", "0:1");
 pref("extensions.zotero.__addonRef__.creatorColumn.join", ", ");
 
+pref("extensions.zotero.__addonRef__.function.publicationColumn.enable", true);
+pref("extensions.zotero.__addonRef__.publicationColumn.fields", "publicationTitle, proceedingsTitle, university, publisher");
+
+
 
 
 pref("extensions.zotero.__addonRef__.nestedTags.sortord", "0");

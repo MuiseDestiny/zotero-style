@@ -68,6 +68,7 @@ async function onStartup() {
     views.initItemSelectListener(),
     views.addNumberToCollectionTree(),
     views.renderCreatorColumn(),
+    views.renderPublicationColumn()
   ]
   try {
     await Promise.all(tasks);
