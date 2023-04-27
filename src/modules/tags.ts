@@ -21,7 +21,8 @@ export class Tags {
     },
     color: {
       hover: "#e4e4e4",
-      select: "#D14D72"
+      // select: "#D14D72"
+      select: "#9384D1"
     },
     sorted: [
       "Tag (A-Z)",
@@ -46,7 +47,7 @@ export class Tags {
    * 用于记录层级标签的选择状态和折叠状态，使得刷新时候保持
    */
   public state: { [id: string]: { collapse?: boolean; select?: boolean } } = {};
-  private _state: any
+  private collectionItems!: Zotero.Item[];
   constructor() {
     this.props.icon.svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${this.props.icon.size}" height="${this.props.icon.size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle"><path d="M3 8L12 17L21 8"></path></svg>`
     this.prepare()
@@ -74,10 +75,10 @@ export class Tags {
             align-items: center;
             justify-content: center;
           }
-          .nested-tags-control-icon:hover {
+          .nested-tags-container .nested-tags-control-icon:hover {
             background-color: rgba(0, 0, 0, 0.075)
           }
-          .nested-tags-control-icon:active {
+          .nested-tags-container .nested-tags-control-icon:active {
             opacity: 1;
           }
           .tag-selector, .nested-tags-box {
@@ -86,25 +87,28 @@ export class Tags {
           .menu-item:hover {
             background-color: #e4e4e4;
           }
-          .item {
+          .nested-tags-container .item {
             margin: .1em 0;
-            transition: background-color .1s linear;
+            transition: background-color .1s linear, opacity .1s linear;
           }
-          .item:hover {
+          .nested-tags-container .item:hover {
             cursor: pointer;
             background-color: ${this.props.color.hover};
           }
-          .item:not(.disable):not(.selected):hover {
-            background-color: rgba(${red}, ${green}, ${blue}, .1) !important;
+          .nested-tags-container .item:not(.not-in-items):not(.selected):hover {
+            background-color: rgba(${red}, ${green}, ${blue}, .23) !important;
           }
-          .item.selected:hover {
+          .nested-tags-container .item.selected:hover {
             background-color: rgba(${red}, ${green}, ${blue}, 1);
           }
-          .item.disable {
-            opacity: .6;
+          .nested-tags-container .item.not-in-items {
+            opacity: 1;
+          }
+          .nested-tags-container .item.not-in-collection {
+            opacity: .23;
             cursor: default;
           }
-          .item.selected {
+          .nested-tags-container .item.selected {
             color: white;
             background-color: rgba(${red}, ${green}, ${blue}, .9);
           }
@@ -158,10 +162,17 @@ export class Tags {
     splitter?.addEventListener("mouseup", () => {
       isMouseDown = false
     })
-
+    window.setTimeout(async () => {      
+      await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
+      this.collectionItems = ZoteroPane.getSortedItems()
+    })
     ZoteroPane.collectionsView.onSelect.addListener(async () => {
-      await Zotero.Promise.delay(1000)
-      await this.init(true)
+      // await Zotero.Promise.delay(1000)
+      await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
+      this.collectionItems = ZoteroPane.getSortedItems()
+      if (this.nestedTagsContainer?.style.display != "none") {
+        await this.init(true)
+      }
     })
   }
 
@@ -179,13 +190,15 @@ export class Tags {
       if (
         // 与上次状态相同
         (
-          JSON.stringify(plainTags) == JSON.stringify(this.plainTags) &&
-          this._state == JSON.stringify(this.state)
+          JSON.stringify(plainTags) == JSON.stringify(this.plainTags)
+          // this._state == JSON.stringify(this.state)
         ) ||
         // 未处于当前视图
         this.nestedTagsContainer?.style.display == "none"
       ) {
-        console.log("skip init")
+        // 更新状态
+        await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
+        this.nestedTagsContainer.querySelectorAll(".item")!.forEach(e => e.update())
         return
       }
     }
@@ -196,7 +209,8 @@ export class Tags {
     this.nestedTags = await this.getNestedTags()
     // 渲染嵌套标签
     await this.refresh()
-    this._state = JSON.stringify(this.state)
+    // this._state = JSON.stringify(this.state)
+    // defered.resolve()
   }
 
   public async getPlainTags(): Promise<string[]> {
@@ -214,11 +228,7 @@ export class Tags {
     }
     let plainTags: string[] = [];
     (
-      Zotero.Prefs.get("tagSelector.displayAllTags")
-        ?
-        await Zotero.Items.getAll(1)
-        :
-        ZoteroPane.getSortedItems()
+      await Zotero.Items.getAll(1)
     )
       // @ts-ignore
       .forEach((item: Zotero.Item) => {
@@ -743,7 +753,7 @@ export class Tags {
       (this.state[key] ??= {}).collapse ??= true
       const itemNode = ztoolkit.UI.appendElement({
         tag: "div",
-        classList: ["item"].concat(this.state[key].select ? ["selected"] : []),
+        classList: ["item", "not-in-collection"].concat(this.state[key].select ? ["selected"] : []),
         styles: {
           borderRadius: "3px",
           height: "1.8em",
@@ -785,7 +795,11 @@ export class Tags {
                     {
                       type: "click",
                       listener: async () => {
-                        if (itemNode.classList.contains("disable")) { return }
+                        if (itemNode.classList.contains("not-in-collection")) { return }
+                        // 如果点一个无法构成AND的标签，则切换标签
+                        if (itemNode.classList.contains("not-in-items")) {
+                          Object.keys(this.state).forEach(key => this.state[key].select = false)
+                        }
                         // 点击标签名筛选逻辑
                         if (this.state[key].select) {
                           // 取消点击
@@ -801,8 +815,10 @@ export class Tags {
                           itemNode.classList.add("selected")
                           // itemNode.style.backgroundColor = this.props.color.select
                         }
-                        ZoteroPane.itemsView.refreshAndMaintainSelection()
-                        this._state = JSON.stringify(this.state)
+                        // this._state = JSON.stringify(this.state)
+                        await ZoteroPane.itemsView.refreshAndMaintainSelection()
+                        await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
+                        this.nestedTagsContainer.querySelectorAll(".item")!.forEach(e=>e.update())
                         // await this.init(true)
                       }
                     },
@@ -927,7 +943,7 @@ export class Tags {
               tag: "span",
               id: "number",
               styles: {
-                borderRaduis: "3px",
+                borderRadius: "3px",
               },
               properties: {
                 innerText: children[tag].number,
@@ -938,14 +954,39 @@ export class Tags {
         ]
       }, parent) as HTMLElement
       // 判断是否可点击选择
-      if (
-        this.filterItemsByTagStart(
-          ZoteroPane.getSortedItems(),
-          this.key2tag(key)
-        ).length == 0
-      ) {
-        itemNode.classList.add("disable")
+      // @ts-ignore
+      itemNode.update = () => {
+        if (
+          this.filterItemsByTagStart(
+            ZoteroPane.getSortedItems(),
+            this.key2tag(key)
+          ).length == 0
+        ) {
+          this.state[key].select = false
+          itemNode.classList.remove("selected")
+          if (
+            this.filterItemsByTagStart(
+              this.collectionItems,
+              this.key2tag(key)
+            ).length == 0
+          ) {
+            itemNode.classList.remove("not-in-items")
+            itemNode.classList.add("not-in-collection")
+          } else {
+            itemNode.classList.remove("not-in-collection")
+            itemNode.classList.add("not-in-items")
+          }
+        } else {
+          ["not-in-items", "not-in-collection"].forEach((className: string) => {
+            itemNode.classList.remove(className)
+          })
+        }
       }
+      // 不阻塞渲染
+      window.setTimeout(() => {
+        // @ts-ignore
+        itemNode.update()
+      })
       // 有子节点
       if (Object.keys(children[tag].children).length) {
         // tree, 侧边线容器

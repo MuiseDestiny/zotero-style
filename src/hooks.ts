@@ -55,7 +55,6 @@ async function onStartup() {
   
   const views = new Views(storage)
   // 为用户默认打开显示所有标签，若要显示分类下，需要手动关闭
-  Zotero.Prefs.set("tagSelector.displayAllTags", true)
   const tasks = [
     views.createGraphView(),
     views.renderTitleColumn(),

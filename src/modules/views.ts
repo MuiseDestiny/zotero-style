@@ -303,11 +303,13 @@ export default class Views {
       key,
       (index: number, data: string, column: any, original: Function) => {
         const cellSpan = original(index, data, column) as HTMLSpanElement;
-        const fields = Zotero.Prefs.get(`${config.addonRef}.publicationColumn.fields`) as string
-        const item = ZoteroPane.getSortedItems()[index]
-        cellSpan.innerText = data || fields.split(/,\x20*/).map((field:string) => {
-          return item.getField(field)
-        }).find((i:string)=>i.length>0) || ""
+        try {
+          const fields = Zotero.Prefs.get(`${config.addonRef}.publicationColumn.fields`) as string
+          const item = ZoteroPane.getSortedItems()[index]
+          cellSpan.innerText = data || fields.split(/,\x20*/).map((field:string) => {
+            return item.getField(field)
+          }).find((i:string)=>i.length>0) || ""
+        } catch {}
         return cellSpan
       }
     )
@@ -3225,10 +3227,10 @@ export default class Views {
       // 如果
       window.setTimeout(async () => {
         if (items.length == 0) {
-          Object.values(tagsUI.state).forEach((i: any) => i.select = false)
+          Object.keys(tagsUI.state).forEach((key: string) => tagsUI.state[key].select = false)
+          await ZoteroPane.itemsView.refreshAndMaintainSelection()
+          await tagsUI.init(true)
         }
-        await ZoteroPane.itemsView.refreshAndMaintainSelection()
-        await tagsUI.init()
       })
       return items
     })
