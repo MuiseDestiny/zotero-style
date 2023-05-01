@@ -162,19 +162,24 @@ export default class GraphView {
     console.log(node)
     let newNode = node?.cloneNode(true) as XUL.ToolBarButton
     newNode.setAttribute("id", "zotero-style-show-hide-graph-view")
-    newNode.setAttribute("tooltiptext", "show/hide graph view")
+    newNode.setAttribute("tooltiptext", "Style")
     newNode.setAttribute("command", "")
     newNode.setAttribute("oncommand", "")
-    newNode.addEventListener("click", async () => {
-      let node = this.container
-      if (!node) { return }
-      if (node.style.display == "none") {
-        node.style.display = ""
-        this.setData(await this.getGraph(true))
-        Zotero.Prefs.set(`${config.addonRef}.graphView.enable`, true)
-      } else {
-        node.style.display = "none"
-        Zotero.Prefs.set(`${config.addonRef}.graphView.enable`, false)
+    newNode.addEventListener("mousedown", async (event: any) => {
+      if (event.button == 0) {
+        let node = this.container
+        if (!node) { return }
+        if (node.style.display == "none") {
+          node.style.display = ""
+          this.setData(await this.getGraph(true))
+          Zotero.Prefs.set(`${config.addonRef}.graphView.enable`, true)
+        } else {
+          node.style.display = "none"
+          Zotero.Prefs.set(`${config.addonRef}.graphView.enable`, false)
+        }
+      } else if (event.button == 2) {
+        // 右键显示prompt
+        Zotero._toolkitGlobal.prompt.instance.promptNode.style.display = ""
       }
     })
     newNode.style.listStyleImage = `url(chrome://${config.addonRef}/content/icons/favicon@32x32.png)`
@@ -223,62 +228,6 @@ export default class GraphView {
         dark: { links: { Theme: true }, type: "function" }
       }
     }
-  }
-
-  /**
-   * 计划分析日，周，月阅读的文献
-   * @param items 
-   * @returns 
-   */
-  private async _getGraphByDefaultLink(items: Zotero.Item[]) {
-    const recentDay = "Recent Day"
-    const recentWeek = "Recent Week"
-    const recentMonth = "Recent Month"
-    function getTimeRange(date: Date) {
-      var today = new window.Date(); // 当前日期和时间
-      // @ts-ignore
-      var deltaInMs = today - date; // 计算与当前日期之间的时间差，单位为毫秒
-
-      var oneDayMs = 24 * 60 * 60 * 1000; // 一天的毫秒数
-      var oneWeekMs = 7 * oneDayMs; // 一周的毫秒数
-      var oneMonthMs = 30 * oneDayMs; // 一个月的毫秒数
-
-      if (deltaInMs < oneDayMs) {
-        return { type: recentDay, delta: deltaInMs };
-      } else if (deltaInMs < oneWeekMs) {
-        return { type: recentWeek, delta: deltaInMs };
-      } else if (deltaInMs < oneMonthMs) {
-        return { type: recentMonth, delta: deltaInMs };
-      } else {
-        return
-      }
-    }
-    items = ZoteroPane.getSortedItems() as Zotero.Item[]
-    let deltaItems: any = {
-      recentDay: [],
-      recentWeek: [],
-      recentMonth: []
-    }
-    items.filter(i => i.isRegularItem()).forEach(item => {
-      let date = new window.Date(item.dateModified) as Date
-      let info = getTimeRange(date)
-      if (info) {
-        deltaItems[info.type].push({ item, delta: info.delta})
-      }
-    })
-    const graph: any = {
-      nodes: {}
-    }
-    
-    for (let deltaType in deltaItems) {
-      graph.nodes[deltaType] ??= { links: {} }
-      const items = deltaItems[deltaType]
-      items.forEach((item: any) => {
-        graph.nodes[item.item.id] = { links: { deltaType: true }, type: "item" }
-        graph.nodes[deltaType].links[item.item.id] = true
-      })
-    }
-    return graph
   }
 
   private getGraphByRelatedLink(items: Zotero.Item[]) {

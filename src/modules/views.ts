@@ -42,22 +42,6 @@ export default class Views {
             } catch {
 
             }
-            // 等加载结束后尝试打开，只负责打开，不折叠
-            window.setTimeout(async () => {
-              if (originalLength > items.length) {
-                const filterItems = ZoteroPane.getSortedItems()
-                for (let i = filterItems.length - 1; i >= 0; i--) {
-                  let _item = filterItems[i]
-                  if (
-                    _item.isRegularItem() &&
-                    !items.find((item: Zotero.Item) => item.id == _item.id) &&
-                    !ZoteroPane.itemsView.isContainerOpen(i)
-                  ) {
-                    await ZoteroPane.itemsView.toggleOpenState(i)
-                  }
-                }
-              }
-            }, 0)
             return items
           }
       )
@@ -1718,7 +1702,7 @@ export default class Views {
                   }
                 ]
               }
-            ) as XUL.Element
+            ) as any
             for (let arg of args) {
               // 名称
               element.querySelector("#name")?.appendChild(
@@ -2114,7 +2098,6 @@ export default class Views {
          * 进度条UI，重置
          */
         callback: (prompt) => {
-          prompt.promptNode.style.display = "none"
           const container = prompt.createCommandsContainer()
           const item = getItem() as _ZoteroItem
           prompt.inputNode.placeholder = item.getField("title")
@@ -2123,7 +2106,6 @@ export default class Views {
             prompt.showTip("这里一片荒芜~")
             return
           }
-
           const box = ztoolkit.UI.createElement(document, "div", {
             styles: {
               display: "flex",
@@ -3209,29 +3191,39 @@ export default class Views {
               if (!((document.querySelector(".nested-tags-box") as HTMLDivElement)?.style.display == "none")) {
                 await tagsUI.init();
               }
-            }) 
+            })
             return res
           }
       )
     } catch {}
     window.setTimeout(async () => {
       await tagsUI.init();
-    }, 5000)
-
+    }, 1000)
     this.filterFunctions.push((items: Zotero.Item[]) => {
+      tagsUI.collectionItems ??= items
+      tagsUI.renderAnnotations([])
       const tagStartArr = tagsUI.getTagStart()!
-      if (tagStartArr.length == 0) { return items }
-      for (let i = 0; i < tagStartArr!.length; i++) {
-        items = tagsUI.filterItemsByTagStart(items, tagStartArr![i])
-      }
-      // 如果
       window.setTimeout(async () => {
         if (items.length == 0) {
           Object.keys(tagsUI.state).forEach((key: string) => tagsUI.state[key].select = false)
-          await ZoteroPane.itemsView.refreshAndMaintainSelection()
-          await tagsUI.init(true)
+          // await ZoteroPane.itemsView.refreshAndMaintainSelection();
+          await ZoteroPane.itemsView.refresh()
+          await tagsUI.init(true);
+          return
+        } else {
+          // 渲染标注
+          const annoItems: Zotero.Item[] = items!
+            .filter((item: Zotero.Item) => item.isAttachment() && item.attachmentContentType == "application/pdf")
+            .reduce((annoItemArr: Zotero.Item[], pdfItem: Zotero.Item) => annoItemArr.concat(pdfItem.getAnnotations()), [])
+            .filter((annoItem: Zotero.Item) => tagStartArr.length == 0 || tagStartArr.every(tagStart => annoItem.getTags().find(tag => tag.tag.startsWith(tagStart))))
+          tagsUI.renderAnnotations(annoItems)
         }
-      })
+        if (tagsUI.nestedTagsContainer?.style.display != "none") {
+          tagsUI.updateTagsIn(items)
+          // @ts-ignore
+          tagsUI.nestedTagsContainer?.querySelectorAll(".item").forEach(e => e.update());
+        }
+      }, 0)
       return items
     })
 
@@ -3246,20 +3238,21 @@ export default class Views {
           // @ts-ignore
           async (id: number, location: { pageIndex: number, annotationKey: string }, ...other: any) => {
             if (!location) {
-              const tagStart = tagsUI.getTagStart()
-              if (tagStart) { 
+              const tagStartArr = tagsUI.getTagStart()
+              if (tagStartArr.length) { 
                 const attItem = Zotero.Items.get(id) as Zotero.Item;
                 const annoItem = attItem.getAnnotations()
-                  .find(annoItem => {
-                    return annoItem.getTags().find(tag => tag.tag.startsWith(tagStart));
-                  })
+                  .find(annoItem => annoItem.getTags()
+                      .find(tag => tagStartArr
+                        .find(tagStart => tag.tag.startsWith(tagStart)))
+                  )
                 if (annoItem) {
                   location = {
                     pageIndex: Number(annoItem.annotationPageLabel) - 1,
                     annotationKey: annoItem.key as string
                   }
                 }
-                }
+              }
             }
             // 修复定位bug
             window.setTimeout(async () => {

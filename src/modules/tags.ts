@@ -38,16 +38,23 @@ export class Tags {
    * 这是Zotero界面存在的Container，用于存放标签
    */
   private container!: HTMLDivElement;
+  private annotationsID = "zotero-item-pane-message-box"
+  private nestedTagsID = "nested-tags-container"
   /**
    * 这是本类创建的可折叠标签视图的container，是所有元素的起点
    * 相对应Zotero视图的节点叫tagSelector，但不需要储存
    */
-  private nestedTagsContainer!: HTMLDivElement;
+  public nestedTagsContainer!: HTMLDivElement;
   /**
    * 用于记录层级标签的选择状态和折叠状态，使得刷新时候保持
    */
   public state: { [id: string]: { collapse?: boolean; select?: boolean } } = {};
-  private collectionItems!: Zotero.Item[];
+  public collectionItems: Zotero.Item[] | undefined;
+  private tagsIn: any = {
+    items: [],
+    collection: []
+  }
+  private tagsIns: any[] = []
   constructor() {
     this.props.icon.svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${this.props.icon.size}" height="${this.props.icon.size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle"><path d="M3 8L12 17L21 8"></path></svg>`
     this.prepare()
@@ -75,10 +82,10 @@ export class Tags {
             align-items: center;
             justify-content: center;
           }
-          .nested-tags-container .nested-tags-control-icon:hover {
+          #${this.nestedTagsID} .nested-tags-control-icon:hover {
             background-color: rgba(0, 0, 0, 0.075)
           }
-          .nested-tags-container .nested-tags-control-icon:active {
+          #${this.nestedTagsID} .nested-tags-control-icon:active {
             opacity: 1;
           }
           .tag-selector, .nested-tags-box {
@@ -87,28 +94,31 @@ export class Tags {
           .menu-item:hover {
             background-color: #e4e4e4;
           }
-          .nested-tags-container .item {
+          #${this.nestedTagsID} .item {
             margin: .1em 0;
             transition: background-color .1s linear, opacity .1s linear;
           }
-          .nested-tags-container .item:hover {
+          #${this.annotationsID} * {
+            transition: background-color .1s linear;
+          }
+          #${this.nestedTagsID} .item:hover {
             cursor: pointer;
             background-color: ${this.props.color.hover};
           }
-          .nested-tags-container .item:not(.not-in-items):not(.selected):hover {
+          #${this.nestedTagsID} .item:not(.not-in-items):not(.selected):hover {
             background-color: rgba(${red}, ${green}, ${blue}, .23) !important;
           }
-          .nested-tags-container .item.selected:hover {
+          #${this.nestedTagsID} .item.selected:hover {
             background-color: rgba(${red}, ${green}, ${blue}, 1);
           }
-          .nested-tags-container .item.not-in-items {
+          #${this.nestedTagsID} .item.not-in-items {
             opacity: 1;
           }
-          .nested-tags-container .item.not-in-collection {
+          #${this.nestedTagsID} .item.not-in-collection {
             opacity: .23;
             cursor: default;
           }
-          .nested-tags-container .item.selected {
+          #${this.nestedTagsID} .item.selected {
             color: white;
             background-color: rgba(${red}, ${green}, ${blue}, .9);
           }
@@ -162,14 +172,97 @@ export class Tags {
     splitter?.addEventListener("mouseup", () => {
       isMouseDown = false
     })
-    window.setTimeout(async () => {      
-      await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
-      this.collectionItems = ZoteroPane.getSortedItems()
-    })
+    /**
+     * 把tags过滤修改成contains模式
+     * https://github.com/zotero/zotero/blob/2f0d41c0cb9ea47cce03ea51bf8ac718dbe44b15/chrome/content/zotero/xpcom/collectionTreeRow.js#L321
+     */
+    Zotero.CollectionTreeRow.prototype.getSearchObject = Zotero.Promise.coroutine(function* () {
+      if (Zotero.CollectionTreeCache.lastTreeRow && Zotero.CollectionTreeCache.lastTreeRow.id !== this.id) {
+        Zotero.CollectionTreeCache.clear();
+      }
+
+      if (Zotero.CollectionTreeCache.lastSearch) {
+        return Zotero.CollectionTreeCache.lastSearch;
+      }
+
+      var includeScopeChildren = false;
+
+      // Create/load the inner search
+      if (this.ref instanceof Zotero.Search) {
+        var s = this.ref;
+      }
+      else if (this.isDuplicates()) {
+        var s = yield this.ref.getSearchObject();
+        let tmpTable;
+        for (let id in s.conditions) {
+          let c = s.conditions[id];
+          if (c.condition == 'tempTable') {
+            tmpTable = c.value;
+            break;
+          }
+        }
+        // Called by ItemTreeView::unregister()
+        this.onUnload = async function () {
+          await Zotero.DB.queryAsync(`DROP TABLE IF EXISTS ${tmpTable}`, false, { noCache: true });
+        };
+      }
+      else {
+        var s = new Zotero.Search();
+        s.libraryID = this.ref.libraryID;
+        // Library root
+        if (this.isLibrary(true)) {
+          s.addCondition('noChildren', 'true');
+          // Allow tag selector to match child items in "Title, Creator, Year" mode
+          includeScopeChildren = true;
+        }
+        else if (this.isCollection()) {
+          s.addCondition('noChildren', 'true');
+          s.addCondition('collectionID', 'is', this.ref.id);
+          if (Zotero.Prefs.get('recursiveCollections')) {
+            s.addCondition('recursive', 'true');
+          }
+          // Allow tag selector to match child items in "Title, Creator, Year" mode
+          includeScopeChildren = true;
+        }
+        else if (this.isPublications()) {
+          s.addCondition('publications', 'true');
+        }
+        else if (this.isTrash()) {
+          s.addCondition('deleted', 'true');
+        }
+        else {
+          throw new Error('Invalid search mode ' + this.type);
+        }
+      }
+
+      // Create the outer (filter) search
+      var s2 = new Zotero.Search();
+      s2.libraryID = this.ref.libraryID;
+
+      if (this.isTrash()) {
+        s2.addCondition('deleted', 'true');
+      }
+      s2.setScope(s, includeScopeChildren);
+
+      if (this.searchText) {
+        var cond = 'quicksearch-' + Zotero.Prefs.get('search.quicksearch-mode');
+        s2.addCondition(cond, 'contains', this.searchText);
+      }
+
+      if (this.tags) {
+        for (let tag of this.tags) {
+          s2.addCondition('tag', 'contains', tag);
+        }
+      }
+
+      Zotero.CollectionTreeCache.lastTreeRow = this;
+      Zotero.CollectionTreeCache.lastSearch = s2;
+      return s2;
+    });
+
     ZoteroPane.collectionsView.onSelect.addListener(async () => {
-      // await Zotero.Promise.delay(1000)
+      this.collectionItems = undefined
       await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
-      this.collectionItems = ZoteroPane.getSortedItems()
       if (this.nestedTagsContainer?.style.display != "none") {
         await this.init(true)
       }
@@ -187,6 +280,7 @@ export class Tags {
     let plainTags = await this.getPlainTags()
     // 若不是强制刷新，则需要判断是否和上次获取plainTags相同
     if (!force) {
+      this.tagsIns = []
       if (
         // 与上次状态相同
         (
@@ -197,7 +291,8 @@ export class Tags {
         this.nestedTagsContainer?.style.display == "none"
       ) {
         // 更新状态
-        await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
+        // await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
+        // @ts-ignore
         this.nestedTagsContainer.querySelectorAll(".item")!.forEach(e => e.update())
         return
       }
@@ -317,16 +412,70 @@ export class Tags {
     }
   }
 
+  public updateTagsIn(sortedItems?: Zotero.Item[]) {
+    if (!this.collectionItems) { return }
+    // 读取本次的items标签和collection标签
+    if (!sortedItems) {
+      let sortedIDs = new Set(ZoteroPane.getSortedItems().map(item => item.id));
+      sortedItems = this.collectionItems.filter((item: Zotero.Item) =>
+        sortedIDs.has(item.id) || sortedIDs.has(item.parentID)
+      )
+    }
+    let equal = (a1: number[], a2: number[]) => {
+      return JSON.stringify(a1.sort()) == JSON.stringify(a2.sort())
+    }
+    const data = this.tagsIns.find(data => {
+      return (
+        equal(data.collection, this.collectionItems!.map(i => i.id)) &&
+        equal(data.collection, sortedItems!.map(i => i.id))
+      )
+    })
+    if (data) {
+      this.tagsIn = JSON.parse(data.tagsIn)
+      return 
+    }
+    this.tagsIn = {
+      items: [],
+      collection: []
+    }
+    const sortedIDs = new Set(sortedItems.map(item => item.id))
+    this.tagsIn = {
+      collection: new Set(),
+      items: new Set()
+    }
+    this.collectionItems!.reduce((tagsIn, item) => {
+      let tagIn = "collection"
+      if (sortedIDs.has(item.id)) {
+        tagIn = "items"
+      }
+      tagsIn[tagIn] = new Set([...tagsIn[tagIn], ...item.getTags().map(tag => tag.tag)])
+      if (item.isAttachment() && item.attachmentContentType == "application/pdf") {
+        item.getAnnotations().forEach(annoItem => {
+          tagsIn[tagIn] = new Set([...tagsIn[tagIn], ...annoItem.getTags().map(tag => tag.tag)])
+        })
+      }
+      return tagsIn
+    }, this.tagsIn)
+    this.tagsIn = {
+      collection: Array.from(this.tagsIn.collection).sort(),
+      items: Array.from(this.tagsIn.items).sort().filter(tag => !this.tagsIn.collection.has(tag))
+    }
+    this.tagsIns.push({
+      collection: this.collectionItems.map(i => i.id),
+      items: sortedItems.map(i => i.id),
+      tagsIn: JSON.stringify(this.tagsIn)
+    })
+  }
   /**
    * 刷新
    */
   public async refresh() {
     // 移除原本创建的元素
-    this.container.querySelector(".nested-tags-container")?.remove()
+    this.container.querySelector("#nested-tags-container")?.remove()
     // 存在this，用于splitter变化调整时使用
     const nestedTagsContainer = this.nestedTagsContainer = ztoolkit.UI.appendElement({
       tag: "div",
-      classList: ["nested-tags-container"],
+      id: this.nestedTagsID,
       styles: {
         height: "100px",
         overflowY: "hidden",
@@ -431,7 +580,7 @@ export class Tags {
                   this.plainTags = await this.getPlainTags()
                   this.nestedTags = await this.getNestedTags()
                   box.innerHTML = ""
-                  await this.render(box, this.nestedTags)
+                  await this.render(box, this.nestedTags, 0)
                 }, 500)
               }
             }
@@ -461,7 +610,7 @@ export class Tags {
                 this.plainTags = await this.getPlainTags()
                 this.nestedTags = await this.getNestedTags()
                 box.innerHTML = ""
-                await this.render(box, this.nestedTags)
+                await this.render(box, this.nestedTags, 0)
               }
             }
           ]
@@ -471,7 +620,8 @@ export class Tags {
 
     // 这是Zotero原本标签视图的父节点，在Zotero中这么命名
     const tagSelector = this.container.querySelector(".tag-selector")! as HTMLDivElement
-    this.render(box, this.nestedTags)
+    this.updateTagsIn()
+    this.render(box, this.nestedTags, 0)
     let icons = {
       sort: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-sort-asc"><path d="M11 11h4"></path><path d="M11 15h7"></path><path d="M11 19h10"></path><path d="M9 7 6 4 3 7"></path><path d="M6 6v14"></path></svg>`,
       nest: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon lucide-folder-tree"><path d="M13 10h7a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"></path><path d="M13 21h7a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.88a1 1 0 0 1-.9-.55l-.44-.9a1 1 0 0 0-.9-.55H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"></path><path d="M3 3v2c0 1.1.9 2 2 2h3"></path><path d="M3 3v13c0 1.1.9 2 2 2h3"></path></svg>`,
@@ -544,7 +694,7 @@ export class Tags {
                 if (nestedTagsContainer.style.display == "none") {
                   // 显示
                   nestedTagsContainer.style.display = "flex";
-                  that.init()
+                  that.init(true)
                   tagSelector.style!.display = "none"
                   node.parentNode?.childNodes.forEach((e: any) => {
                     if (e != node) {
@@ -724,17 +874,31 @@ export class Tags {
     return menuNode
   }
 
+  /**
+   * 从给定的items找出包含标签的
+   */
   public filterItemsByTagStart(items: Zotero.Item[], tagStart: string) {
-    return items.filter((item: Zotero.Item) => {
-      return (
-        // 条目/笔记本身包含此标签
-        (item.getTags && item.getTags().find((tag: { tag: string }) => tag.tag.startsWith(tagStart))) ||
-        // PDF附件包含词标签
-        (item.isAttachment()) && item.attachmentContentType == "application/pdf" && item.getAnnotations().some(annoItem => {
-          return annoItem.getTags().some(tag => tag.tag.startsWith(tagStart))
+    const filterItems: Zotero.Item[] = []
+    for (let i = 0; i < items.length; i++) {
+      let item = items[i]
+      // 可见标签条目
+      if ((item.getTags && item.getTags().find((tag: { tag: string }) => tag.tag.startsWith(tagStart)))) {
+        filterItems.push(item)
+      }
+      // 不可见标签条目
+      if (item.isAttachment() && item.attachmentContentType == "application/pdf") {
+        let flag = false
+        item.getAnnotations().forEach(annoItem => {
+          annoItem.getTags().forEach(tag => {
+            if (tag.tag.startsWith(tagStart)) {
+              flag = true
+            }
+          })
         })
-      )
-    })
+        if (flag) { filterItems.push(item) }
+      }
+    }
+    return filterItems
   }
 
   /**
@@ -808,18 +972,25 @@ export class Tags {
                         } else {
                           // 点击匹配
                           // #226: 允许多个select构成AND
-                          // Object.values(this.state).forEach((i: any) => i.select = false)
                           // @ts-ignore
-                          this.nestedTagsContainer.querySelectorAll(".item").forEach(e => e.style.backgroundColor = "")
+                          // this.nestedTagsContainer.querySelectorAll(".item").forEach(e => e.style.backgroundColor = "")
                           this.state[key].select = true
                           itemNode.classList.add("selected")
-                          // itemNode.style.backgroundColor = this.props.color.select
+                          // 记住当前rows状态
                         }
-                        // this._state = JSON.stringify(this.state)
-                        await ZoteroPane.itemsView.refreshAndMaintainSelection()
-                        await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
-                        this.nestedTagsContainer.querySelectorAll(".item")!.forEach(e=>e.update())
-                        // await this.init(true)
+                        var beginTime = +new Date();
+
+                        // await ZoteroPane.itemsView.refreshAndMaintainSelection()
+                        // await ZoteroPane.itemsView._itemTreeLoadingDeferred.promise
+                        
+                        await ZoteroPane.itemsView.setFilter("tags", new Set(this.getTagStart()))
+
+                        var endTime = +new Date();
+                        console.log("ZoteroPane.itemsView.refresh()" + (endTime - beginTime) + "ms");
+
+                        // this.updateTagsIn()
+
+                        
                       }
                     },
                     {
@@ -956,19 +1127,14 @@ export class Tags {
       // 判断是否可点击选择
       // @ts-ignore
       itemNode.update = () => {
+        const tagStart = this.key2tag(key)
         if (
-          this.filterItemsByTagStart(
-            ZoteroPane.getSortedItems(),
-            this.key2tag(key)
-          ).length == 0
+          !this.tagsIn.items.find((tag:string) => tag.startsWith(tagStart))
         ) {
           this.state[key].select = false
           itemNode.classList.remove("selected")
           if (
-            this.filterItemsByTagStart(
-              this.collectionItems,
-              this.key2tag(key)
-            ).length == 0
+            !this.tagsIn.collection.find((tag: string) => tag.startsWith(tagStart))
           ) {
             itemNode.classList.remove("not-in-items")
             itemNode.classList.add("not-in-collection")
@@ -1065,7 +1231,7 @@ export class Tags {
           this.render(...args)
         }
       }
-  }
+    }
   }
 
   private getSortedTags(children: NestedTags["children"]) {
@@ -1088,6 +1254,447 @@ export class Tags {
     }
     return sortedTags
   }
+
+  /**
+   * 在条目底部渲染
+   * @param annoItems 
+   */
+  private _renderAnnotations(annoItems: Zotero.Item[]) {
+    document.querySelector(`#item-tree-main-default #${this.annotationsID}`)?.remove()
+    const container = ztoolkit.UI.appendElement({
+      tag: "div",
+      id: this.annotationsID,
+      styles: {
+        borderTop: "1px solid #cecece",
+        maxHeight: (document.querySelector("#item-tree-main-default")?.getBoundingClientRect().height!) / 2 + "px",
+        overflowY: "auto",
+        padding: "0 1em",
+      },
+    },
+    document.querySelector("#item-tree-main-default") as HTMLDivElement)
+    
+    annoItems.forEach((annoItem: Zotero.Item) => {
+      const color = annoItem.annotationColor
+      const c = new ColorRNA(color)
+      let [red, green, blue] = c.rgb()
+      const hsl = c.HSL()
+      hsl[2] = 30 
+      const deepColor = c.HSL(hsl).getHex()
+      const opacityColor = (opacity: number) => `rgba(${red}, ${green}, ${blue}, ${opacity})`
+      const annoNode = ztoolkit.UI.appendElement({
+        tag: "div",
+        styles: {
+          margin: "1em 0",
+          border: `1px solid ${deepColor}`,
+          backgroundColor: opacityColor(0.13),
+          padding: ".25em .5em",
+          borderRadius: "3px",
+          cursor: "pointer",
+          boxSizing: "border-box",
+        },
+        children: [
+          // 标题 + 页码
+          {
+            tag: "div",
+            styles: {
+              margin: ".25em 0",
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between"
+            },
+            children: [
+              // 标题
+              {
+                tag: "div",
+                styles: {
+                  fontSize: "1.2em",
+                  fontWeight: "bold",
+                  color: "#9384D1",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                },
+                properties: {
+                  // @ts-ignore
+                  innerText: Zotero.Items.get(annoItem.parentID)._displayTitle
+                }
+              },
+              {
+                tag: "div",
+                styles: {
+                  color: "rgba(0, 0, 0, .5)"
+                },
+                properties: {
+                  innerHTML: `<b>P${annoItem.annotationPageLabel}</b>`
+                }
+              }
+            ]
+          },
+          
+          // 标注内容
+          {
+            tag: "div",
+            classList: ["content"],
+            styles: {
+              textAlign: "justify",
+            },
+            properties: {
+              innerText: annoItem.annotationText || `Annotation Type: ${annoItem.annotationType}. Please double-click to view detailed information.`
+            }
+          },
+          // 评论
+          {
+            tag: "div",
+            styles: {
+              display: annoItem.annotationComment?.length > 0 ? "flex" : "none",
+              lineHeight: "2em",
+              backgroundColor: `rgba(${red}, ${green}, ${blue}, 0.35)`,
+              padding: "0 .5em",
+              margin: ".5em -.5em"
+            },
+            properties: {
+              innerText: annoItem.annotationComment
+            }
+          },
+          // 标签
+          {
+            tag: "div",
+            classList: ["tags-box"],
+            styles: {
+              display: annoItem.getTags().length > 0 ? "flex" : "none",
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              alignItems: "center",
+              height: "2em",
+              margin: "0.25em 0"
+            },
+            children: annoItem.getTags().map(tag => {
+              return {
+                tag: "div",
+                styles: {
+                  border: `1px solid ${opacityColor(1)}`,
+                  borderRadius: "1em",
+                  backgroundColor: opacityColor(0.3),
+                  color: deepColor,
+                  padding: "0 1em"
+                },
+                properties: {
+                  innerText: tag.tag
+                }
+              }
+            })
+          }
+        ],
+        listeners: [
+          {
+            type: "mouseenter",
+            listener: () => {
+              annoNode.style.backgroundColor = opacityColor(0.23)
+            }
+          },
+          {
+            type: "mouseleave",
+            listener: () => {
+              annoNode.style.backgroundColor = opacityColor(0.13)
+            }
+          },
+          {
+            type: "click",
+            listener: () => {
+              new ztoolkit.Clipboard()
+                .addText(annoItem.annotationText, "text/unicode")
+                .copy()
+              new ztoolkit.ProgressWindow(config.addonName)
+                .createLine({ text: "Copy Annotation Text", type: "success" })
+                .show()
+            }
+          },
+          {
+            type: "dblclick",
+            listener: () => {
+              Zotero.Reader.open(annoItem.parentID, {
+                pageIndex: Number(annoItem.annotationPageLabel) - 1,
+                annotationKey: annoItem.key as string
+              } as any)
+            }
+          }
+        ]
+        
+      }, container)
+    })
+  };
+
+  public renderAnnotations(annoItems: Zotero.Item[]) {
+    ZoteroPane.itemsView.selection.clearSelection()
+    function bindZoomOutEvent(div: HTMLDivElement): void {
+      div.addEventListener('wheel', (event: WheelEvent) => {
+        if (event.ctrlKey) {
+          event.preventDefault();
+          const step = 0.5
+          // @ts-ignore
+          const delta = event.deltaY || event.detail || event.wheelDelta;
+          let s = Number(window.getComputedStyle(div).fontSize.replace("px", "")) + step * (delta > 0 ? -1 : 1)
+          const minSize = 8, maxSize = 20
+          if (s < minSize) { s = minSize }
+          if (s > maxSize) { s = maxSize }
+          div.style.fontSize = String(s) + "px"
+        }
+      });
+    }
+    const parent = document.querySelector("#zotero-item-pane-content")!
+    // @ts-ignore
+    // parent.firstChild.innerHTML = ""
+    const container = ztoolkit.UI.createElement(document, "vbox", {
+      id: this.annotationsID,
+      styles: {
+        // overflowY: "auto",
+        // padding: ".5em 1em",
+        overflowY: "auto",
+      },
+      attributes: {
+        align: annoItems.length == 0 ? "center" : "",
+        pack: annoItems.length == 0 ? "center" : ""
+      },
+      children: [
+        {
+          tag: "div",
+          id: "inner-container",
+          styles: {
+            padding: "0em 1em",
+            width: "100%",
+            height: "100%"
+          }
+        }
+      ]
+    })
+    parent?.replaceChild(container, parent.firstChild!)
+    if (annoItems.length == 0) {
+      const n = ZoteroPane.getSortedItems().length
+      ztoolkit.UI.appendElement({
+        tag: "description",
+        namespace: "xul",
+        properties: {
+          textContent: `${n} items in this view`
+        }
+      }, container)
+      return
+    }
+    bindZoomOutEvent(container)
+    const innerContainer = container.querySelector("#inner-container")!
+    const preRenderNumber = 20
+    let render = (annoItems: Zotero.Item[]) => {
+      annoItems.forEach((annoItem: Zotero.Item) => {
+        const color = annoItem.annotationColor
+        const c = new ColorRNA(color)
+        let [red, green, blue] = c.rgb()
+        const hsl = c.HSL()
+        hsl[2] = 30
+        const deepColor = c.HSL(hsl).getHex()
+        const opacityColor = (opacity: number) => `rgba(${red}, ${green}, ${blue}, ${opacity})`
+        const annoNode = ztoolkit.UI.appendElement({
+          tag: "div",
+          styles: {
+            margin: "1em 0",
+            border: `1px solid ${deepColor}`,
+            backgroundColor: opacityColor(0.13),
+            padding: ".25em .5em",
+            borderRadius: "3px",
+            cursor: "pointer",
+            // boxSizing: "border-box",
+            // width: width + "px"
+          },
+          children: [
+            // 标题 + 页码
+            {
+              tag: "div",
+              styles: {
+                margin: "0.25em 0 .5em 0",
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              },
+              children: [
+                // 标题
+                {
+                  tag: "div",
+                  styles: {
+                    position: "relative",
+                    width: "100%"
+                  },
+                  children: [
+                    {
+                      tag: "div",
+                      styles: {
+                        position: "absolute",
+                        fontSize: "1.2em",
+                        fontWeight: "bold",
+                        color: "#9384D1",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        left: "0",
+                        top: "0",
+                        width: "95%"
+                      },
+                      properties: {
+                        // @ts-ignore
+                        innerText: Zotero.Items.get(annoItem.parentID)._displayTitle
+                      }
+                    }
+                  ]
+                },
+                {
+                  tag: "div",
+                  styles: {
+                    color: "rgba(0, 0, 0, .5)"
+                  },
+                  properties: {
+                    innerHTML: `<b>P${annoItem.annotationPageLabel}</b>`
+                  }
+                }
+              ]
+            },
+  
+            // 标注内容
+            {
+              tag: "div",
+              classList: ["content"],
+              styles: {
+                textAlign: "justify",
+              },
+              properties: {
+                innerText: annoItem.annotationText || `Annotation Type: ${annoItem.annotationType}. Please double-click to view detailed information.`
+              }
+            },
+            // 评论
+            {
+              tag: "div",
+              styles: {
+                display: annoItem.annotationComment?.length > 0 ? "flex" : "none",
+                lineHeight: "2em",
+                backgroundColor: `rgba(${red}, ${green}, ${blue}, 0.35)`,
+                padding: "0 .5em",
+                margin: ".5em -.5em"
+              },
+              properties: {
+                innerText: annoItem.annotationComment
+              }
+            },
+            // 标签
+            {
+              tag: "div",
+              classList: ["tags-box"],
+              styles: {
+                display: annoItem.getTags().length > 0 ? "flex" : "none",
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                alignItems: "center",
+                height: "2em",
+                margin: "0.25em 0"
+              },
+              children: annoItem.getTags().map(tag => {
+                return {
+                  tag: "div",
+                  styles: {
+                    border: `1px solid ${opacityColor(1)}`,
+                    borderRadius: "1em",
+                    backgroundColor: opacityColor(0.3),
+                    color: deepColor,
+                    padding: "0 1em"
+                  },
+                  properties: {
+                    innerText: tag.tag
+                  }
+                }
+              })
+            }
+          ],
+          listeners: [
+            {
+              type: "mouseenter",
+              listener: () => {
+                annoNode.style.backgroundColor = opacityColor(0.23)
+              }
+            },
+            {
+              type: "mouseleave",
+              listener: () => {
+                annoNode.style.backgroundColor = opacityColor(0.13)
+              }
+            },
+            {
+              type: "click",
+              listener: () => {
+                new ztoolkit.Clipboard()
+                  .addText(annoItem.annotationText, "text/unicode")
+                  .copy()
+                new ztoolkit.ProgressWindow(config.addonName)
+                  .createLine({ text: "Copy Annotation Text", type: "success" })
+                  .show()
+              }
+            },
+            {
+              type: "dblclick",
+              listener: () => {
+                Zotero.Reader.open(annoItem.parentID, {
+                  pageIndex: Number(annoItem.annotationPageLabel) - 1,
+                  annotationKey: annoItem.key as string
+                } as any)
+              }
+            }
+          ]
+        }, innerContainer)
+      })
+    }
+    render(annoItems.slice(0, preRenderNumber))
+    if (annoItems.length > preRenderNumber) {
+      const color = "#19A7CE"
+      const c = new ColorRNA(color)
+      let [red, green, blue] = c.rgb()
+      const hsl = c.HSL()
+      hsl[2] = 30
+      const deepColor = c.HSL(hsl).getHex()
+      const opacityColor = (opacity: number) => `rgba(${red}, ${green}, ${blue}, ${opacity})`
+      const loadingAll = ztoolkit.UI.appendElement({
+        tag: "div",
+        styles: {
+          margin: "1em 0",
+          border: `1px solid ${deepColor}`,
+          borderRadius: "3px",
+          backgroundColor: opacityColor(.13),
+          padding: "1em",
+          color: deepColor,
+          textAlign: "center",
+          fontWeight: "bold",
+          cursor: "pointer"
+        },
+        properties: {
+          innerText: "Loading All"
+        },
+        listeners: [
+          {
+            type: "click",
+            listener: () => {
+              loadingAll.remove();
+              render(annoItems.slice(preRenderNumber))
+            }
+          },
+          {
+            type: "mouseenter",
+            listener: () => {
+              loadingAll.style.backgroundColor = opacityColor(0.23)
+            }
+          },
+          {
+            type: "mouseleave",
+            listener: () => {
+              loadingAll.style.backgroundColor = opacityColor(0.13)
+            }
+          },
+        ]
+      }, innerContainer)
+    }
+  };
 }
 
 
