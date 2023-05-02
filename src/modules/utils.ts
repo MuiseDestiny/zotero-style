@@ -1,4 +1,4 @@
-import Requests from "E:/Github/zotero-reference/src/modules/requests";
+import Requests from "zotero-reference/src/modules/requests";
 
 import { config } from "../../package.json";
 import LocalStorage from "./localStorage";
@@ -27,14 +27,13 @@ export async function updatePublicationTags(localStorage: LocalStorage, item: Zo
   } catch { console.log(response) }
   if (response && response.data) {
     // 自定义数据集 + 官方数据集合并
-    let officialAllData = response.data.officialRank.all
-    if (!officialAllData) {
+    let officialAllData={...response.data.officialRank.all}
+    if (Object.keys(officialAllData).length === 0) {
       if (tip) {
         new ztoolkit.ProgressWindow("Publication Tags", { closeTime: 3000, closeOtherProgressWindows: true })
           .createLine({ text: "Not Found", type: "default" }).show()
       }
       await localStorage.set(item, "publication", "")
-      return 0
     }
     let customRankInfo = response.data.customRank.rankInfo
     response.data.customRank.rank.forEach((rankString: string) => {
@@ -53,7 +52,10 @@ export async function updatePublicationTags(localStorage: LocalStorage, item: Zo
         officialAllData[info.abbName] = info[rank]
       } catch { }
     })
-    if (officialAllData) {
+    if (Object.keys(officialAllData).length === 0){
+      return 0;
+    }
+    else{
       await localStorage.set(item, "publication", officialAllData)
       // 显示它支持的所有字段
       if (tip) {

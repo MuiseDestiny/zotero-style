@@ -47,18 +47,18 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 > It differs from tags column in that it renders the text directly. You can create a tag that starts with `#` to try it out.
 
 <details>
-  
+
 <summary>Column Settings</summary>
 
- 
+
  **Prefix**
-  
+
 |Prefix|Meaning|
 |--|--|
 | # | Show all tags that start with `#`, but will remove the `#` prefix. |
 |~~/ | All tags except those beginning with `/` are displayed |
 |                      /^#(.+)/                        | Use the entered regular expression to match the tag, and `(.+)` is the actual displayed tag content. Multiple `(.+)` will be automatically joined. |
-  
+
 </details>
 
 
@@ -67,16 +67,15 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 > It is similar to #Tags, but its tags can generate automatically, which represent the rank of a publication.
 
 <details>
-  
 <summary>Column Settings</summary>
 
 <img src="https://user-images.githubusercontent.com/51939531/223394517-19cf5bf8-b5e3-402a-8da7-5952b1fd062e.png" width="50%" height="50%">
 
 
  **Fileds**
-  
+
   You can choose fields to display by editing `Fields` field in Column Settings. Check the table below for field definitions.
-  
+
 | Field | Name | Source |
 | --- | --- | --- |
 |ccf|  |《中国计算机学会推荐国际学术会议和期刊、中文科技期刊目录-2019、计算领域高质量科技期刊分级目录》，数据集从高到低分为：A(T1), B(T2), C(T3)。|
@@ -116,7 +115,11 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 |sciwarn| 中科院预警 | 《国际期刊预警名单(试行)-2021.12.31》 ，该数据集只有一个等级。|
 |cju| | 《长江大学自然科学高质量期刊（中国期刊）分级目录（2021版）.pdf》数据集从高到低分为T1, T2, T3。|
 |zju| | 《浙江大学国内学术期刊分级目录指南·2020版.pdf》数据集从高到低分为国内一级学术期刊，国内一级核心期刊。|
-  
+
+If you are using a custom dataset, you must locate the custom field definition of the dataset and fill it in the `Fields` section.
+
+
+
 **Map**
 
 You can customise tags by editing `Map` field in Column Settings, using string or regex to replace tags to your desired format.
@@ -192,9 +195,9 @@ CAS quartiles 中科院分区升级版:
 > This addon and other addons may expand Zotero's columns, but the screen size is limit. We often need to show/hide columns frequently, and View Group makes it easier and quicker.
 
 <details>
-  
+
 <summary>Usage</summary>
-  
+
 ![View Group](https://user-images.githubusercontent.com/51939531/221079177-0d73beed-d63f-4935-a380-f09667d0800c.png)
 
 | Operation | Target | Do |
@@ -205,7 +208,7 @@ CAS quartiles 中科院分区升级版:
 | left clcik | `Add View` button | save current view |
 
 </details> 
-  
+
 ## Nested Tags
 
 > Nested tags can recategorize your Zotero items. It could replace Zotero's collection to some extent.
@@ -233,7 +236,7 @@ You can switch between the nested tags view provided by the plugin and the tags 
 
 ![image](https://user-images.githubusercontent.com/51939531/221781981-8faa86f9-2985-459c-a944-c03a1561113c.png)
 
-  
+
 </details> 
 
 ## Quick Filtering
@@ -245,22 +248,22 @@ You can switch between the nested tags view provided by the plugin and the tags 
 > An Obsidian's `inreractive graph` rendered by Obsidian's source code. It can show item's related items visually. And you can locate the Zotero item from the graph node (`click`), and locate the graph node from Zotero item (`ctrl+click`).
 
  <details>
-  
+
 <summary>Demonstration</summary>
-   
+
 ![Graph View](https://user-images.githubusercontent.com/51939531/221080186-05187a08-c237-43ec-8728-9bc603f0eb4f.gif)
-  
+
 </details>
 
 
 ## Frequently Asked Questions
 
 <details>
- 
+
 <summary>Where is my tags?</summary>
 
 Two ways display your tags after assigning color and position: (1) you can open the column settings of title and click `Tags` and (2) you can show Tags column that is created by this addon.
-  
+
 </details>
 
 ## Recommended Links

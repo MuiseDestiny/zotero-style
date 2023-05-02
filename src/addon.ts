@@ -1,4 +1,4 @@
-import ZoteroToolkit from "E:/Github/zotero-plugin-toolkit/dist"
+import ZoteroToolkit from "zotero-plugin-toolkit/dist"
 import hooks from "./hooks";
 
 class Addon {
