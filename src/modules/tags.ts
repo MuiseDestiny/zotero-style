@@ -153,6 +153,12 @@ export class Tags {
           .nested-search-box .icon:hover {
             opacity: 1
           }
+          #zotero-editpane-notes row {
+            margin-left: 1em;
+          }
+          #zotero-editpane-notes * {
+            transition: background-color .1s linear, opacity .1s linear;
+          }
         `
       },
     });
@@ -1301,7 +1307,7 @@ export class Tags {
     const parent = document.querySelector("rows#zotero-editpane-dynamic-notes")! as any
     parent.style.paddingBottom = ".5em";
     (document.querySelector("#zotero-editpane-notes hbox") as any).style.margin = "0 .5em"
-    parent.querySelectorAll("row").forEach((e: any) => e.style.marginLeft = "5px") 
+    // parent.querySelectorAll("row").forEach((e: any) => e.style.marginLeft = "1em") 
     parent.querySelectorAll(".annotation").forEach((e: any)=>e.remove())
     bindZoomOutEvent(parent)
     let render = (annoItems: Zotero.Item[]) => {
