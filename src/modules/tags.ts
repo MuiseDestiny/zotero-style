@@ -173,9 +173,10 @@ export class Tags {
       isMouseDown = false
     })
     /**
-     * 把tags过滤修改成contains模式
+     * 把tags过滤is修改成contains模式
      * https://github.com/zotero/zotero/blob/2f0d41c0cb9ea47cce03ea51bf8ac718dbe44b15/chrome/content/zotero/xpcom/collectionTreeRow.js#L321
      */
+    // @ts-ignore
     Zotero.CollectionTreeRow.prototype.getSearchObject = Zotero.Promise.coroutine(function* () {
       if (Zotero.CollectionTreeCache.lastTreeRow && Zotero.CollectionTreeCache.lastTreeRow.id !== this.id) {
         Zotero.CollectionTreeCache.clear();
@@ -266,6 +267,27 @@ export class Tags {
       if (this.nestedTagsContainer?.style.display != "none") {
         await this.init(true)
       }
+    })
+
+    let renderItemAnnotations = () => {
+      const tagStartArr = this.getTagStart()!
+      const item = ZoteroPane.getSelectedItems()?.[0]
+      if (!item || !item.isRegularItem()) { return }
+      const annoItems: Zotero.Item[] = item.getAttachments().map(id => Zotero.Items.get(id))
+        .filter((item: Zotero.Item) => item.isAttachment() && item.attachmentContentType == "application/pdf")
+        .reduce((annoItemArr: Zotero.Item[], pdfItem: Zotero.Item) => annoItemArr.concat(pdfItem.getAnnotations()), [])
+        .filter((annoItem: Zotero.Item) => tagStartArr.length == 0 || tagStartArr.every(tagStart => annoItem.getTags().find(tag => tag.tag.startsWith(tagStart))))
+      this.renderAnnotations(annoItems)
+    }
+
+    ZoteroPane.itemsView.onSelect.addListener(async () => {
+      window.setTimeout(() => {
+        renderItemAnnotations()
+      }, 10)
+    })
+
+    document.querySelector("tab#zotero-editpane-notes-tab")?.addEventListener("click", () => {
+      renderItemAnnotations()
     })
   }
 
@@ -1255,178 +1277,9 @@ export class Tags {
     return sortedTags
   }
 
-  /**
-   * 在条目底部渲染
-   * @param annoItems 
-   */
-  private _renderAnnotations(annoItems: Zotero.Item[]) {
-    document.querySelector(`#item-tree-main-default #${this.annotationsID}`)?.remove()
-    const container = ztoolkit.UI.appendElement({
-      tag: "div",
-      id: this.annotationsID,
-      styles: {
-        borderTop: "1px solid #cecece",
-        maxHeight: (document.querySelector("#item-tree-main-default")?.getBoundingClientRect().height!) / 2 + "px",
-        overflowY: "auto",
-        padding: "0 1em",
-      },
-    },
-    document.querySelector("#item-tree-main-default") as HTMLDivElement)
-    
-    annoItems.forEach((annoItem: Zotero.Item) => {
-      const color = annoItem.annotationColor
-      const c = new ColorRNA(color)
-      let [red, green, blue] = c.rgb()
-      const hsl = c.HSL()
-      hsl[2] = 30 
-      const deepColor = c.HSL(hsl).getHex()
-      const opacityColor = (opacity: number) => `rgba(${red}, ${green}, ${blue}, ${opacity})`
-      const annoNode = ztoolkit.UI.appendElement({
-        tag: "div",
-        styles: {
-          margin: "1em 0",
-          border: `1px solid ${deepColor}`,
-          backgroundColor: opacityColor(0.13),
-          padding: ".25em .5em",
-          borderRadius: "3px",
-          cursor: "pointer",
-          boxSizing: "border-box",
-        },
-        children: [
-          // 标题 + 页码
-          {
-            tag: "div",
-            styles: {
-              margin: ".25em 0",
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between"
-            },
-            children: [
-              // 标题
-              {
-                tag: "div",
-                styles: {
-                  fontSize: "1.2em",
-                  fontWeight: "bold",
-                  color: "#9384D1",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                },
-                properties: {
-                  // @ts-ignore
-                  innerText: Zotero.Items.get(annoItem.parentID)._displayTitle
-                }
-              },
-              {
-                tag: "div",
-                styles: {
-                  color: "rgba(0, 0, 0, .5)"
-                },
-                properties: {
-                  innerHTML: `<b>P${annoItem.annotationPageLabel}</b>`
-                }
-              }
-            ]
-          },
-          
-          // 标注内容
-          {
-            tag: "div",
-            classList: ["content"],
-            styles: {
-              textAlign: "justify",
-            },
-            properties: {
-              innerText: annoItem.annotationText || `Annotation Type: ${annoItem.annotationType}. Please double-click to view detailed information.`
-            }
-          },
-          // 评论
-          {
-            tag: "div",
-            styles: {
-              display: annoItem.annotationComment?.length > 0 ? "flex" : "none",
-              lineHeight: "2em",
-              backgroundColor: `rgba(${red}, ${green}, ${blue}, 0.35)`,
-              padding: "0 .5em",
-              margin: ".5em -.5em"
-            },
-            properties: {
-              innerText: annoItem.annotationComment
-            }
-          },
-          // 标签
-          {
-            tag: "div",
-            classList: ["tags-box"],
-            styles: {
-              display: annoItem.getTags().length > 0 ? "flex" : "none",
-              flexDirection: "row",
-              justifyContent: "flex-start",
-              alignItems: "center",
-              height: "2em",
-              margin: "0.25em 0"
-            },
-            children: annoItem.getTags().map(tag => {
-              return {
-                tag: "div",
-                styles: {
-                  border: `1px solid ${opacityColor(1)}`,
-                  borderRadius: "1em",
-                  backgroundColor: opacityColor(0.3),
-                  color: deepColor,
-                  padding: "0 1em"
-                },
-                properties: {
-                  innerText: tag.tag
-                }
-              }
-            })
-          }
-        ],
-        listeners: [
-          {
-            type: "mouseenter",
-            listener: () => {
-              annoNode.style.backgroundColor = opacityColor(0.23)
-            }
-          },
-          {
-            type: "mouseleave",
-            listener: () => {
-              annoNode.style.backgroundColor = opacityColor(0.13)
-            }
-          },
-          {
-            type: "click",
-            listener: () => {
-              new ztoolkit.Clipboard()
-                .addText(annoItem.annotationText, "text/unicode")
-                .copy()
-              new ztoolkit.ProgressWindow(config.addonName)
-                .createLine({ text: "Copy Annotation Text", type: "success" })
-                .show()
-            }
-          },
-          {
-            type: "dblclick",
-            listener: () => {
-              Zotero.Reader.open(annoItem.parentID, {
-                pageIndex: Number(annoItem.annotationPageLabel) - 1,
-                annotationKey: annoItem.key as string
-              } as any)
-            }
-          }
-        ]
-        
-      }, container)
-    })
-  };
 
   public renderAnnotations(annoItems: Zotero.Item[]) {
-    ZoteroPane.itemsView.selection.clearSelection()
-    function bindZoomOutEvent(div: HTMLDivElement): void {
+    function bindZoomOutEvent(div: HTMLDivElement) {
       div.addEventListener('wheel', (event: WheelEvent) => {
         if (event.ctrlKey) {
           event.preventDefault();
@@ -1440,48 +1293,17 @@ export class Tags {
           div.style.fontSize = String(s) + "px"
         }
       });
-    }
-    const parent = document.querySelector("#zotero-item-pane-content")!
-    // @ts-ignore
-    // parent.firstChild.innerHTML = ""
-    const container = ztoolkit.UI.createElement(document, "vbox", {
-      id: this.annotationsID,
-      styles: {
-        // overflowY: "auto",
-        // padding: ".5em 1em",
-        overflowY: "auto",
-      },
-      attributes: {
-        align: annoItems.length == 0 ? "center" : "",
-        pack: annoItems.length == 0 ? "center" : ""
-      },
-      children: [
-        {
-          tag: "div",
-          id: "inner-container",
-          styles: {
-            padding: "0em 1em",
-            width: "100%",
-            height: "100%"
-          }
-        }
-      ]
-    })
-    parent?.replaceChild(container, parent.firstChild!)
-    if (annoItems.length == 0) {
-      const n = ZoteroPane.getSortedItems().length
-      ztoolkit.UI.appendElement({
-        tag: "description",
-        namespace: "xul",
-        properties: {
-          textContent: `${n} items in this view`
-        }
-      }, container)
-      return
-    }
-    bindZoomOutEvent(container)
-    const innerContainer = container.querySelector("#inner-container")!
-    const preRenderNumber = 20
+    };
+    const pane = document.querySelector("#zotero-editpane-notes") as any
+    pane.style.paddingLeft = "0"
+    pane.style.marginLeft = "0"
+    // pane.style.margin = "0 .5em"
+    const parent = document.querySelector("rows#zotero-editpane-dynamic-notes")! as any
+    parent.style.paddingBottom = ".5em";
+    (document.querySelector("#zotero-editpane-notes hbox") as any).style.margin = "0 .5em"
+    parent.querySelectorAll("row").forEach((e: any) => e.style.marginLeft = "5px") 
+    parent.querySelectorAll(".annotation").forEach((e: any)=>e.remove())
+    bindZoomOutEvent(parent)
     let render = (annoItems: Zotero.Item[]) => {
       annoItems.forEach((annoItem: Zotero.Item) => {
         const color = annoItem.annotationColor
@@ -1493,15 +1315,14 @@ export class Tags {
         const opacityColor = (opacity: number) => `rgba(${red}, ${green}, ${blue}, ${opacity})`
         const annoNode = ztoolkit.UI.appendElement({
           tag: "div",
+          classList: ["annotation"],
           styles: {
-            margin: "1em 0",
+            margin: "0.5em 1em",
             border: `1px solid ${deepColor}`,
             backgroundColor: opacityColor(0.13),
             padding: ".25em .5em",
             borderRadius: "3px",
             cursor: "pointer",
-            // boxSizing: "border-box",
-            // width: width + "px"
           },
           children: [
             // 标题 + 页码
@@ -1643,57 +1464,10 @@ export class Tags {
               }
             }
           ]
-        }, innerContainer)
+        }, parent)
       })
     }
-    render(annoItems.slice(0, preRenderNumber))
-    if (annoItems.length > preRenderNumber) {
-      const color = "#19A7CE"
-      const c = new ColorRNA(color)
-      let [red, green, blue] = c.rgb()
-      const hsl = c.HSL()
-      hsl[2] = 30
-      const deepColor = c.HSL(hsl).getHex()
-      const opacityColor = (opacity: number) => `rgba(${red}, ${green}, ${blue}, ${opacity})`
-      const loadingAll = ztoolkit.UI.appendElement({
-        tag: "div",
-        styles: {
-          margin: "1em 0",
-          border: `1px solid ${deepColor}`,
-          borderRadius: "3px",
-          backgroundColor: opacityColor(.13),
-          padding: "1em",
-          color: deepColor,
-          textAlign: "center",
-          fontWeight: "bold",
-          cursor: "pointer"
-        },
-        properties: {
-          innerText: "Loading All"
-        },
-        listeners: [
-          {
-            type: "click",
-            listener: () => {
-              loadingAll.remove();
-              render(annoItems.slice(preRenderNumber))
-            }
-          },
-          {
-            type: "mouseenter",
-            listener: () => {
-              loadingAll.style.backgroundColor = opacityColor(0.23)
-            }
-          },
-          {
-            type: "mouseleave",
-            listener: () => {
-              loadingAll.style.backgroundColor = opacityColor(0.13)
-            }
-          },
-        ]
-      }, innerContainer)
-    }
+    render(annoItems)
   };
 }
 

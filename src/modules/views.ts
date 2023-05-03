@@ -3201,22 +3201,12 @@ export default class Views {
     }, 1000)
     this.filterFunctions.push((items: Zotero.Item[]) => {
       tagsUI.collectionItems ??= items
-      tagsUI.renderAnnotations([])
-      const tagStartArr = tagsUI.getTagStart()!
       window.setTimeout(async () => {
         if (items.length == 0) {
           Object.keys(tagsUI.state).forEach((key: string) => tagsUI.state[key].select = false)
-          // await ZoteroPane.itemsView.refreshAndMaintainSelection();
-          await ZoteroPane.itemsView.refresh()
+          await ZoteroPane.itemsView.refreshAndMaintainSelection();
           await tagsUI.init(true);
           return
-        } else {
-          // 渲染标注
-          const annoItems: Zotero.Item[] = items!
-            .filter((item: Zotero.Item) => item.isAttachment() && item.attachmentContentType == "application/pdf")
-            .reduce((annoItemArr: Zotero.Item[], pdfItem: Zotero.Item) => annoItemArr.concat(pdfItem.getAnnotations()), [])
-            .filter((annoItem: Zotero.Item) => tagStartArr.length == 0 || tagStartArr.every(tagStart => annoItem.getTags().find(tag => tag.tag.startsWith(tagStart))))
-          tagsUI.renderAnnotations(annoItems)
         }
         if (tagsUI.nestedTagsContainer?.style.display != "none") {
           tagsUI.updateTagsIn(items)
