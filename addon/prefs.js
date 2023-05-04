@@ -49,7 +49,7 @@ pref("extensions.zotero.__addonRef__.PublicationTagsColumn.margin", "0.2");
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.padding", "0.5");
 pref("extensions.zotero.__addonRef__.PublicationTagsColumn.opacity", "0.13");
 
-pref("extensions.zotero.__addonRef__.function.progressColumn.enable", true);
+pref("extensions.zotero.__addonRef__.function.progressColumn.enable", false);
 pref("extensions.zotero.__addonRef__.progressColumn.style", "bar");
 pref("extensions.zotero.__addonRef__.progressColumn.color", "#86C8BC");
 pref("extensions.zotero.__addonRef__.progressColumn.opacity", "0.7");
