@@ -259,7 +259,14 @@ You can switch between the nested tags view provided by the plugin and the tags 
 > Long Press to edit a PDF style.
 > Click `🎨` to add a PDF Style.
 
+<details>
+
+<summary>Demonstration</summary>
+
 ![image](https://github.com/MuiseDestiny/zotero-style/assets/51939531/0a924c15-d867-49e0-9110-3eb54c61d453)
+
+</details>
+
 
 
 ## Frequently Asked Questions
