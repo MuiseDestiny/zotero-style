@@ -265,6 +265,10 @@ You can switch between the nested tags view provided by the plugin and the tags 
 
 ![image](https://github.com/MuiseDestiny/zotero-style/assets/51939531/0a924c15-d867-49e0-9110-3eb54c61d453)
   
+![image](https://github.com/MuiseDestiny/zotero-style/assets/51939531/26563a6a-5c94-4dea-9c1f-ca9c5a81b298)
+
+![image](https://github.com/MuiseDestiny/zotero-style/assets/51939531/064c1250-197c-46d5-92bf-761e879c7766)
+
 ![image](https://github.com/MuiseDestiny/zotero-style/assets/51939531/2aa86c6f-9773-472a-b69f-c05df12d3bfa)
 
 
