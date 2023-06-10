@@ -1,38 +1,46 @@
 {
   "name": "zotero-style",
-  "version": "2.6.6",
+  "version": "2.6.7",
   "description": "A Zotero plugin for creating a personal Zotero Style.",
   "config": {
     "addonName": "Zotero Style",
     "addonID": "zoterostyle@polygon.org",
     "addonInstance": "ZoteroStyle",
     "addonRef": "zoterostyle",
-    "releasepage": "https://github.com/muisedestiny/zotero-style/releases/latest/download/zotero-style.xpi",
-    "updaterdf": "https://raw.githubusercontent.com/MuiseDestiny/zotero-style/master/update.json"
+    "releasepage": "https://github.com/MuiseDestiny/zotero-style/releases/latest/download/zotero-style.xpi",
+    "updaterdf": "https://raw.githubusercontent.com/MuiseDestiny/zotero-style/bootstrap/update.json"
   },
   "main": "src/index.ts",
   "scripts": {
     "build-dev": "cross-env NODE_ENV=development node scripts/build.js",
-    "build": "cross-env NODE_ENV=production node scripts/build.js",
+    "build-prod": "cross-env NODE_ENV=production node scripts/build.js",
+    "build": "concurrently -c auto npm:build-prod npm:tsc",
+    "tsc": "tsc --noEmit",
+    "start-z6": "node scripts/start.js --z 6",
+    "start-z7": "node scripts/start.js --z 7",
     "start": "node scripts/start.js",
     "stop": "node scripts/stop.js",
-    "prerestart": "npm run build-dev",
-    "restart": "node scripts/restart.js",
+    "restart-dev": "npm run build-dev && npm run stop && npm run start",
+    "restart-prod": "npm run build-prod && npm run stop && npm run start",
+    "restart": "npm run restart-dev",
+    "restart-z7": "npm run build-dev && npm run stop && npm run start-z7",
     "release": "release-it",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/muisedestiny/zotero-style.git"
+    "url": "git+https://github.com/MuiseDestiny/zotero-style.git"
   },
   "author": "Polygon",
   "license": "AGPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/muisedestiny/zotero-style/issues"
+    "url": "https://github.com/MuiseDestiny/zotero-style/issues"
   },
-  "homepage": "https://github.com/muisedestiny/zotero-style#readme",
+  "homepage": "",
   "dependencies": {
+    "@authing/native-js-ui-components": "^4.3.10",
     "3d-force-graph": "^1.71.1",
+    "authing-js-sdk": "^4.23.44",
     "color-rna": "^1.0.1",
     "d3": "^7.8.2",
     "math": "^0.0.3",
@@ -43,7 +51,9 @@
     "raphael": "^2.3.0",
     "runes": "^0.4.3",
     "sentence-extractor": "^1.0.7",
+    "terser": "^5.17.1",
     "three": "^0.148.0",
+    "zotero-adv-installer": "file:..",
     "zotero-plugin-toolkit": "^2.0.3"
   },
   "devDependencies": {
@@ -53,6 +63,7 @@
     "esbuild": "^0.16.17",
     "release-it": "^15.6.0",
     "replace-in-file": "^6.3.5",
+    "uglify-js": "^3.17.4",
     "zotero-types": "^0.1.5"
   }
 }
