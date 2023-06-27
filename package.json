@@ -1,6 +1,6 @@
 {
   "name": "zotero-style",
-  "version": "2.6.7",
+  "version": "2.6.8",
   "description": "A Zotero plugin for creating a personal Zotero Style.",
   "config": {
     "addonName": "Zotero Style",
