@@ -1,4 +1,4 @@
-# Zotus = Zotero Lotus
+# Style
 > 让你享受阅读文献的乐趣！
 
 <img src="addon/chrome/content/icons/favicon.png" width="36px" height="36px">
