@@ -12,7 +12,8 @@
 
 You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-style/issues/48).
 
-[中文文档](https://www.notion.so/Zotero-Style-bc2aebbbb6df4b7baa858e376e4fc5be)
+[中文文档](https://www.notion.so/Zotero-Style-bc2aebbbb6df4b7baa858e376e4fc5be) |
+[视频教程](https://www.bilibili.com/video/BV1ZP411p7ko/?spm_id_from=333.999.0.0)
 ---
 
 ## TODO
