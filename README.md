@@ -39,6 +39,19 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 
 > It can visually represent the annotation word count of each page of the PDF corresponding to a item.
 
+### Read/Unread Status
+> Unread paper is shown in bold, and read paper is not bolded.This is the same as the read button in RSS.
+
+<details>
+<summary>How to mark?</summary>
+
+|Scenario|Screenshot|
+|--|--|
+|Zotero Item Pane (plugin's function)|![image](https://github.com/MuiseDestiny/zotero-style/assets/51939531/41bb9c79-317f-4fd9-98f1-8a4abf5b5439)|
+|Zotero RSS (Zotero's function)|![image](https://github.com/MuiseDestiny/zotero-style/assets/51939531/73143f9c-2f8a-4c0d-b741-6bcdbdebe9fa)|
+
+</details>
+
 ### Tags
 
 > The tags that were originally displayed before the title are separated into this separate `Tags` column.
