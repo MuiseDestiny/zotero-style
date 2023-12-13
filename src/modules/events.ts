@@ -41,6 +41,7 @@ export default class Events {
 		// Zotero is bulr
 		if (!(reader && reader.state && this.state.activate && item)) { return }
 		ztoolkit.log("listeningReader is running")
+		// pageIndex get from Zotero.Reader, it is start from 1
 		const pageIndex = reader.state.pageIndex;
 		if (pageIndex == this.state.pageIndex) {
 			if (reader.state.left == this.state.left && reader.state.top == this.state.top)
@@ -69,10 +70,11 @@ export default class Events {
 				data: {}
 			}
 		}
-		if (this.cache[cacheKey].data[pageIndex]) {
-			this.cache[cacheKey].data[pageIndex] += this.recordInterval
+		// when progress start to render, it starts from key 0
+		if (this.cache[cacheKey].data[pageIndex - 1]) {
+			this.cache[cacheKey].data[pageIndex - 1] += this.recordInterval
 		} else {
-			this.cache[cacheKey].data[pageIndex] = this.recordInterval
+			this.cache[cacheKey].data[pageIndex - 1] = this.recordInterval
 		}
 		await this.storage.set(item, "readingTime", this.cache[cacheKey])
 	}
