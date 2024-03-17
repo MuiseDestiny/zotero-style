@@ -3299,14 +3299,17 @@ export default class Views {
               } catch { return div }
               window.setTimeout(async () => {
                 let getCollectionAllItemNumber = async (c: any) => {
-                  let s = (await c.getChildItems()).length
+                  const child=await c.getChildItems() as Zotero.Item[]
+                  let count = child.length
+                  let itemKeys = child.map(s=>s.key)
                   if (c.hasChildCollections()) {
                     let cs = c.getChildCollections()
                     for (let i = 0; i < cs.length; i++) {
-                      s += await getCollectionAllItemNumber(cs[i])
+                      count += (await getCollectionAllItemNumber(cs[i]) ).count
+                      itemKeys.push(... (await getCollectionAllItemNumber(cs[i]) ).itemKeys)
                     }
                   }
-                  return s
+                  return {count,itemKeys}
                 }
                 let setText = (text: string | undefined, force: boolean = false) => {
                   if (text && ((!force && text != this.cache[key]) || force)) {
@@ -3351,7 +3354,8 @@ export default class Views {
                 if (ref._ObjectType == "Collection") { 
                   let collection = ref;
                   const childItemNumber = (await collection.getChildItems()).length
-                  const offspringItemNumber = await getCollectionAllItemNumber(collection)
+                  const offspringItemNumberCount = (await getCollectionAllItemNumber(collection)).count
+                  const offspringItemNumber = new Set(... (await getCollectionAllItemNumber(collection)).itemKeys).size
                   switch (mode) {
                     case 0:
                       text = childItemNumber;
