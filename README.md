@@ -19,6 +19,14 @@ You can upload your screenshots [here](https://github.com/MuiseDestiny/zotero-st
 [中文文档](https://www.notion.so/Zotero-Style-bc2aebbbb6df4b7baa858e376e4fc5be) |
 [视频教程](https://www.bilibili.com/video/BV1ZP411p7ko/?spm_id_from=333.999.0.0)
 ---
+## 关于更新/About Update
+
+> 请使用下图，Zotero官方提供的更新方式更新。小版本将不在Github发布Release，你始终可以通过下图方式获取所有版本（大/小）更新。
+
+
+![image](https://github.com/user-attachments/assets/87a6737c-4789-4195-a46e-d4b8bbb20b79)
+
+
 
 ## TODO
 
