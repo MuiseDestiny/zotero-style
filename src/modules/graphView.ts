@@ -292,7 +292,14 @@ export default class GraphView {
   
   private getGraphByAuthorLink(items: Zotero.Item[]) {
     let getAuthors = (item: Zotero.Item) => {
-      return item.getCreators().map(a => {
+    let getAuthors = (item: Zotero.Item) => {
+      // creatorTypeID: 8 means "author" in Zotero creator types
+      const AUTHOR_CREATOR_TYPE_ID = 8
+      return item.getCreators()
+        .filter(a => a.creatorTypeID === AUTHOR_CREATOR_TYPE_ID)
+        .map(a => `${a.firstName || ""} ${a.lastName || ""}`.trim())
+        .filter(name => name.length > 0)
+    }
         return `${a.firstName} ${a.lastName}`
       })
     }
