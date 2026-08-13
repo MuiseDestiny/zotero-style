@@ -6,7 +6,73 @@ import AddonItem from "./modules/item";
 import { registerPrefsScripts, registerPrefs } from "./modules/prefs";
 import LocalStorage from "./modules/localStorage";
 
+type ItemTreeColumnPrefs = Record<string, Record<string, any>>;
+
+async function snapshotStyleColumnPrefs(): Promise<ItemTreeColumnPrefs> {
+  const saved: ItemTreeColumnPrefs = {};
+  try {
+    const treePrefsPath = `${Zotero.Profile.dir}${Zotero.isWin ? "\\\\" : "/"}treePrefs.json`;
+    const raw = await Zotero.File.getContentsAsync(treePrefsPath);
+    const treePrefs = JSON.parse(raw || "{}");
+    for (const [treeID, prefs] of Object.entries(treePrefs)) {
+      const stylePrefs: Record<string, any> = {};
+      for (const [key, value] of Object.entries((prefs || {}) as Record<string, any>)) {
+        if (key.startsWith(`${config.addonRef}-`)) {
+          stylePrefs[key] = value;
+        }
+      }
+      if (Object.keys(stylePrefs).length) {
+        saved[treeID] = stylePrefs;
+      }
+    }
+  } catch (e) {
+    ztoolkit.log("snapshot Style column prefs failed", e);
+  }
+  return saved;
+}
+
+async function restoreStyleColumnPrefs(saved: ItemTreeColumnPrefs) {
+  try {
+    const mainWindow = Zotero.getMainWindow?.();
+    const itemTree = mainWindow?.ZoteroPane?.itemsView as any;
+    const savedPrefs = itemTree && saved[itemTree.id];
+    if (!itemTree || !savedPrefs) { return; }
+
+    const availableKeys = new Set(
+      (itemTree.getColumns?.() || []).map((column: any) => column.dataKey)
+    );
+    const currentPrefs = Object.assign(
+      {},
+      itemTree._getColumnPrefs?.() || itemTree._columnPrefs || {}
+    );
+    let changed = false;
+
+    for (const [key, value] of Object.entries(savedPrefs)) {
+      if (!availableKeys.has(key)) { continue; }
+      currentPrefs[key] = Object.assign({}, currentPrefs[key] || {}, value);
+      changed = true;
+    }
+    if (!changed) { return; }
+
+    itemTree._columnPrefs = currentPrefs;
+    itemTree._columnsId = null;
+    if (typeof itemTree._resetColumns == "function") {
+      await itemTree._resetColumns();
+    }
+    if (typeof itemTree._writeColumnPrefsToFile == "function") {
+      await itemTree._writeColumnPrefsToFile(true);
+    }
+  } catch (e) {
+    ztoolkit.log("restore Style column prefs failed", e);
+  }
+}
+
 async function onStartup() {
+  // Zotero can persist an incomplete column set before Style finishes registering
+  // its custom columns. Preserve the previous Style column layout and merge it
+  // back after startup so order/width/visibility survive restarts.
+  const savedStyleColumnPrefs = await snapshotStyleColumnPrefs();
+
   registerPrefs();
   // Register the callback in Zotero as an item observer
   const notifierID = Zotero.Notifier.registerObserver(
@@ -82,7 +148,7 @@ async function onStartup() {
   } catch { }
   await views.registerCommands()
 
-
+  await restoreStyleColumnPrefs(savedStyleColumnPrefs)
 }
 
 function onShutdown(): void {
