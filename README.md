@@ -4,7 +4,11 @@
 
 <img src="addon/chrome/content/icons/favicon.png" width="36px" height="36px" alt="Ethereal Style 图标">
 
+[![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-round&logo=github)](https://github.com/windingwind/zotero-plugin-template)
+[![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
+![Release Date](https://img.shields.io/github/release-date/MuiseDestiny/zotero-style?color=9cf)
 [![License](https://img.shields.io/github/license/MuiseDestiny/zotero-style)](LICENSE)
+![Downloads latest release](https://img.shields.io/github/downloads/MuiseDestiny/zotero-style/latest/total?color=yellow)
 
 Ethereal Style 是一款面向 Zotero 的文献管理与阅读增强插件，帮助你更直观地查看阅读进度、组织文献与标签，并改善 PDF 阅读和工作区体验。
 
