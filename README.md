@@ -1,12 +1,12 @@
-# Zotero Style
+# Ethereal Style
 
 > 让你享受阅读文献的乐趣！
 
-<img src="addon/chrome/content/icons/favicon.png" width="36px" height="36px" alt="Zotero Style 图标">
+<img src="addon/chrome/content/icons/favicon.png" width="36px" height="36px" alt="Ethereal Style 图标">
 
 [![License](https://img.shields.io/github/license/MuiseDestiny/zotero-style)](LICENSE)
 
-Zotero Style（Ethereal Style）是一款面向 Zotero 的文献管理与阅读增强插件，帮助你更直观地查看阅读进度、组织文献与标签，并改善 PDF 阅读和工作区体验。
+Ethereal Style 是一款面向 Zotero 的文献管理与阅读增强插件，帮助你更直观地查看阅读进度、组织文献与标签，并改善 PDF 阅读和工作区体验。
 
 **[阅读完整功能介绍与使用文档](https://plugins.muisedestiny.xyz/docs/style)**
 
@@ -31,14 +31,14 @@ README 仅提供功能概览。安装、配置、使用方法以及最新的功�
 
 **[加入 Pro](https://plugins.muisedestiny.xyz/)**
 
-插件同时提供 **Style Pro** 扩展能力，例如：
+插件同时提供 **Ethereal Style Pro** 扩展能力，例如：
 
 - **标签页管理**：垂直标签页、标签组与标签页管理器，便于在多篇文献之间切换。
 - **探索与预览**：在侧边栏集中浏览文献内容，直接预览 PDF 附件或网页快照。
 - **笔记与标注管理**：集中查看笔记和标注，通过反向链接回到引用位置，并使用文献矩阵比较多篇文献。
 - **被引次数列**：在条目列表查看文献被引次数。
 
-Pro 的完整功能、使用条件与激活说明，请查看 [Style 文档](https://plugins.muisedestiny.xyz/docs/style)。具体功能范围以文档和当前版本的插件设置为准。
+Pro 的完整功能、使用条件与激活说明，请查看 [Ethereal Style 文档](https://plugins.muisedestiny.xyz/docs/style)。具体功能范围以文档和当前版本的插件设置为准。
 
 ## 开源与代码说明
 
