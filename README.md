@@ -1,8 +1,6 @@
-# Ethereal Style
+# <img src="addon/chrome/content/icons/favicon.png" width="36" height="36" alt=""> Ethereal Style
 
 > 让你享受阅读文献的乐趣！
-
-<img src="addon/chrome/content/icons/favicon.png" width="36px" height="36px" alt="Ethereal Style 图标">
 
 [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-round&logo=github)](https://github.com/windingwind/zotero-plugin-template)
 [![Latest release](https://img.shields.io/github/v/release/MuiseDestiny/zotero-style)](https://github.com/MuiseDestiny/zotero-style/releases)
