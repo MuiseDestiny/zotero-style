@@ -1,4 +1,4 @@
-# <img src="addon/chrome/content/icons/favicon.png" width="36" height="36" alt=""> Ethereal Style
+# <img src="addon/chrome/content/icons/favicon.png" width="32" height="32" alt="" align="absmiddle"> Ethereal Style
 
 [English README](README.en.md)
 
