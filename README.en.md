@@ -1,5 +1,7 @@
 # <img src="addon/chrome/content/icons/favicon.png" width="36" height="36" alt=""> Ethereal Style
 
+[中文 README](README.md)
+
 > Enjoy reading your papers!
 
 [![Using Zotero Plugin Template](https://img.shields.io/badge/Using-Zotero%20Plugin%20Template-blue?style=flat-round&logo=github)](https://github.com/windingwind/zotero-plugin-template)
@@ -7,15 +9,13 @@
 ![Release Date](https://img.shields.io/github/release-date/MuiseDestiny/zotero-style?color=9cf)
 [![License](https://img.shields.io/github/license/MuiseDestiny/zotero-style)](LICENSE)
 ![Downloads latest release](https://img.shields.io/github/downloads/MuiseDestiny/zotero-style/latest/total?color=yellow)
-[![Zotero 中文社区 · 已收录](https://zotero-chinese.com/badges/listed.svg)](https://zotero-chinese.com/plugins/)
+[![Zotero 中文社区 · 已收录](docs/assets/zotero-chinese-listed.svg)](https://zotero-chinese.com/plugins/)
 
 Ethereal Style is a Zotero plugin for literature management and enhanced reading, helping you visualize reading progress, organize papers and tags, and improve your PDF reading and workspace experience.
 
-English · [简体中文](README.md)
+## Documentation
 
-## [Documentation](https://plugins.muisedestiny.xyz/docs/style)
-
-See the documentation for usage. **Pro features** require [purchase](https://plugins.muisedestiny.xyz/) and [activation](https://plugins.muisedestiny.xyz/guide).
+See the [documentation](https://plugins.muisedestiny.xyz/docs/style) for usage. **Pro features** require [purchase](https://plugins.muisedestiny.xyz/) and [activation](https://plugins.muisedestiny.xyz/guide).
 
 ## Installation & updates
 
